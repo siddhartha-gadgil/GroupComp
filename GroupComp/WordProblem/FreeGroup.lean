@@ -1,4 +1,12 @@
 import Mathlib
+/-!
+# Word problem in free groups
+
+We translate into Lean the solution to the word problem in free groups based on covering spaces. We use the same definitions and some of the lemmas from the solution in Mathlib4.
+
+The translation is not faithful - we skip definitions of graphs and paths and instead abstract the sequence of vertices along the lift of a path.
+-/
+
 
 variable {α : Type} [DecidableEq α]
 
@@ -69,14 +77,14 @@ theorem nonnil_nextVertex_cancel (start : List (α × Bool))
     start :+ letter = start.dropLast  := by 
   simp [nextVertex,  eql, if_pos, nonnil]
 
-theorem step_exists {L L': List (α × Bool)} :
+theorem exists_of_step {L L': List (α × Bool)} :
     Step L L' → ∃ x : α , ∃  b : Bool, ∃ L₁ L₂ : List (α × Bool ),
     L = (L₁ ++ (x, b) :: (x, !b) :: L₂) ∧ L' = L₁ ++ L₂  := by
   intro step
   induction step with
   | @not L₁ L₂ x b =>  use x, b, L₁, L₂; simp
 
-theorem reduced_nextVertex (start: List (α × Bool))(letter: (α × Bool)):
+theorem nextVertex_reduced (start: List (α × Bool))(letter: (α × Bool)):
     Reduced start → Reduced (start :+ letter) := by
   intro reduced_start
   if nilP: start = [] 
@@ -85,7 +93,7 @@ theorem reduced_nextVertex (start: List (α × Bool))(letter: (α × Bool)):
     apply reduced_singleton
   else
     intro L' step
-    let ⟨x, b, L₁, L₂, eqs⟩ := step_exists step
+    let ⟨x, b, L₁, L₂, eqs⟩ := exists_of_step step
     let eq1 := eqs.1
     if cancP:start.getLast nilP = Letter.inv letter 
     then 
@@ -130,7 +138,7 @@ abbrev equiv (a b : List (α × Bool)) := mk a = mk b
 
 infix:50 " ∼ " => equiv
 
-theorem cancelling_pair_fixes(start: List (α × Bool))(a : α)(b: Bool):
+theorem homotopy_lifting_endpoints(start: List (α × Bool))(a : α)(b: Bool):
     Reduced start → start :+ (a, b) :+ (a, !b) = start := by
   intro reduced_start
   if nilP: start = [] then
@@ -218,14 +226,14 @@ theorem nextVertex_equiv_concat
 def finalVertex (start word : List (α × Bool)) : List (α × Bool) :=
   List.foldl (nextVertex) start word
 
-theorem reduced_finalVertex (start word : List (α × Bool)) :
+theorem finalVertex_reduced (start word : List (α × Bool)) :
     Reduced start → Reduced (finalVertex start word) := 
   fun reduced_start ↦
   match word with
   | [] => reduced_start
   | head  :: tail  =>
-    reduced_finalVertex (start :+ head) tail 
-      (reduced_nextVertex start head reduced_start)
+    finalVertex_reduced (start :+ head) tail 
+      (nextVertex_reduced start head reduced_start)
 
 theorem append_equiv {L₁ L₂ : List (α × Bool)}(L₃ : List (α × Bool)) :
     L₁ ∼ L₂ → L₁ ++ L₃ ∼ L₂ ++ L₃ := by
@@ -234,13 +242,13 @@ theorem append_equiv {L₁ L₂ : List (α × Bool)}(L₃ : List (α × Bool)) :
   rw [← mul_mk, ← mul_mk]
   rw [eqn]
      
-theorem finalVertex_append (start word : List (α × Bool)) :
+theorem finalVertex_equiv_append (start word : List (α × Bool)) :
     start ++ word ∼ finalVertex start word  := by
   match word with
   | [] => simp [finalVertex]
   | head ::tail => 
     simp [finalVertex, List.foldl_cons]
-    let ih := finalVertex_append (start :+ head) tail
+    let ih := finalVertex_equiv_append (start :+ head) tail
     simp [finalVertex, List.foldl_cons] at ih
     let eqn := nextVertex_equiv_concat start head
     show mk (start ++ head :: tail) = mk (List.foldl nextVertex (start :+ head) tail)
@@ -249,33 +257,33 @@ theorem finalVertex_append (start word : List (α × Bool)) :
     simp [← eqn']
       
 
-def quotFinalVertex (start : List (α × Bool)) (red : Reduced start) 
-    (word: FreeGroup α) : List (α × Bool) := by
-  apply Quot.liftOn word (finalVertex start)
+def finalVertexOnFreeGroup (start : List (α × Bool)) (red : Reduced start) 
+    (g: FreeGroup α) : List (α × Bool) := by
+  apply Quot.liftOn g (finalVertex start)
   intro w₁ w₂ step
   simp [finalVertex]
-  let ⟨x, b, L₁, L₂, eqs⟩ := step_exists step
+  let ⟨x, b, L₁, L₂, eqs⟩ := exists_of_step step
   let eq1 := eqs.1
   let eq2 := eqs.2
   rw [eq1, eq2]
   simp [List.foldl_cons, List.foldl_append]
   congr
-  apply cancelling_pair_fixes
-  apply reduced_finalVertex
+  apply homotopy_lifting_endpoints
+  apply finalVertex_reduced
   assumption
 
-theorem quotFinalVertex_commutes (start word : List (α × Bool)) 
+theorem finalVertexOnFreeGroup_natural (start word : List (α × Bool)) 
     (red : Reduced start) : 
-  finalVertex start word = quotFinalVertex start red (mk word) := by rfl
+  finalVertex start word = finalVertexOnFreeGroup start red (mk word) := by rfl
 
-abbrev reducedWord (g : FreeGroup α) := quotFinalVertex [] reduced_nil g
+abbrev reducedWord (g : FreeGroup α) := finalVertexOnFreeGroup [] reduced_nil g
 
 theorem reducedWord_inverse 
     (g : FreeGroup α) : mk (reducedWord g) = g := by
   apply Quot.ind (β := fun g ↦ mk (reducedWord g) = g )
   intro word
-  simp [finalVertex_append [], ←quotFinalVertex_commutes]
-  simp [←finalVertex_append]
+  simp [finalVertex_equiv_append [], ←finalVertexOnFreeGroup_natural]
+  simp [←finalVertex_equiv_append]
 
 instance wordProblem : DecidableEq (FreeGroup α) := by
   intro a b
@@ -293,13 +301,11 @@ instance wordProblem : DecidableEq (FreeGroup α) := by
 
 /- Examples -/
 def a : FreeGroup (Fin 2) := mk [(0, false)]
-def A : FreeGroup (Fin 2) := mk [(0, true)]
 def b : FreeGroup (Fin 2) := mk [(1, false)]
-def B : FreeGroup (Fin 2) := mk [(1, true)]
 
-#eval decide (a = B)
-#eval decide (a * b * B = a)
-#eval decide (a * b * B * A = 1) -- true
+#eval decide (a = b⁻¹)
+#eval decide (a * b * b⁻¹ = a) -- true
+#eval decide (a * b * b⁻¹ * a⁻¹ = 1) -- true
 
-example : a * b * B * A = 1 := by decide
-example : a * b * A * B ≠ 1 := by decide 
+example : a * b * b⁻¹ * a⁻¹ = 1 := by decide
+example : a * b * a⁻¹ * b⁻¹ ≠ 1 := by decide 
