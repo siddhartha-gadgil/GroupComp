@@ -15,47 +15,6 @@ We will then see
 -/
 
     
-example : 3 ≤ 7 := by 
-  repeat (first | apply Nat.le_refl| apply Nat.le_step) 
-
-macro "nat_le" : tactic => do
-  `(tactic| repeat (first | apply Nat.le_refl| apply Nat.le_step))
-
-example : 2 ≤ 8 := by nat_le
-
-macro "step_with" step:term "finish_with" fin:term : tactic => do
-  `(tactic| repeat (first | apply $fin| apply $step))
-
-example : 2 ≤ 8 := by 
-  step_with Nat.le_step finish_with Nat.le_refl 
-
-example : 2 ≤ 8 := by 
-  step_with Nat.succ_le_succ finish_with Nat.zero_le 
-
-#eval [1, 2][0]
-
-example (n : Nat) : (n :: [1, 2, 3])[1] = 1 := by 
-  rfl
-
-def hcf(a b : ℕ) : ℕ := 
-  if c':a < b then hcf b a 
-  else 
-    if c:b = 0 then a 
-    else
-      have b_pos : b > 0 := by 
-        apply Nat.pos_of_ne_zero
-        assumption      
-      have : (a - b) < a := by 
-        apply Nat.sub_lt_of_pos_le b a b_pos
-        apply Nat.le_of_not_lt 
-        assumption
-      hcf (a - b) b
-termination_by _ a b => (b, a)
-
-#check Nat.pos_of_ne_zero
-#check Nat.sub_lt_of_pos_le
-
-#eval List.range 10 |>.map fun n => hcf 100 n
 /-!
 ## Lean as a calculator.
 
