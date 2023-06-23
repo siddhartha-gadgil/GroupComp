@@ -2,9 +2,9 @@ import Mathlib
 /-!
 # Word problem for quotients of ℤ 
 
-## Linear Diaphontine Equations
+## Linear Diophantine Equations
 
-We solve linear diaphontine equations of the form `a * x + b * y = c` 
+We solve linear diophantine equations of the form `a * x + b * y = c` 
 where `a`, `b`, `c` are integers if they have a solution with proof.
 Otherwise, we return a proof that there is no solution.
 

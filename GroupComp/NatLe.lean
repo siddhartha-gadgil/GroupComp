@@ -21,18 +21,8 @@ Analogous to this, (modulo renaming) the `≤` relation is defined in terms of t
 #check Nat.succ
 
 #check Nat.le
-#check Nat.le_step
-#check Nat.le_refl
-
-#check List.find?_eq_none
-#check List.get?_concat_length
-#check List.get?_eq_none
-#check List.filter_length_eq_length
-#check List.disjoint_of_disjoint_append_left_left
-#check List.pairwise_of_reflexive_of_forall_ne
-#check List.union_equiv_append
-#check List.nodup_iff_forall_not_duplicate
-#check List.length_eraseP_of_mem
+#check Nat.le_step -- ∀ {n m : ℕ}, n ≤ m → n ≤ Nat.succ m
+#check Nat.le_refl -- ∀ n : ℕ, n ≤ n
 
 
 /-!
