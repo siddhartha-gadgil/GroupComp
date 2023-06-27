@@ -10,10 +10,10 @@ structure Graph (V E : Type) where
 def Graph.τ {V E : Type} (G : Graph V E) (e : E) : V := G.ι (G.bar e)
 
 @[simp]
-theorem terminal_bar {V E : Type} (G : Graph V E) (e : E) :  G.ι (G.bar e)= G.τ e := by rfl
+theorem initial_bar {V E : Type} (G : Graph V E) (e : E) :  G.ι (G.bar e)= G.τ e := by rfl
 
 @[simp]
-theorem initial_bar {V E : Type} (G : Graph V E) (e : E) :  G.τ (G.bar e) = G.ι e := by 
+theorem terminal_bar {V E : Type} (G : Graph V E) (e : E) :  G.τ (G.bar e) = G.ι e := by 
   rw [Graph.τ, G.bar_involution]
 
 
