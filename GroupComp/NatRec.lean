@@ -136,3 +136,14 @@ failed to compile partial definition 'wrong', failed to show that type is inhabi
 /-!
 Lean has to allow partial definitions due to deep results of Church-Gödel-Turing-..., which say for example that we cannot prove that a Lean interpreter in Lean terminates.
 -/
+
+def sum : ℕ → ℕ
+| 0 => 0
+| n + 1 => n + 1 + sum n
+
+theorem sum_formula (n: ℕ) :  sum n = (n * (n + 1) : ℚ) / 2  := by 
+  induction n with
+  | zero => rfl
+  | succ n ih => 
+    simp [sum]
+    linarith
