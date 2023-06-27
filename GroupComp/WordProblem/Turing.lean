@@ -20,10 +20,11 @@ def evil (s: String)(env: Environment) : TermElabM Nat :=
   try
     let stx? := Parser.runParserCategory env `term s |>.toOption
     let t : TSyntax `term := ⟨stx?.getD (← `(Nat.zero))⟩
-    let diag ←`($t $t) 
-    let e ← elabTerm diag (mkConst ``Nat)
-    let e ← reduce e 
-    exprNat <| ← mkAppM ``Nat.succ #[e] 
+    let code:= Expr.lit <| Literal.strVal s
+    let e ← elabTerm t none
+    let e' := mkApp e code
+    let e' ← reduce e' 
+    exprNat <| ← mkAppM ``Nat.succ #[e'] 
   catch _ =>
     return 0
 
@@ -32,4 +33,9 @@ def runEvil(s: String) : TermElabM Nat := do
   evil s env
 
 #eval runEvil "2"
+
+def egFn: String → Nat := fun _ => 3
+
+#eval runEvil "egFn"
+
 -- #eval runEvil "evil"
