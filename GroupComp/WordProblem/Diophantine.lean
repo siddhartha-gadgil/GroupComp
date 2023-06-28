@@ -96,6 +96,14 @@ instance wordProblemMod (a b n : ℤ) : Decidable (zeroModSpan a b n) := by
 
 #check WellFounded.min
 #check Nat.lt_wfRel.wf.min {n: ℕ | n % 2 = 0} (by use 2; simp)
+
+#check Nat.find
+
+#eval @Nat.find (fun n ↦ n % 2 = 1) _ (by use 3; simp)
+
+
+
+
 #check Function.Surjective
 
 #check Int.eq_nat_or_neg -- ∀ (a : ℤ), ∃ n : Nat, a = ↑n ∨ a = -↑n
