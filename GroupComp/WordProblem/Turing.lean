@@ -20,6 +20,14 @@ partial def exprNatM : TermElabM Expr → TermElabM Nat := fun exprM =>
 def elabSucc(n: TermElabM Nat) : TermElabM Nat := do
   return (Nat.succ (←n))
 
+def flipExpr (e: Expr) : TermElabM Expr := do
+  let zeroExpr ← reduce <|  mkConst ``Nat.zero
+  if ←isDefEq e zeroExpr then 
+    reduce <| ← mkAppM ``Nat.succ #[zeroExpr]
+  else
+    logInfo m!"{e} ≠ {zeroExpr} "
+    return zeroExpr
+
 def evil (s: String)(env: Environment) : TermElabM Expr :=
   try
     let stx? := Parser.runParserCategory env `term s |>.toOption
@@ -27,27 +35,27 @@ def evil (s: String)(env: Environment) : TermElabM Expr :=
     let code := Expr.lit <| Literal.strVal s
     let e ← elabTerm t none
     let e' := mkApp e code
-    let e' ← reduce e' 
-    reduce <| ← mkAppM ``elabSucc #[e'] 
+    flipExpr <| ← reduce e' 
+    -- reduce <| ← mkAppM ``elabSucc #[e'] 
   catch _ =>
-    return Lean.mkConst ``Nat.zero 
+    Term.mkConst ``Nat.zero 
 
 def runEvil(s: String) : TermElabM Expr := do
   let env ← getEnv
   evil s env
 
 
-elab "evil_run" s:str : term => do
+elab "see_evil" s:str : term => do
   let st : String := s.getString
   logInfo m!"{st}"
   evil st (← getEnv)
 
 #eval runEvil "2"
 
-def egFn: String → TermElabM Nat := fun s => return 3 + s.length
+def egFn: String → Nat := fun _ => 0
 
-#check evil_run "egFn" -- 4 (= egFn ("egFn") + 1) -- does not work
+#check see_evil "egFn" -- 4 (= egFn ("egFn") + 1) -- does not work
 
 #eval runEvil "egFn" -- 4 (= egFn ("egFn") + 1)
 
--- #eval runEvil "evil"
+-- #eval see_evil "evil"
