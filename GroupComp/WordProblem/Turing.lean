@@ -38,15 +38,15 @@ def runEvil(s: String) : TermElabM Expr := do
 
 
 elab "evil_run" s:str : term => do
-  let st : String := sorry -- how do I do this
-  let e ← evil st (← getEnv)
-  return e
+  let st : String := s.getString
+  logInfo m!"{st}"
+  evil st (← getEnv)
 
 #eval runEvil "2"
 
 def egFn: String → TermElabM Nat := fun s => return 3 + s.length
 
--- #eval evil_run "egFn" -- 4 (= egFn ("egFn") + 1) -- does not work
+#check evil_run "egFn" -- 4 (= egFn ("egFn") + 1) -- does not work
 
 #eval runEvil "egFn" -- 4 (= egFn ("egFn") + 1)
 
