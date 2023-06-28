@@ -2,13 +2,14 @@ import Lean
 open Lean Meta Elab Term
 
 /-- natural number from expression built from `Nat.zero` and `Nat.succ` -/
-partial def exprNat : Expr → TermElabM Nat := fun expr => 
+partial def exprNatM : TermElabM Expr → TermElabM Nat := fun exprM => 
   do
+    let expr ← exprM 
     let mvar ←  mkFreshExprMVar (some (mkConst ``Nat))
     let sExp := mkApp (mkConst ``Nat.succ) mvar
     if ← isDefEq sExp expr then
       Term.synthesizeSyntheticMVarsNoPostponing
-      let prev ← exprNat (← whnf mvar)
+      let prev ← exprNatM (whnf mvar)
       return Nat.succ prev
     else 
     if ← isDefEq (mkConst `Nat.zero) expr then
@@ -16,7 +17,10 @@ partial def exprNat : Expr → TermElabM Nat := fun expr =>
     else
       throwError m!"{expr} not a Nat expression"
 
-def evil (s: String)(env: Environment) : TermElabM Nat :=
+def elabSucc(n: TermElabM Nat) : TermElabM Nat := do
+  return (Nat.succ (←n))
+
+def evil (s: String)(env: Environment) : TermElabM Expr :=
   try
     let stx? := Parser.runParserCategory env `term s |>.toOption
     let t := stx?.getD (← `(Nat.zero))
@@ -24,17 +28,17 @@ def evil (s: String)(env: Environment) : TermElabM Nat :=
     let e ← elabTerm t none
     let e' := mkApp e code
     let e' ← reduce e' 
-    exprNat <| ← mkAppM ``Nat.succ #[e'] 
+    reduce <| ← mkAppM ``elabSucc #[e'] 
   catch _ =>
-    return 0
+    return Lean.mkConst ``Nat.zero 
 
-def runEvil(s: String) : TermElabM Nat := do
+def runEvil(s: String) : TermElabM Expr := do
   let env ← getEnv
   evil s env
 
 #eval runEvil "2"
 
-def egFn: String → Nat := fun s => 3 + s.length
+def egFn: String → TermElabM Nat := fun s => return 3 + s.length
 
 #eval runEvil "egFn" -- 4 (= egFn ("egFn") + 1)
 
