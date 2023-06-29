@@ -122,12 +122,19 @@ end EdgePath
 abbrev PathClass (G: Graph V E) (v w : V)  := 
     Quot <| @EdgePath.Reduction _ _ G v w
 
+abbrev homotopyClass {G: Graph V E} {v w : V} (p : EdgePath G v w) :
+   PathClass G v w  := 
+  Quot.mk _ p
+
+notation "[[" p "]]" => homotopyClass p 
+
+
 #check Quot.liftOn₂
 #check Quot.lift₂
 
 def PathClass.mul {G: Graph V E}{v w u : V} : 
   PathClass G v w → PathClass G w u → PathClass G v u := by
-    apply Quot.lift₂ (fun p₁ p₂ ↦ Quot.mk _ (p₁ ++ p₂))
+    apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]])
     · intro a b₁ b₂ rel
       induction rel with
       | step e p₁ p₂ => 
@@ -154,8 +161,7 @@ namespace PathClass
 
 theorem mul_append {G : Graph V E} {v w u : V} {a: EdgePath G v w} 
   {b  : EdgePath G w u} :
-  (Quot.mk EdgePath.Reduction a) * (Quot.mk EdgePath.Reduction b) = 
-    Quot.mk EdgePath.Reduction (a ++ b) := by rfl
+  [[ a ]] * [[ b ]] = [[ a ++ b ]] := by rfl
 
 theorem mul_assoc {G: Graph V E}{ v w u u' :  V}:
   (p: PathClass G v w) → (q: PathClass G w u) → (r: PathClass G u u') →  
@@ -175,6 +181,12 @@ def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
   bar_involution := fun (e, b) => by intros ; simp
   bar_no_fp := fun (e, b) => by intros ; simp
 }
+
+class ConnectedGraph (G: Graph V E) where
+  path : (v w: V) → EdgePath G v w
+
+def getPath (G: Graph V E) [ConnectedGraph G] (v w: V) : EdgePath G v w :=
+  ConnectedGraph.path v w
 
 /-!
 Old stuff
