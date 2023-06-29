@@ -169,6 +169,13 @@ theorem mul_assoc {G: Graph V E}{ v w u u' :  V}:
     simp [mul_append, EdgePath.append_assoc]
 end PathClass
 
+def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
+  ι := fun _ => ()
+  bar := fun (e, b) ↦ (e, !b)
+  bar_involution := fun (e, b) => by intros ; simp
+  bar_no_fp := fun (e, b) => by intros ; simp
+}
+
 /-!
 Old stuff
 -/
