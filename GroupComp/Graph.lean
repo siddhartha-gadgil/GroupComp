@@ -119,13 +119,13 @@ inductive Reduction  {G : Graph V E} {v w : V}:
 end EdgePath
 
 
-def PathClass (G: Graph V E) (v w : V)  := 
+abbrev PathClass (G: Graph V E) (v w : V)  := 
     Quot <| @EdgePath.Reduction _ _ G v w
 
 #check Quot.liftOn₂
 #check Quot.lift₂
 
-def PathClass.mul (G: Graph V E)(v w u : V) : 
+def PathClass.mul {G: Graph V E}{v w u : V} : 
   PathClass G v w → PathClass G w u → PathClass G v u := by
     apply Quot.lift₂ (fun p₁ p₂ ↦ Quot.mk _ (p₁ ++ p₂))
     · intro a b₁ b₂ rel
@@ -143,6 +143,31 @@ def PathClass.mul (G: Graph V E)(v w u : V) :
         simp [EdgePath.append_assoc, EdgePath.cons_append]
         exact EdgePath.Reduction.step e p₁ (p₂ ++ b₂)
 
+
+#check Quot.induction_on
+
+instance  {G : Graph V E} {v w u : V} : 
+  HMul (PathClass G v w) (PathClass G w u) (PathClass G v u) := 
+    ⟨PathClass.mul⟩
+
+namespace PathClass
+
+theorem mul_append {G : Graph V E} {v w u : V} {a: EdgePath G v w} 
+  {b  : EdgePath G w u} :
+  (Quot.mk EdgePath.Reduction a) * (Quot.mk EdgePath.Reduction b) = 
+    Quot.mk EdgePath.Reduction (a ++ b) := by rfl
+
+theorem mul_assoc {G: Graph V E}{ v w u u' :  V}:
+  (p: PathClass G v w) → (q: PathClass G w u) → (r: PathClass G u u') →  
+    (p * q) * r = p * (q * r) := by 
+    apply Quot.ind
+    intro a
+    apply Quot.ind
+    intro b
+    apply Quot.ind
+    intro c
+    simp [mul_append, EdgePath.append_assoc]
+end PathClass
 
 /-!
 Old stuff
