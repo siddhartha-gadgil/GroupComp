@@ -1,5 +1,7 @@
 import Mathlib
 
+variable {V E: Type}
+
 structure Graph (V E : Type) where
   ι : E → V
   bar : E → E
@@ -7,13 +9,13 @@ structure Graph (V E : Type) where
   bar_no_fp : ∀ e, e ≠ bar e 
 
 
-def Graph.τ {V E : Type} (G : Graph V E) (e : E) : V := G.ι (G.bar e)
+def Graph.τ  (G : Graph V E) (e : E) : V := G.ι (G.bar e)
 
 @[simp]
-theorem initial_bar {V E : Type} (G : Graph V E) (e : E) :  G.ι (G.bar e)= G.τ e := by rfl
+theorem initial_bar  (G : Graph V E) (e : E) :  G.ι (G.bar e)= G.τ e := by rfl
 
 @[simp]
-theorem terminal_bar {V E : Type} (G : Graph V E) (e : E) :  G.τ (G.bar e) = G.ι e := by 
+theorem terminal_bar  (G : Graph V E) (e : E) :  G.τ (G.bar e) = G.ι e := by 
   rw [Graph.τ, G.bar_involution]
 
 
@@ -35,27 +37,27 @@ theorem bar_involution {V E: Type} {G: Graph V E} {v w: V} (e: EdgeBetween G v w
     simp [EdgeBetween.bar, G.bar_involution, lm]
 
 
-inductive EdgePath {V E : Type} (G : Graph V E) : V → V → Type where
+inductive EdgePath  (G : Graph V E) : V → V → Type where
   | nil : ∀ v, EdgePath G v v
   | cons {v w u : V} : (e : EdgeBetween G v w) →  
       (EdgePath G w u) →  EdgePath G v u
 
 namespace EdgePath
 
-def length {V E : Type} {G : Graph V E} {v w : V} (p : EdgePath G v w) : Nat :=
+def length  {G : Graph V E} {v w : V} (p : EdgePath G v w) : Nat :=
   match p with
   | nil _ => 0
   | cons _ p'  => 1 + p'.length
 
-def concat {V E : Type}{G : Graph V E} {v w u : V} (p : EdgePath G v w) (e: EdgeBetween G w u) : EdgePath G v u := 
+def concat {G : Graph V E} {v w u : V} (p : EdgePath G v w) (e: EdgeBetween G w u) : EdgePath G v u := 
   match p with
   | nil .(v) => cons e (nil u)      
   | cons  e' p'  => cons e' (concat p' e)
 
-theorem concat_cons {V E : Type}{G : Graph V E}{v w u u': V} (e: EdgeBetween G v w) (p: EdgePath G w u)(e': EdgeBetween G u u')  : 
+theorem concat_cons {G : Graph V E}{v w u u': V} (e: EdgeBetween G v w) (p: EdgePath G w u)(e': EdgeBetween G u u')  : 
     concat (cons e p) e' = cons e (concat p e') := by rfl
 
-def reverse {V E : Type}{G : Graph V E} {v w : V} (p : EdgePath G v w) : EdgePath G w v := 
+def reverse {G : Graph V E} {v w : V} (p : EdgePath G v w) : EdgePath G w v := 
   match p with
   | nil .(v) => 
       nil v
@@ -63,10 +65,10 @@ def reverse {V E : Type}{G : Graph V E} {v w : V} (p : EdgePath G v w) : EdgePat
       let tail := reverse p
       concat tail e.bar  
 
-theorem reverse_cons {V E : Type}{G: Graph V E}{v w u : V} (e: EdgeBetween G v w) (p: EdgePath G w u) : 
+theorem reverse_cons {G: Graph V E}{v w u : V} (e: EdgeBetween G v w) (p: EdgePath G w u) : 
     reverse (cons e p) = concat (reverse p) e.bar := by rfl
 
-theorem reverse_concat {V E : Type}{G: Graph V E}{v w u : V} (p: EdgePath G v w) (e: EdgeBetween G w u) : 
+theorem reverse_concat {G: Graph V E}{v w u : V} (p: EdgePath G v w) (e: EdgeBetween G w u) : 
     reverse (concat p e) = cons e.bar (reverse p) := by 
     induction p with
     | nil  => 
@@ -74,19 +76,33 @@ theorem reverse_concat {V E : Type}{G: Graph V E}{v w u : V} (p: EdgePath G v w)
     | cons  e' p ih =>
       simp [concat_cons, reverse_cons, ih]
 
-def append {V E : Type}{G: Graph V E}{ v w e : V}
-    (p: EdgePath G v w)(q: EdgePath G w e) : EdgePath G v e :=
+def append {G: Graph V E}{ v w u : V}
+    (p: EdgePath G v w)(q: EdgePath G w u) : EdgePath G v u :=
   match p with
   | nil .(v) => q
   | cons  e' p'  => 
       let tail := append p' q
       cons e' tail 
 
-instance {V E : Type} {G : Graph V E} {v w u : V} : 
+instance  {G : Graph V E} {v w u : V} : 
   HAppend (EdgePath G v w) (EdgePath G w u) (EdgePath G v u) := 
     ⟨append⟩
 
-theorem reverse_reverse {V E : Type} {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
+theorem cons_append {G : Graph V E}{v' v w u : V}
+    (e: EdgeBetween G v' v)(p: EdgePath G v w)(q: EdgePath G w u) :
+    (cons e p) ++ q = cons e (p ++ q) := by rfl
+
+theorem append_assoc {G: Graph V E}{ v w u u' :  V}
+  (p: EdgePath G v w)(q: EdgePath G w u)(r: EdgePath G u u') : 
+    (p ++ q) ++ r = p ++ (q ++ r) := by 
+    induction p with
+    | nil  => 
+      rfl
+    | cons  e' p' ih =>
+      simp [cons_append, ih]
+
+
+theorem reverse_reverse  {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
   p.reverse.reverse = p := by
   induction p with
   | nil  => 
@@ -94,7 +110,7 @@ theorem reverse_reverse {V E : Type} {G : Graph V E} {v w : V} (p : EdgePath G v
   | cons  e p ih => 
     simp [reverse, reverse_cons, reverse_concat, ih, bar_involution]
 
-inductive Reduction {V E : Type} {G : Graph V E} {v w : V}:
+inductive Reduction  {G : Graph V E} {v w : V}:
       (EdgePath G v w) →  (EdgePath G v w) →  Prop where
   | step {u u' : V}(e : EdgeBetween G u u') (p₁ : EdgePath G v u) (p₂ : EdgePath G u w) : 
       Reduction (p₁ ++ (cons e (cons e.bar p₂))) (p₁ ++ p₂)
@@ -102,7 +118,37 @@ inductive Reduction {V E : Type} {G : Graph V E} {v w : V}:
 
 end EdgePath
 
-inductive EdgePath' {V E : Type} (G : Graph V E) : V → V → Type where
+
+def PathClass (G: Graph V E) (v w : V)  := 
+    Quot <| @EdgePath.Reduction _ _ G v w
+
+#check Quot.liftOn₂
+#check Quot.lift₂
+
+def PathClass.mul (G: Graph V E)(v w u : V) : 
+  PathClass G v w → PathClass G w u → PathClass G v u := by
+    apply Quot.lift₂ (fun p₁ p₂ ↦ Quot.mk _ (p₁ ++ p₂))
+    · intro a b₁ b₂ rel
+      induction rel with
+      | step e p₁ p₂ => 
+        rename_i u u'
+        apply Quot.sound
+        simp [← EdgePath.append_assoc]
+        exact EdgePath.Reduction.step e (a ++ p₁) p₂ 
+    · intro a b₁ b₂ rel
+      induction rel with
+      | step e p₁ p₂ => 
+        rename_i u u'
+        apply Quot.sound
+        simp [EdgePath.append_assoc, EdgePath.cons_append]
+        exact EdgePath.Reduction.step e p₁ (p₂ ++ b₂)
+
+
+/-!
+Old stuff
+-/
+
+inductive EdgePath'  (G : Graph V E) : V → V → Type where
   | nil : ∀ v, EdgePath' G v v
   | cons {v w u : V} : (e : E) →  
         (EdgePath' G w u) →  G.ι e = v → G.τ e = w  → EdgePath' G v u
@@ -110,12 +156,12 @@ inductive EdgePath' {V E : Type} (G : Graph V E) : V → V → Type where
 
 namespace EdgePath'
 
-def length {V E : Type} {G : Graph V E} {v w : V} (p : EdgePath' G v w) : Nat :=
+def length  {G : Graph V E} {v w : V} (p : EdgePath' G v w) : Nat :=
   match p with
   | EdgePath'.nil _ => 0
   | EdgePath'.cons _ p' _ _ => 1 + p'.length
 
-def concat {V E : Type}{G : Graph V E} {v w u : V} (p : EdgePath' G v w) (e: E)(h₁ : G.ι e = w)(h₂ : G.τ e = u) : EdgePath' G v u := 
+def concat {G : Graph V E} {v w u : V} (p : EdgePath' G v w) (e: E)(h₁ : G.ι e = w)(h₂ : G.τ e = u) : EdgePath' G v u := 
   match p with
   | EdgePath'.nil .(v) => 
     EdgePath'.cons e (EdgePath'.nil u) h₁ h₂     
@@ -123,7 +169,7 @@ def concat {V E : Type}{G : Graph V E} {v w u : V} (p : EdgePath' G v w) (e: E)(
       let tail := EdgePath'.concat p' e h₁ h₂
       EdgePath'.cons e' tail h₁' h₂'
 
-def reverse {V E : Type}{G : Graph V E} {v w : V} (p : EdgePath' G v w) : EdgePath' G w v := by
+def reverse {G : Graph V E} {v w : V} (p : EdgePath' G v w) : EdgePath' G w v := by
   match p with
   | EdgePath'.nil .(v) => 
     exact EdgePath'.nil v
@@ -133,7 +179,7 @@ def reverse {V E : Type}{G : Graph V E} {v w : V} (p : EdgePath' G v w) : EdgePa
       · simp ; assumption
       · simp ; assumption
 
-def append {V E : Type}{G: Graph V E}{ v w e : V}
+def append {G: Graph V E}{ v w e : V}
     (p: EdgePath' G v w)(q: EdgePath' G w e) : EdgePath' G v e :=
   match p with
   | EdgePath'.nil .(v) => q
@@ -141,7 +187,7 @@ def append {V E : Type}{G: Graph V E}{ v w e : V}
       let tail := EdgePath'.append p' q
       EdgePath'.cons e' tail h₁ h₂
 
-instance {V E : Type} {G : Graph V E} {v w u : V} : 
+instance  {G : Graph V E} {v w u : V} : 
   HAppend (EdgePath' G v w) (EdgePath' G w u) (EdgePath' G v u) := 
     ⟨EdgePath'.append⟩
 
