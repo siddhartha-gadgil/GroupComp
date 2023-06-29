@@ -115,6 +115,8 @@ inductive Reduction  {G : Graph V E} {v w : V}:
   | step {u u' : V}(e : EdgeBetween G u u') (p₁ : EdgePath G v u) (p₂ : EdgePath G u w) : 
       Reduction (p₁ ++ (cons e (cons e.bar p₂))) (p₁ ++ p₂)
 
+def reduced {G : Graph V E} {v w : V} (p : EdgePath G v w) : Prop := 
+  ∀ p', ¬ Reduction p p'
 
 end EdgePath
 
