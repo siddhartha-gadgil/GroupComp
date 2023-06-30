@@ -199,8 +199,8 @@ macro "finish_with" x:term
   `(tactic| repeat (first | 
           apply ($x:term) | 
           apply $y))
-
-/-! 
+ 
+/-!
 We can use our more general tactic in different ways.
 
 ```lean
