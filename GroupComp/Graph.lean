@@ -140,14 +140,12 @@ def PathClass.mul {G: Graph V E}{v w u : V} :
     · intro a b₁ b₂ rel
       induction rel with
       | step e p₁ p₂ => 
-        rename_i u u'
         apply Quot.sound
         simp [← EdgePath.append_assoc]
         exact EdgePath.Reduction.step e (a ++ p₁) p₂ 
     · intro a b₁ b₂ rel
       induction rel with
       | step e p₁ p₂ => 
-        rename_i u u'
         apply Quot.sound
         simp [EdgePath.append_assoc, EdgePath.cons_append]
         exact EdgePath.Reduction.step e p₁ (p₂ ++ b₂)
