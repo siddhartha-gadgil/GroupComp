@@ -57,3 +57,20 @@ def constNat (n: Nat) (_: String) : Nat := n
 #eval see_evil "3" -- 0
 
 -- #eval see_evil "evil"
+
+/-!
+## Halting problem
+
+It follows that we cannot also decide which programs halt on which input, in our case which expressions can be reduced. If we did we would modify the interpreter (or `reduce`) to return a specific default value in case of not halting. The modified interpreter will always halt.
+-/
+
+/-!
+The above is based on Cantor's diagonal argument.
+-/
+
+theorem cantor_diagonal' {α : Type} (f : α → (α → Bool)) : 
+  ∃ t : α → Bool, ∀ a : α, t  ≠ f a := by
+  apply Exists.intro (fun a ↦ !(f a a) )
+  intro a h
+  let h' := congrFun h a
+  by_cases c:f a a <;> simp [c] at h'
