@@ -87,7 +87,7 @@ def nextVertex (start: List (α × Bool))(letter: (α × Bool)) : List (α × Bo
   if nilP:start = [] then [letter]
   else
     let last := start.getLast nilP
-    if last = Letter.inv letter then
+    if last = letter⁻¹ then
         start.dropLast
     else
         start.concat (letter)
@@ -105,7 +105,7 @@ Lift of an edge where we do not cancel the last letter.
 -/
 theorem nonnil_nextVertex_extend 
     (start : List (α × Bool)) (nonnil: start ≠ []) (letter : (α × Bool))
-    (neq : start.getLast nonnil ≠ Letter.inv letter) : 
+    (neq : start.getLast nonnil ≠ letter⁻¹) : 
     start :+ letter = start.concat letter := by 
   simp [nextVertex,  neq, if_neg, nonnil]
 
@@ -114,7 +114,7 @@ Lift of an edge where we cancel the last letter.
 -/
 theorem nonnil_nextVertex_cancel (start : List (α × Bool)) 
     (nonnil: start ≠ []) (letter : (α × Bool)) 
-    (eql : start.getLast nonnil = Letter.inv letter) : 
+    (eql : start.getLast nonnil = letter⁻¹) : 
     start :+ letter = start.dropLast  := by 
   simp [nextVertex,  eql, if_pos, nonnil]
 
@@ -142,7 +142,7 @@ theorem nextVertex_reduced (start: List (α × Bool))(letter: (α × Bool)):
     intro L' step
     let ⟨x, b, L₁, L₂, eqs⟩ := exists_of_step step
     let eq1 := eqs.1
-    if cancP:start.getLast nilP = Letter.inv letter 
+    if cancP:start.getLast nilP = letter⁻¹ 
     then 
       simp [cancP, nilP, nonnil_nextVertex_cancel] at eq1
       have eq1' : start.dropLast.concat (start.getLast nilP) = 
@@ -155,7 +155,8 @@ theorem nextVertex_reduced (start: List (α × Bool))(letter: (α × Bool)):
       apply Step.not
     else 
       simp [cancP, nilP, nonnil_nextVertex_extend] at eq1
-      if endP : L₂ = [] then
+      if endP : L₂ = [] 
+      then
         simp [endP] at eq1
         rw [←List.concat_eq_append] at eq1
         have : L₁ ++ [(x, b), (x, !b)] = 
@@ -169,7 +170,7 @@ theorem nextVertex_reduced (start: List (α × Bool))(letter: (α × Bool)):
         let eq2' := List.of_concat_eq_concat eq1''
         let _eq2'' := eq2'.2
         rw [eq1''', _eq2''] at cancP
-        simp [Letter.inv] at cancP
+        simp [inv_def] at cancP
       else
         rw [← split_drop L₂ endP] at eq1
         rw [← List.cons_append, ← List.cons_append, 
@@ -188,6 +189,7 @@ abbrev equiv (a b : List (α × Bool)) := mk a = mk b
 
 infix:50 " ∼ " => equiv
 
+#check Bool.not_not
 /--
 Lifting by two edges that are inverses of each other does not change the word if the initial word is reduced. This is the part of homotopy lifting we need.
 -/
@@ -195,33 +197,29 @@ theorem homotopy_lifting_endpoints(start: List (α × Bool))(a : α)(b: Bool):
     Reduced start → start :+ (a, b) :+ (a, !b) = start := by
   intro reduced_start
   if nilP: start = [] then
-    simp [nilP, nextVertex, Letter.inv]
+    simp [nilP, nextVertex, inv_def]
   else 
-    if cancP:start.getLast nilP = Letter.inv (a, b) 
+    if cancP:start.getLast nilP = (a, b)⁻¹ 
     then 
       simp [cancP, nonnil_nextVertex_cancel, nilP]
-      if nil' : start.dropLast = [] then
+      if nil' : start.dropLast = [] 
+      then
         simp [nilP, nil', nil_nextVertex]
         let sp := split_drop start nilP
         rw [←sp, nil']
         simp
-        simp [Letter.inv] at cancP
+        simp [inv_def] at cancP
         rw [cancP]
       else
-        if cancP':start.dropLast.getLast nil'  = Letter.inv (a, !b) then
+        if cancP':start.dropLast.getLast nil'  = (a, !b)⁻¹ 
+        then
           let sp := split_drop start nilP
           let sp' := split_drop start.dropLast nil'
           rw [←sp', cancP', cancP] at sp
-          have : Letter.inv (a, b) = (a, !b) := by
-            rfl
-          rw [this] at sp
-          have : Letter.inv (a, !b) = (a, b) := by
-            simp [Letter.inv]
-          rw [this] at sp
+          simp [inv_def' a !b] at sp
           let L' := start.dropLast.dropLast
           have : 
-            List.dropLast (List.dropLast start) ++ [(a, b)] ++ [(a, !b)] = L' ++ (a, b) :: (a, !b) :: [] := by
-            simp
+            List.dropLast (List.dropLast start) ++ [(a, b), (a, b)⁻¹] = L' ++ (a, b) :: (a, !b) :: [] := by simp [inv_def]
           rw [this] at sp
           have step : Step start (L' ++ []) := by
             rw [← sp]
@@ -234,12 +232,10 @@ theorem homotopy_lifting_endpoints(start: List (α × Bool))(a : α)(b: Bool):
           let res := 
             nonnil_nextVertex_extend start.dropLast nil' (a, !b) cancP'    
           rw [res]
-          have : Letter.inv (a, b) = (a, !b) := by
-            rfl
-          rw [this] at cancP
           let sp := split_drop start nilP
           rw [cancP] at sp
-          simp [Letter.inv] at cancP
+          simp [inv_def] at cancP
+          simp [inv_def] at sp 
           simp [sp]
     else
       simp [cancP, nonnil_nextVertex_extend]
@@ -250,7 +246,7 @@ theorem homotopy_lifting_endpoints(start: List (α × Bool))(a : α)(b: Bool):
       let cnc := 
         nonnil_nextVertex_cancel (start :+ (a, b)) nn (a, !b)
         (by 
-          simp [Letter.inv, cancP, eqn]) 
+          simp [inv_def, cancP, eqn]) 
       rw [cnc, eqn]
       simp
 
@@ -263,18 +259,19 @@ theorem nextVertex_equiv_concat
   if nilP: start = [] then
     simp [nilP, nil_nextVertex]
   else
-    if cancP:start.getLast nilP = Letter.inv letter
+    if cancP:start.getLast nilP = letter⁻¹
     then
       simp [cancP, nonnil_nextVertex_cancel, nilP]
       let (a, b) := letter
       apply Quot.sound
-      simp [Letter.inv] at cancP
       let sp := split_drop start nilP
       rw [cancP] at sp
       let step' := @Step.not _ start.dropLast ([]) a !b
+      simp [Bool.not_not] at step'
       have : List.dropLast start ++ [(a, !b), (a, b)] = 
         start.dropLast ++ [(a, !b)] ++ [(a, b)] := by simp
-      simp [this, sp] at step'
+      rw [inv_def] at sp
+      rw [this, sp] at step'
       exact step'
     else
       simp [cancP, nonnil_nextVertex_extend, nilP]
@@ -365,6 +362,9 @@ theorem reducedWord_inverse
   simp [finalVertex_equiv_append [], ←finalVertexOnFreeGroup_natural]
   simp [←finalVertex_equiv_append]
 
+/--
+Decidability of the word problem for free groups.
+-/
 instance wordProblem : DecidableEq (FreeGroup α) := by
   intro a b
   if c:reducedWord a = reducedWord b
