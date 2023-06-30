@@ -88,6 +88,18 @@ instance  {G : Graph V E} {v w u : V} :
   HAppend (EdgePath G v w) (EdgePath G w u) (EdgePath G v u) := 
     ⟨append⟩
 
+theorem nil_append {G: Graph V E} {u v : V} (p: EdgePath G u v) :
+  EdgePath.nil (G := G) u ++ p = p := rfl
+
+theorem append_nil {G: Graph V E} {u v : V} (p: EdgePath G u v) :
+  p ++ EdgePath.nil (G := G) v = p := by
+    show append _ _ = _
+    induction p with
+      | nil _ => rfl
+      | cons _ _ ih =>
+        show cons _ _ = _
+        erw [ih]
+
 theorem cons_append {G : Graph V E}{v' v w u : V}
     (e: EdgeBetween G v' v)(p: EdgePath G v w)(q: EdgePath G w u) :
     (cons e p) ++ q = cons e (p ++ q) := by rfl
@@ -134,6 +146,9 @@ notation "[[" p "]]" => homotopyClass p
 #check Quot.liftOn₂
 #check Quot.lift₂
 
+def PathClass.id (G : Graph V E) (v : V) : PathClass G v v :=
+  [[.nil v]]
+
 def PathClass.mul {G: Graph V E}{v w u : V} : 
   PathClass G v w → PathClass G w u → PathClass G v u := by
     apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]])
@@ -158,6 +173,14 @@ instance  {G : Graph V E} {v w u : V} :
     ⟨PathClass.mul⟩
 
 namespace PathClass
+
+theorem id_mul {G : Graph V E} {u v : V} {a : EdgePath G u v} : 
+  (PathClass.id G u) * [[a]] = [[a]] := by rfl
+
+theorem mul_id {G : Graph V E} {u v : V} {a : EdgePath G u v} : 
+  [[a]] * (PathClass.id G v) = [[a]] := by 
+  show [[_]] = _
+  rw [EdgePath.append_nil]
 
 theorem mul_append {G : Graph V E} {v w u : V} {a: EdgePath G v w} 
   {b  : EdgePath G w u} :
@@ -187,6 +210,17 @@ class ConnectedGraph (G: Graph V E) where
 
 def getPath (G: Graph V E) [ConnectedGraph G] (v w: V) : EdgePath G v w :=
   ConnectedGraph.path v w
+
+instance {G : Graph V E} : CategoryTheory.Groupoid V where
+  Hom := PathClass G
+  id := PathClass.id G
+  comp := PathClass.mul (G := G)
+  id_comp := sorry
+  comp_id := sorry
+  assoc := sorry
+  inv := sorry
+  inv_comp := sorry
+  comp_inv := sorry
 
 /-!
 Old stuff
