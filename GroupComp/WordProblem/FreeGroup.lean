@@ -155,7 +155,8 @@ theorem nextVertex_reduced (start: List (α × Bool))(letter: (α × Bool)):
       apply Step.not
     else 
       simp [cancP, nilP, nonnil_nextVertex_extend] at eq1
-      if endP : L₂ = [] then
+      if endP : L₂ = [] 
+      then
         simp [endP] at eq1
         rw [←List.concat_eq_append] at eq1
         have : L₁ ++ [(x, b), (x, !b)] = 
@@ -201,7 +202,8 @@ theorem homotopy_lifting_endpoints(start: List (α × Bool))(a : α)(b: Bool):
     if cancP:start.getLast nilP = (a, b)⁻¹ 
     then 
       simp [cancP, nonnil_nextVertex_cancel, nilP]
-      if nil' : start.dropLast = [] then
+      if nil' : start.dropLast = [] 
+      then
         simp [nilP, nil', nil_nextVertex]
         let sp := split_drop start nilP
         rw [←sp, nil']
@@ -209,14 +211,15 @@ theorem homotopy_lifting_endpoints(start: List (α × Bool))(a : α)(b: Bool):
         simp [inv_def] at cancP
         rw [cancP]
       else
-        if cancP':start.dropLast.getLast nil'  = (a, !b)⁻¹ then
+        if cancP':start.dropLast.getLast nil'  = (a, !b)⁻¹ 
+        then
           let sp := split_drop start nilP
           let sp' := split_drop start.dropLast nil'
           rw [←sp', cancP', cancP] at sp
           simp [inv_def' a !b] at sp
           let L' := start.dropLast.dropLast
           have : 
-           List.dropLast (List.dropLast start) ++ [(a, b), (a, b)⁻¹] = L' ++ (a, b) :: (a, !b) :: [] := by simp [inv_def]
+            List.dropLast (List.dropLast start) ++ [(a, b), (a, b)⁻¹] = L' ++ (a, b) :: (a, !b) :: [] := by simp [inv_def]
           rw [this] at sp
           have step : Step start (L' ++ []) := by
             rw [← sp]
