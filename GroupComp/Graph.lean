@@ -108,6 +108,10 @@ instance  G.EdgePath {v w u : V} {G : Graph V E} :
     (concat p e) ++ q = p ++ (cons e q) := by
     induction p <;> aesop
 
+theorem append_concat {v w w' u : V} (e : EdgeBetween G w' u)(p: EdgePath G v w)(q: EdgePath G w w') :
+  p ++ (concat q e) = concat (p ++ q) e := by
+  induction p <;> aesop
+
 theorem concat_eq_append_edge {v w u : V} (e : G.EdgeBetween w u) (p : G.EdgePath v w) :
     p.concat e = p ++ (cons e (nil u)) := by
   have := concat_append e p (.nil _)
@@ -240,17 +244,25 @@ theorem mul_assoc { v w u u' :  V}:
     intro c
     simp [append_assoc]
 
-@[instance]
-def FundamentalGroupoid : CategoryTheory.Groupoid V where
-  Hom := G.PathClass
-  id := .id
-  comp := .mul (G := G)
-  id_comp := id_mul
-  comp_id := mul_id
-  assoc := mul_assoc
-  inv := inv
-  inv_comp := inv_mul
-  comp_inv := mul_inv
+theorem append_mul {v w u : V} (p : EdgePath G v w) (q : EdgePath G w u) : 
+    [[p ++ q]] = mul [[ p ]] [[ q]] := by rfl
+
+theorem cons_natural{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
+   [[cons a  b₁]] = [[cons a b₂]] := by
+  intro rel
+  rw [show cons a b₁ = cons a (nil _) ++ b₁ by rfl, 
+      show cons a b₂ = cons a (nil _) ++ b₂ by rfl,
+      append_mul, append_mul, rel]
+
+theorem concat_natural {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgeBetween G w u) : [[a₁]] = [[a₂]] → 
+   [[concat a₁ b]] = [[concat a₂ b]] := by
+  intro rel
+  have: concat a₁  b = a₁ ++ (concat (nil _) b) := by 
+    rw [append_concat, append_nil]
+  rw [this]
+  have: concat a₂  b = a₂ ++ (concat (nil _) b) := by 
+    rw [append_concat, append_nil]
+  rw [this, append_mul, append_mul, rel]
 
 end PathClass
 
