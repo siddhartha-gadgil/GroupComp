@@ -98,6 +98,17 @@ theorem cons_append {G : Graph V E}{v' v w u : V}
     (e: EdgeBetween G v' v)(p: EdgePath G v w)(q: EdgePath G w u) :
     (cons e p) ++ q = cons e (p ++ q) := by rfl
 
+theorem concat_append {G: Graph V E}{ v w w' u : V}
+    (e : EdgeBetween G w w')(p: EdgePath G v w)(q: EdgePath G w' u) :
+    (concat p e) ++ q = p ++ (cons e q) := by
+    induction p with
+    | nil v => rfl
+    | cons e' p ih =>
+      simp [concat_cons]
+      simp [cons_append, ih]
+
+
+
 -- theorem append_cons {G : Graph V E}{v w u u' : V}
 --     (p: EdgePath G v w)(e: EdgeBetween G w u)(q: EdgePath G u u') :
 --     p ++ (cons e q) = cons e (p ++ q) := by 
@@ -180,7 +191,10 @@ theorem reverse_left_inverse {G: Graph V E}{v w : V}
       simp [EdgePath.reverse_cons, EdgePath.reverse_concat, EdgePath.cons_append, ih]
       trans [[reverse p ++ p]]
       · apply Quot.sound
-        sorry
+        rw [concat_append]
+        let step := Reduction.step e.bar (reverse p) p
+        rw [bar_involution e] at step
+        exact step
       · assumption 
 
 
