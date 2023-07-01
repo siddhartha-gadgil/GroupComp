@@ -107,6 +107,11 @@ instance  G.EdgePath {v w u : V} {G : Graph V E} :
     (concat p e) ++ q = p ++ (cons e q) := by
     induction p <;> aesop
 
+theorem concat_eq_append_edge {v w u : V} (e : G.EdgeBetween w u) (p : G.EdgePath v w) :
+    p.concat e = p ++ (cons e (nil u)) := by
+  have := concat_append e p (.nil _)
+  aesop
+
 -- theorem append_cons {v w u u' : V}
 --     (p: G.EdgePath v w)(e: G.EdgeBetween w u)(q: G.EdgePath u u') :
 --     p ++ (cons e q) = cons e (p ++ q) := by 
@@ -126,10 +131,9 @@ theorem append_assoc { v w u u' :  V}
   induction p <;> aesop (add norm simp [reverse_cons, reverse_concat])
 
 theorem reverse_append {u v w : V} (p : G.EdgePath u v) (q : G.EdgePath v w) :
-  (p ++ q).reverse = q.reverse ++ p.reverse := by
-    induction p with
-      | nil => aesop
-      | cons _ _ ih => sorry
+    (p ++ q).reverse = q.reverse ++ p.reverse := by
+  induction p <;>
+    aesop (add norm simp [reverse_cons, concat_eq_append_edge, append_assoc])
 
 @[aesop safe [constructors, cases]]
 inductive Reduction {v w : V}:
@@ -194,7 +198,7 @@ theorem reverse_step {v w : V} (a₁ a₂ : G.EdgePath v w) (rel : Reduction a�
 namespace PathClass
 
 @[aesop norm unfold] 
-protected def id (G : Graph V E) (v : V) : G.PathClass v v :=
+protected def id {G : Graph V E} (v : V) : G.PathClass v v :=
   [[.nil v]]
 
 def mul {v w u : V} : 
@@ -202,23 +206,27 @@ def mul {v w u : V} :
   apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]]) <;>
     aesop (add safe apply [left_append_step, right_append_step])
 
-def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
+@[aesop norm unfold] def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
   Quot.lift ([[·.reverse]]) reverse_step
 
 @[simp] theorem mul_paths (p : G.EdgePath u v) (p' : G.EdgePath v w) :
   mul [[p]] [[p']] = [[p ++ p']] := rfl
 
 @[simp] theorem id_mul  {u v : V} : ∀ p : G.PathClass u v, 
-  mul (PathClass.id G u) p = p := by
+  mul (.id u) p = p := by
     apply Quot.ind; aesop
 
 @[simp] theorem mul_id  {u v : V} : ∀ p : G.PathClass u v,
-  mul p (PathClass.id G v) = p := by 
+  mul p (.id v) = p := by 
     apply Quot.ind; aesop
 
-theorem mul_append  {v w u : V} {a: G.EdgePath v w} 
-  {b  : G.EdgePath w u} :
-  mul [[ a ]] [[ b ]] = [[ a ++ b ]] := by rfl
+@[simp] theorem inv_mul {u v : V} : ∀ p : G.PathClass u v,
+    mul p.inv p = .id v := by
+  apply Quot.ind; aesop
+
+@[simp] theorem mul_inv {u v : V} : ∀ p : G.PathClass u v,
+    mul p p.inv = .id u := by
+  apply Quot.ind; aesop
 
 theorem mul_assoc { v w u u' :  V}:
   (p: PathClass G v w) → (q: PathClass G w u) → (r: PathClass G u u') →  
@@ -229,18 +237,18 @@ theorem mul_assoc { v w u u' :  V}:
     intro b
     apply Quot.ind
     intro c
-    simp [mul_append, append_assoc]
+    simp [append_assoc]
 
 instance  : CategoryTheory.Groupoid V where
-  Hom := PathClass G
-  id := .id G
+  Hom := G.PathClass
+  id := .id
   comp := .mul (G := G)
   id_comp := id_mul
   comp_id := mul_id
   assoc := mul_assoc
   inv := inv
-  inv_comp := sorry
-  comp_inv := sorry
+  inv_comp := inv_mul
+  comp_inv := mul_inv
 
 end PathClass
 
