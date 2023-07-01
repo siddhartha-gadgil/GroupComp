@@ -155,16 +155,6 @@ notation "[[" p "]]" => homotopyClass p
 
 attribute [aesop safe apply] Quot.sound
 
-@[simp] theorem cons_bar_cons (e : G.EdgeBetween u v) (p : G.EdgePath u w) :
-    [[p |>.cons e.bar |>.cons e]] = [[p]] := by
-  have := Reduction.step e (.nil _) p
-  aesop
-
-@[simp] theorem cons_cons_bar (e : G.EdgeBetween u v) (p : G.EdgePath v w) :
-    [[p |>.cons e |>.cons e.bar]] = [[p]] := by
-  have := cons_bar_cons e.bar p
-  aesop
-
 @[simp] theorem append_cons_bar_cons (e : G.EdgeBetween u u') (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) :
     [[p₁ ++ (p₂ |>.cons e.bar |>.cons e)]] = [[p₁ ++ p₂]] := by
   have := Reduction.step e p₁ p₂
