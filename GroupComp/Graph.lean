@@ -1,5 +1,6 @@
 import Mathlib.Data.Bool.Basic
 import Mathlib.CategoryTheory.Groupoid
+import Mathlib.Algebra.Group.Basic
 
 universe u v
 
@@ -239,7 +240,8 @@ theorem mul_assoc { v w u u' :  V}:
     intro c
     simp [append_assoc]
 
-instance  : CategoryTheory.Groupoid V where
+@[instance]
+def FundamentalGroupoid : CategoryTheory.Groupoid V where
   Hom := G.PathClass
   id := .id
   comp := .mul (G := G)
@@ -251,6 +253,20 @@ instance  : CategoryTheory.Groupoid V where
   comp_inv := mul_inv
 
 end PathClass
+
+open PathClass
+
+@[instance]
+def FundamentalGroupoid : CategoryTheory.Groupoid V where
+  Hom := G.PathClass
+  id := .id
+  comp := .mul (G := G)
+  id_comp := id_mul
+  comp_id := mul_id
+  assoc := mul_assoc
+  inv := inv
+  inv_comp := inv_mul
+  comp_inv := mul_inv
 
 def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
   ι := fun _ ↦ ()
