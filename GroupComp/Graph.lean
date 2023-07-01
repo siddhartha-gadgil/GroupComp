@@ -65,6 +65,9 @@ def reverse {G : Graph V E} {v w : V} (p : EdgePath G v w) : EdgePath G w v :=
       let tail := reverse p
       concat tail e.bar  
 
+theorem reverse_nil {G : Graph V E}{v : V} : 
+    reverse (EdgePath.nil v : EdgePath G v v) = EdgePath.nil v := by rfl
+
 theorem reverse_cons {G: Graph V E}{v w u : V} (e: EdgeBetween G v w) (p: EdgePath G w u) : 
     reverse (cons e p) = concat (reverse p) e.bar := by rfl
 
@@ -88,9 +91,29 @@ instance  {G : Graph V E} {v w u : V} :
   HAppend (EdgePath G v w) (EdgePath G w u) (EdgePath G v u) := 
     ⟨append⟩
 
+theorem nil_append {G : Graph V E}{v w : V} (p : EdgePath G v w) : 
+    (nil v : EdgePath G v v) ++ p = p := by rfl
+
 theorem cons_append {G : Graph V E}{v' v w u : V}
     (e: EdgeBetween G v' v)(p: EdgePath G v w)(q: EdgePath G w u) :
     (cons e p) ++ q = cons e (p ++ q) := by rfl
+
+-- theorem append_cons {G : Graph V E}{v w u u' : V}
+--     (p: EdgePath G v w)(e: EdgeBetween G w u)(q: EdgePath G u u') :
+--     p ++ (cons e q) = cons e (p ++ q) := by 
+--     induction p with
+--     | nil  => 
+--       rfl
+--     | cons  e' p ih =>
+--       simp [cons_append, ih]
+
+theorem append_nil {G : Graph V E}{v w : V} (p : EdgePath G v w) : 
+    p ++ (EdgePath.nil w : EdgePath G w w) = p := by 
+    induction p with
+    | nil  => 
+      rfl
+    | cons  e' p ih =>
+      rw [cons_append, ih]
 
 theorem append_assoc {G: Graph V E}{ v w u u' :  V}
   (p: EdgePath G v w)(q: EdgePath G w u)(r: EdgePath G u u') : 
@@ -147,9 +170,19 @@ theorem right_append_step {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)
       simp [EdgePath.append_assoc, EdgePath.cons_append]
       exact EdgePath.Reduction.step e p₁ (p₂ ++ b)
 
+theorem reverse_left_inverse {G: Graph V E}{v w : V} 
+(p : EdgePath G v w) : 
+    [[p.reverse ++ p]] = [[EdgePath.nil w]] := by
+    induction p with
+    | nil v  => 
+      simp [reverse_nil, nil_append]
+    | cons e p ih => 
+      simp [EdgePath.reverse_cons, EdgePath.reverse_concat, EdgePath.cons_append, ih]
+      trans [[reverse p ++ p]]
+      · apply Quot.sound
+        sorry
+      · assumption 
 
-#check Quot.liftOn₂
-#check Quot.lift₂
 
 def PathClass.mul {G: Graph V E}{v w u : V} : 
     PathClass G v w → PathClass G w u → PathClass G v u := by
