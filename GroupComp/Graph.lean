@@ -127,14 +127,6 @@ theorem concat_append {G: Graph V E}{ v w w' u : V}
 --     | cons  e' p ih =>
 --       simp [cons_append, ih]
 
-theorem append_nil {G : Graph V E}{v w : V} (p : EdgePath G v w) : 
-    p ++ (EdgePath.nil w : EdgePath G w w) = p := by 
-    induction p with
-    | nil  => 
-      rfl
-    | cons  e' p ih =>
-      rw [cons_append, ih]
-
 theorem append_assoc {G: Graph V E}{ v w u u' :  V}
   (p: EdgePath G v w)(q: EdgePath G w u)(r: EdgePath G u u') : 
     (p ++ q) ++ r = p ++ (q ++ r) := by 
@@ -207,6 +199,12 @@ theorem reverse_left_inverse {G: Graph V E}{v w : V}
       · assumption 
 
 
+#check Quot.liftOn₂
+#check Quot.lift₂
+
+def PathClass.id (G : Graph V E) (v : V) : PathClass G v v :=
+  [[.nil v]]
+
 def PathClass.mul {G: Graph V E}{v w u : V} : 
     PathClass G v w → PathClass G w u → PathClass G v u := by
   apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]])
@@ -216,28 +214,6 @@ def PathClass.mul {G: Graph V E}{v w u : V} :
   · intro a b₁ b₂ rel
     apply right_append_step
     assumption
-
-#check Quot.liftOn₂
-#check Quot.lift₂
-
-def PathClass.id (G : Graph V E) (v : V) : PathClass G v v :=
-  [[.nil v]]
-
-def PathClass.mul {G: Graph V E}{v w u : V} : 
-  PathClass G v w → PathClass G w u → PathClass G v u := by
-    apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]])
-    · intro a b₁ b₂ rel
-      induction rel with
-      | step e p₁ p₂ => 
-        apply Quot.sound
-        simp [← EdgePath.append_assoc]
-        exact EdgePath.Reduction.step e (a ++ p₁) p₂ 
-    · intro a b₁ b₂ rel
-      induction rel with
-      | step e p₁ p₂ => 
-        apply Quot.sound
-        simp [EdgePath.append_assoc, EdgePath.cons_append]
-        exact EdgePath.Reduction.step e p₁ (p₂ ++ b₂)
 
 
 #check Quot.induction_on
