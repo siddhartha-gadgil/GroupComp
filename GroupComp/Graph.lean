@@ -120,6 +120,7 @@ def reduced {G : Graph V E} {v w : V} (p : EdgePath G v w) : Prop :=
 
 end EdgePath
 
+open EdgePath
 
 abbrev PathClass (G: Graph V E) (v w : V)  := 
     Quot <| @EdgePath.Reduction _ _ G v w
@@ -130,25 +131,35 @@ abbrev homotopyClass {G: Graph V E} {v w : V} (p : EdgePath G v w) :
 
 notation "[[" p "]]" => homotopyClass p 
 
+theorem left_append_step {G: Graph V E}{v w u : V} (a : EdgePath G v w)  (b₁ b₂ : EdgePath G w u)  (rel : Reduction  b₁ b₂) : 
+   [[a ++ b₁]] = [[a ++ b₂]] := by
+    induction rel with
+    | step e p₁ p₂ => 
+      apply Quot.sound
+      simp [← EdgePath.append_assoc]
+      exact EdgePath.Reduction.step e (a ++ p₁) p₂ 
+
+theorem right_append_step {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgePath G w u) (rel : Reduction  a₁ a₂) : 
+    [[a₁ ++ b]] = [[a₂ ++ b]] := by 
+    induction rel with
+    | step e p₁ p₂ => 
+      apply Quot.sound
+      simp [EdgePath.append_assoc, EdgePath.cons_append]
+      exact EdgePath.Reduction.step e p₁ (p₂ ++ b)
+
 
 #check Quot.liftOn₂
 #check Quot.lift₂
 
 def PathClass.mul {G: Graph V E}{v w u : V} : 
-  PathClass G v w → PathClass G w u → PathClass G v u := by
-    apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]])
-    · intro a b₁ b₂ rel
-      induction rel with
-      | step e p₁ p₂ => 
-        apply Quot.sound
-        simp [← EdgePath.append_assoc]
-        exact EdgePath.Reduction.step e (a ++ p₁) p₂ 
-    · intro a b₁ b₂ rel
-      induction rel with
-      | step e p₁ p₂ => 
-        apply Quot.sound
-        simp [EdgePath.append_assoc, EdgePath.cons_append]
-        exact EdgePath.Reduction.step e p₁ (p₂ ++ b₂)
+    PathClass G v w → PathClass G w u → PathClass G v u := by
+  apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]])
+  · intro a b₁ b₂ rel
+    apply left_append_step
+    assumption
+  · intro a b₁ b₂ rel
+    apply right_append_step
+    assumption
 
 
 #check Quot.induction_on
