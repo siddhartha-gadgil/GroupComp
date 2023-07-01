@@ -107,16 +107,15 @@ theorem concat_append {G: Graph V E}{ v w w' u : V}
       simp [concat_cons]
       simp [cons_append, ih]
 
-
-
--- theorem append_cons {G : Graph V E}{v w u u' : V}
---     (p: EdgePath G v w)(e: EdgeBetween G w u)(q: EdgePath G u u') :
---     p ++ (cons e q) = cons e (p ++ q) := by 
---     induction p with
---     | nil  => 
---       rfl
---     | cons  e' p ih =>
---       simp [cons_append, ih]
+theorem append_concat {G: Graph V E}{ v w w' u : V}
+    (e : EdgeBetween G w' u)(p: EdgePath G v w)(q: EdgePath G w w') :
+    p ++ (concat q e) = concat (p ++ q) e := by
+    induction p with
+    | nil v => rfl
+    | cons e' p ih =>
+      simp [concat]
+      simp [cons_append]
+      exact ih q
 
 theorem append_nil {G : Graph V E}{v w : V} (p : EdgePath G v w) : 
     p ++ (EdgePath.nil w : EdgePath G w w) = p := by 
@@ -181,22 +180,12 @@ theorem right_append_step {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)
       simp [EdgePath.append_assoc, EdgePath.cons_append]
       exact EdgePath.Reduction.step e p₁ (p₂ ++ b)
 
-theorem reverse_left_inverse {G: Graph V E}{v w : V} 
-(p : EdgePath G v w) : 
-    [[p.reverse ++ p]] = [[EdgePath.nil w]] := by
-    induction p with
-    | nil v  => 
-      simp [reverse_nil, nil_append]
-    | cons e p ih => 
-      simp [EdgePath.reverse_cons, EdgePath.reverse_concat, EdgePath.cons_append, ih]
-      trans [[reverse p ++ p]]
-      · apply Quot.sound
-        rw [concat_append]
-        let step := Reduction.step e.bar (reverse p) p
-        rw [bar_involution e] at step
-        exact step
-      · assumption 
-
+theorem cons_step {G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u)  (rel : Reduction  b₁ b₂) : 
+   [[cons a  b₁]] = [[cons a b₂]] := by
+    induction rel with
+    | step e p₁ p₂ => 
+      apply Quot.sound
+      exact EdgePath.Reduction.step e (cons a p₁) p₂ 
 
 def PathClass.mul {G: Graph V E}{v w u : V} : 
     PathClass G v w → PathClass G w u → PathClass G v u := by
@@ -209,11 +198,71 @@ def PathClass.mul {G: Graph V E}{v w u : V} :
     assumption
 
 
-#check Quot.induction_on
-
 instance  {G : Graph V E} {v w u : V} : 
   HMul (PathClass G v w) (PathClass G w u) (PathClass G v u) := 
     ⟨PathClass.mul⟩
+
+theorem append_mul {G: Graph V E}{v w u : V} (p : EdgePath G v w) (q : EdgePath G w u) : 
+    [[p ++ q]] = [[ p ]] * [[ q]] := by rfl
+
+theorem cons_natural{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
+   [[cons a  b₁]] = [[cons a b₂]] := by
+  intro rel
+  have: cons a b₁ = cons a (nil _) ++ b₁ := by rfl
+  rw [this]
+  have: cons a b₂ = cons a (nil _) ++ b₂ := by rfl
+  rw [this]
+  simp [append_mul]
+  rw [rel]
+
+theorem concat_natural {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgeBetween G w u) : [[a₁]] = [[a₂]] → 
+   [[concat a₁  b]] = [[concat a₂ b]] := by
+  intro rel
+  have: concat a₁  b = a₁ ++ (concat (nil _) b) := by 
+    rw [append_concat, append_nil]
+  rw [this]
+  have: concat a₂  b = a₂ ++ (concat (nil _) b) := by 
+    rw [append_concat, append_nil]
+  rw [this]
+  simp [append_mul]
+  rw [rel]
+
+theorem reverse_left_inverse {G: Graph V E}{v w : V} 
+(p : EdgePath G v w) : 
+    [[p.reverse ++ p]] = [[EdgePath.nil w]] := by
+    induction p with
+    | nil v  => 
+      simp [reverse_nil, nil_append]
+    | cons e p ih => 
+      simp only [EdgePath.reverse_cons]
+      trans [[reverse p ++ p]]
+      · apply Quot.sound
+        rw [concat_append]
+        let step := Reduction.step e.bar (reverse p) p
+        rw [bar_involution e] at step
+        exact step
+      · assumption 
+
+theorem reverse_right_inverse {G: Graph V E}{v w : V} 
+(p : EdgePath G v w) : 
+    [[p ++ p.reverse]] = [[EdgePath.nil v]] := by
+    induction p with
+    | nil v  => 
+      simp [reverse_nil, nil_append]
+    | cons e p ih => 
+      simp only [reverse_cons]
+      rename_i v' w' u'
+      trans [[ (nil v' : EdgePath G v' v') ++ cons e (cons e.bar (nil _)) ]]
+      · rw [nil_append, append_concat, cons_append, concat_cons]
+        have : cons e.bar (nil v') = concat (nil w') e.bar := rfl
+        rw [this]
+        apply cons_natural
+        apply concat_natural
+        assumption
+      · apply Quot.sound
+        apply Reduction.step 
+
+
 
 namespace PathClass
 
