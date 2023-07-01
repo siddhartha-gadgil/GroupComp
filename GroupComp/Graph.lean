@@ -139,7 +139,7 @@ end EdgePath
 open EdgePath
 
 abbrev PathClass (G: Graph V E) (v w : V)  := 
-    Quot <| @EdgePath.Reduction _ _ G v w
+    Quot <| @Reduction _ _ G v w
 
 abbrev homotopyClass  {v w : V} (p : G.EdgePath v w) :
    PathClass G v w  := 
@@ -149,23 +149,21 @@ notation "[[" p "]]" => homotopyClass p
 
 attribute [aesop safe apply] Quot.sound
 
-@[simp] theorem cons_bar_cons (e : G.EdgeBetween w v) (p: G.EdgePath w u) :
-    [[p |>.cons e.bar |>.cons e]] = [[p]] := by
-  have := Reduction.step e (.nil w) p
+@[simp] theorem append_cons_bar_cons (e : G.EdgeBetween u u') (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) :
+    [[p₁ ++ (p₂ |>.cons e.bar |>.cons e)]] = [[p₁ ++ p₂]] := by
+  have := Reduction.step e p₁ p₂
   aesop
 
-@[simp] theorem cons_cons_bar (e : G.EdgeBetween v w) (p: G.EdgePath w u) : 
-  [[p |>.cons e |>.cons e.bar]] = [[p]] := by
-  have := cons_bar_cons e.bar p
+@[simp] theorem append_cons_cons_bar (e : G.EdgeBetween u' u) (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) : 
+  [[p₁ ++ (p₂ |>.cons e |>.cons e.bar)]] = [[p₁ ++ p₂]] := by
+  have := append_cons_bar_cons e.bar p₁ p₂
   aesop
 
 theorem left_append_step {v w u : V} (a : G.EdgePath v w)  (b₁ b₂ : G.EdgePath w u)  (rel : Reduction  b₁ b₂) : 
    [[a ++ b₁]] = [[a ++ b₂]] := by
-    induction rel with
-    | step e p₁ p₂ => 
-      apply Quot.sound
-      simp [← EdgePath.append_assoc]
-      exact .step e (a ++ p₁) p₂ 
+    induction rel
+    repeat (rw [← append_assoc])
+    aesop
 
 theorem right_append_step {v w u : V} (a₁ a₂ : G.EdgePath v w)  (b : G.EdgePath w u) (rel : Reduction  a₁ a₂) : 
     [[a₁ ++ b]] = [[a₂ ++ b]] := by
@@ -174,26 +172,20 @@ theorem right_append_step {v w u : V} (a₁ a₂ : G.EdgePath v w)  (b : G.EdgeP
 @[simp] theorem reverse_left_inverse {v w : V} 
 (p : G.EdgePath v w) : 
     [[p.reverse ++ p]] = [[.nil w]] := by
-    induction p with
-    | nil v  => simp
-    | cons e p ih => 
-      simp [EdgePath.reverse_cons, EdgePath.reverse_concat, EdgePath.cons_append, ih]
-      trans [[reverse p ++ p]]
-      · apply Quot.sound
-        let step := Reduction.step e.bar (reverse p) p
-        simp at step
-        assumption
-      · assumption
+    induction p <;>
+      aesop (add norm simp [reverse_cons, reverse_concat, cons_append])
 
 @[simp] theorem reverse_right_inverse {v w : V} (p : G.EdgePath w v) :
     [[p ++ p.reverse]] = [[.nil w]] := by
   have := reverse_left_inverse p.reverse
   aesop
 
-def PathClass.id (G : Graph V E) (v : V) : PathClass G v v :=
+namespace PathClass
+
+protected def id (G : Graph V E) (v : V) : PathClass G v v :=
   [[.nil v]]
 
-def PathClass.mul {v w u : V} : 
+def mul {v w u : V} : 
     PathClass G v w → PathClass G w u → PathClass G v u := by
   apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]]) <;>
     aesop (add safe apply [left_append_step, right_append_step])
@@ -201,8 +193,6 @@ def PathClass.mul {v w u : V} :
 instance {v w u : V} : 
   HMul (PathClass G v w) (PathClass G w u) (PathClass G v u) := 
     ⟨PathClass.mul⟩
-
-namespace PathClass
 
 @[simp] theorem id_mul  {u v : V} {a : G.EdgePath u v} : 
   (PathClass.id G u) * [[a]] = [[a]] := by rfl
@@ -218,21 +208,22 @@ theorem mul_append  {v w u : V} {a: G.EdgePath v w}
 
 theorem mul_assoc { v w u u' :  V}:
   (p: PathClass G v w) → (q: PathClass G w u) → (r: PathClass G u u') →  
-    (p * q) * r = p * (q * r) := by 
+    (p * q) * r = p * (q * r) := by
     apply Quot.ind
     intro a
     apply Quot.ind
     intro b
     apply Quot.ind
     intro c
-    simp [mul_append, EdgePath.append_assoc]
+    simp [mul_append, append_assoc]
+
 end PathClass
 
 def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
-  ι := fun _ => ()
+  ι := fun _ ↦ ()
   bar := fun (e, b) ↦ (e, !b)
-  bar_involution := fun (e, b) => by intros ; simp
-  bar_no_fp := fun (e, b) => by intros ; simp only [ne_eq, Prod.mk.injEq, true_and, Bool.not_eq_not]
+  bar_involution := by aesop
+  bar_no_fp := by aesop
 }
 
 class ConnectedGraph (G: Graph V E) where
