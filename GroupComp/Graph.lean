@@ -293,3 +293,4 @@ class ConnectedGraph (G: Graph V E) where
 def getPath (G: Graph V E) [ConnectedGraph G] (v w: V) : G.EdgePath v w :=
   ConnectedGraph.path v w
 
+end Graph
