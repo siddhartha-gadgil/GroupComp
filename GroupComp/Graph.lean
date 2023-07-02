@@ -321,29 +321,39 @@ theorem morphism_term_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
 
 structure CoveringMap (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) 
       extends Morphism G₁ G₂ where
-  localSection : (v₁ : V₁) → E₂ → E₁
-  section_init : (v₁ : V₁) → (e₂ : E₂) →
-    G₁.ι (localSection v₁ e₂) = v₁ 
+  localSection : (v₁ : V₁) → (e :E₂) → 
+      vertexMap v₁ = G₂.ι e   → E₁
+  section_init : (v₁ : V₁) → (e₂ : E₂) → 
+    (h : vertexMap v₁ = G₂.ι e₂) → 
+    G₁.ι (localSection v₁ e₂ h) = v₁ 
   left_inverse : (v₁ : V₁) → (e₂ :E₂) → 
-    edgeMap (localSection v₁ e₂) = e₂
-  right_inverse : (v₁ : V₁) → (e₁ : E₁) → 
-    localSection v₁ (edgeMap e₁) = e₁ 
+    (h : vertexMap v₁ = G₂.ι e₂) → 
+    edgeMap (localSection v₁ e₂ h) = e₂
+  right_inverse : (v₁ : V₁) → (e₁ : E₁) →
+    (h : vertexMap v₁ = G₂.ι (edgeMap e₁)) →  
+    localSection v₁ (edgeMap e₁) h = e₁ 
 
 /--
-Path lifting function. Strangely the definition does not seem to need `p v₁ = v₂`. This is an error due to liberal definition of local section.
+Path lifting function. 
 -/
 def pathLift (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
     (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
-    (e: EdgePath G₂ v₂ w₂) : 
+    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) : 
       Σ w₁ : V₁, EdgePath G₁ v₁ w₁ := by
     match e with
     | nil _ => exact ⟨v₁, nil _⟩
     | cons e₂ b₂ =>
       rename_i w₂' w₂''
-      let e₁ := p.localSection v₁ e₂.edge -- lift of the edge
+      let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.source]) 
+        -- lift of the edge
       let v₁' := G₁.τ e₁ -- the final vertex of the lift
-      have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init      
-      let ⟨w₁, tail⟩ := pathLift G₁ G₂ p v₁' w₂'' w₂  b₂
+      have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init
+      have term_vert : p.vertexMap (G₁.τ e₁) = w₂'' := by
+        rw [← e₂.target]
+        rw [←morphism_term_commutes ]
+        congr
+        apply p.left_inverse
+      let ⟨w₁, tail⟩ := pathLift G₁ G₂ p v₁' w₂'' w₂ term_vert b₂
       let edge₁ : EdgeBetween G₁ v₁ v₁' :=
         ⟨e₁, init_vert, rfl⟩
       exact ⟨w₁, EdgePath.cons edge₁ tail⟩
