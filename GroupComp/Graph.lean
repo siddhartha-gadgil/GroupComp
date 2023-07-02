@@ -293,4 +293,59 @@ class ConnectedGraph (G: Graph V E) where
 def getPath (G: Graph V E) [ConnectedGraph G] (v w: V) : G.EdgePath v w :=
   ConnectedGraph.path v w
 
+@[ext] structure Morphism (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) where
+  vertexMap : V₁ → V₂
+  edgeMap : E₁ → E₂
+  commutes : ∀ (e : E₁), G₂.ι (edgeMap e) = vertexMap (G₁.ι e)
+  bar_commutes : ∀ (e : E₁), edgeMap (G₁.bar e) = G₂.bar (edgeMap e)
+
+theorem morphism_init_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+    (f: Morphism G₁ G₂) : 
+      ∀ (e : E₁), G₂.ι (f.edgeMap e) = f.vertexMap (G₁.ι e) := by
+  intro e
+  exact f.commutes e
+
+theorem morphism_bar_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+    (f: Morphism G₁ G₂) : 
+      ∀ (e : E₁), f.edgeMap (G₁.bar e) = G₂.bar (f.edgeMap e) := by
+  intro e
+  exact f.bar_commutes e
+
+theorem morphism_term_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+    (f: Morphism G₁ G₂) : 
+      ∀ (e : E₁), G₂.τ (f.edgeMap e) = f.vertexMap (G₁.τ e) := by
+  intro e
+  rw [Graph.τ, Graph.τ, ←morphism_bar_commutes, ←morphism_init_commutes]
+
+
+
+structure CoveringMap (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) 
+      extends Morphism G₁ G₂ where
+  localSection : (v₁ : V₁) → E₂ → E₁
+  section_init : (v₁ : V₁) → (e₂ : E₂) →
+    G₁.ι (localSection v₁ e₂) = v₁ 
+  left_inverse : (v₁ : V₁) → (e₂ :E₂) → 
+    edgeMap (localSection v₁ e₂) = e₂
+  right_inverse : (v₁ : V₁) → (e₁ : E₁) → 
+    localSection v₁ (edgeMap e₁) = e₁ 
+
+/--
+Path lifting function. Strangely the definition does not seem to need `p v₁ = v₂`. This is an error due to liberal definition of local section.
+-/
+def pathLift (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
+    (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
+    (e: EdgePath G₂ v₂ w₂) : 
+      Σ w₁ : V₁, EdgePath G₁ v₁ w₁ := by
+    match e with
+    | nil _ => exact ⟨v₁, nil _⟩
+    | cons e₂ b₂ =>
+      rename_i w₂' w₂''
+      let e₁ := p.localSection v₁ e₂.edge -- lift of the edge
+      let v₁' := G₁.τ e₁ -- the final vertex of the lift
+      have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init      
+      let ⟨w₁, tail⟩ := pathLift G₁ G₂ p v₁' w₂'' w₂  b₂
+      let edge₁ : EdgeBetween G₁ v₁ v₁' :=
+        ⟨e₁, init_vert, rfl⟩
+      exact ⟨w₁, EdgePath.cons edge₁ tail⟩
+
 end Graph
