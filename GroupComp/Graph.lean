@@ -1,5 +1,6 @@
 import Mathlib.Data.Bool.Basic
 import Mathlib.CategoryTheory.Groupoid
+import Mathlib.CategoryTheory.Endomorphism
 import Mathlib.Algebra.Group.Basic
 
 universe u v
@@ -269,7 +270,7 @@ end PathClass
 open PathClass
 
 @[instance]
-def FundamentalGroupoid : CategoryTheory.Groupoid V where
+def FundamentalGroupoid (G : Graph V E) : CategoryTheory.Groupoid V where
   Hom := G.PathClass
   id := .id
   comp := .mul (G := G)
@@ -279,6 +280,10 @@ def FundamentalGroupoid : CategoryTheory.Groupoid V where
   inv := inv
   inv_comp := inv_mul
   comp_inv := mul_inv
+
+@[instance]
+def FundamentalGroup (G : Graph V E) (v : V) :=
+  @CategoryTheory.End.group _ G.FundamentalGroupoid v
 
 def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
   ι := fun _ ↦ ()
