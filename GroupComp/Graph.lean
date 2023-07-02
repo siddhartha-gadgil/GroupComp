@@ -401,13 +401,23 @@ theorem cons_eq {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w)
         symm
         assumption
 
+theorem cons_eq' {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w) 
+    (e' : EdgeBetween G v w' )(p : EdgePath G w u) (p' : EdgePath G w' u) (eq₁ : e.edge = e'.edge) (eq₂ : w' = w) (eq₃ : eq₂ ▸ p =   p'): 
+      cons e' p' = cons e p := by 
+      match p, p', e, e', eq₂ with
+      | p, p', e, e', rfl => 
+        simp [cons_edgeList, Eq.symm eq₃]
+        ext
+        symm
+        assumption
+
 theorem edgeList_shift {G: Graph V E} {v v' w : V}  
     (p : EdgePath G v w)(eqn : v = v'):
       p.toEdgeList = (eqn ▸ p).toEdgeList := by
       match p, eqn with
       | p, rfl => rfl
 
-theorem edgelist_eq_implies_eq {G: Graph V E}{v w: V}
+@[ext] theorem edgelist_eq_implies_eq {G: Graph V E}{v w: V}
   (p₁ p₂ : EdgePath G v w) : p₁.toEdgeList = p₂.toEdgeList → p₁ = p₂ := by
   induction p₁ with
   | nil v =>
@@ -418,36 +428,30 @@ theorem edgelist_eq_implies_eq {G: Graph V E}{v w: V}
     | EdgePath.cons e₂ p₂  =>
       intro h
       simp [cons_edgeList, nil_edgeList] at h
-  | cons e p ih =>
+  | cons e₁ p₁' ih =>
     intro h
     induction p₂ with
     | nil w =>
       simp [cons_edgeList, nil_edgeList] at h
-    | cons e₂ p₂ ih₂ =>
-      rename_i w₁ w₂ u₁ u₂ v' w' u' v'' w'' u''
+    | cons e₂ p₂'  =>
       simp [cons_edgeList] at h
-      have e1t := e.target
+      have e1t := e₁.target
       have e2t := e₂.target
       rw [h.1] at e1t
       rw [e1t] at e2t
-      let l₂ := h.2
       simp [h.2] at ih 
-      apply cons_eq 
+      apply cons_eq' 
       · symm
         exact h.1
-      · let p' := e1t ▸ p₂  
-        let step := ih (e2t ▸ p₂) 
+      · let step := ih (e2t ▸ p₂') 
         symm   
-        have : p= (e2t ▸ p₂)  := by
+        have : p₁' = (e2t ▸ p₂')  := by
           apply step
-          exact edgeList_shift p₂ (Eq.symm e2t)
+          exact edgeList_shift p₂' (Eq.symm e2t)
         rw [this]
         · simp
-          sorry
-        · symm
           assumption
-
-#check Eq.mpr
+        
 
 structure PathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
