@@ -459,14 +459,14 @@ structure PathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   w₁ : V₁ 
   path: EdgePath G₁ v₁ w₁
   h' : p.vertexMap w₁ = w₂
-  commutes : p.pathMap v₁ w₁ path v₂ w₂ h h' = e
+  list_commutes : path.toEdgeList.map p.edgeMap = e.toEdgeList
 
 def pathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂):
     PathLift p v₁ v₂ w₂ h e := by
     match e with
-    | nil _ => exact ⟨v₁, nil _, h, (by simp [Morphism.pathMap])⟩
+    | nil _ => exact ⟨v₁, nil _, h, (by simp [toEdgeList])⟩
     | cons e₂ b₂ =>
       rename_i w₂' w₂''
       let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.source]) 
@@ -482,7 +482,7 @@ def pathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       let edge₁ : EdgeBetween G₁ v₁ v₁' :=
         ⟨e₁, init_vert, rfl⟩
       exact ⟨w₁, cons edge₁ tail, pf₁, by 
-        unfold Morphism.pathMap
-        sorry⟩
+        simp [cons_edgeList, pf₂]
+        apply p.left_inverse⟩
 
 end Graph
