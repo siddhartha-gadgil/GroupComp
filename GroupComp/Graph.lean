@@ -339,9 +339,10 @@ Path lifting function.
 def pathLift (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
     (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) : 
-      Σ w₁ : V₁, EdgePath G₁ v₁ w₁ := by
+      {pair : Σ w₁ : V₁, EdgePath G₁ v₁ w₁ // 
+        p.vertexMap pair.fst = w₂} := by
     match e with
-    | nil _ => exact ⟨v₁, nil _⟩
+    | nil _ => exact ⟨⟨v₁, nil _⟩, h⟩
     | cons e₂ b₂ =>
       rename_i w₂' w₂''
       let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.source]) 
@@ -353,9 +354,9 @@ def pathLift (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
         rw [←morphism_term_commutes ]
         congr
         apply p.left_inverse
-      let ⟨w₁, tail⟩ := pathLift G₁ G₂ p v₁' w₂'' w₂ term_vert b₂
+      let ⟨⟨w₁, tail⟩, pf⟩ := pathLift G₁ G₂ p v₁' w₂'' w₂ term_vert b₂
       let edge₁ : EdgeBetween G₁ v₁ v₁' :=
         ⟨e₁, init_vert, rfl⟩
-      exact ⟨w₁, EdgePath.cons edge₁ tail⟩
+      exact ⟨⟨w₁, EdgePath.cons edge₁ tail⟩, pf⟩
 
 end Graph
