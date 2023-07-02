@@ -336,7 +336,7 @@ structure CoveringMap (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
 /--
 Path lifting function. 
 -/
-def pathLift (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
+def pathLift' (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
     (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) : 
       {pair : Σ w₁ : V₁, EdgePath G₁ v₁ w₁ // 
@@ -354,9 +354,38 @@ def pathLift (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
         rw [←morphism_term_commutes ]
         congr
         apply p.left_inverse
-      let ⟨⟨w₁, tail⟩, pf⟩ := pathLift G₁ G₂ p v₁' w₂'' w₂ term_vert b₂
+      let ⟨⟨w₁, tail⟩, pf⟩ := pathLift' G₁ G₂ p v₁' w₂'' w₂ term_vert b₂
       let edge₁ : EdgeBetween G₁ v₁ v₁' :=
         ⟨e₁, init_vert, rfl⟩
       exact ⟨⟨w₁, EdgePath.cons edge₁ tail⟩, pf⟩
+
+def Morphism.pathMap {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁)
+    (v₂ w₂ : V₂)(hv : f.vertexMap v₁ = v₂)(hw : f.vertexMap w₁ = w₂) : 
+      G₂.EdgePath v₂ w₂ := by 
+      match p with
+      | nil _ =>
+        rw [←hw, hv]
+        exact nil _
+      | cons e p' => 
+        rename_i w₁' w₁'' u'
+        let tail := 
+          pathMap f u' w₁ p' (f.vertexMap u') w₂ rfl hw
+        let e₁ := f.edgeMap e.edge
+        let init_vert : G₂.ι e₁ = v₂ := by
+          rw [←hv, ←e.source, ←morphism_init_commutes] 
+        let term_vert : G₂.τ e₁ = f.vertexMap u' := by
+          rw [morphism_term_commutes, e.target]
+        let edge₂ : EdgeBetween G₂ v₂ (f.vertexMap u') :=
+          ⟨e₁, init_vert, term_vert⟩
+        exact cons edge₂ tail
+
+structure PathLift (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
+    (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
+    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) where
+  w₁ : V₁ 
+  path: EdgePath G₁ v₁ w₁
+  h' : p.vertexMap w₁ = w₂
+  commutes : p.pathMap v₁ w₁ path v₂ w₂ h h' = e
 
 end Graph
