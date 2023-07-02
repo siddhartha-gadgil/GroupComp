@@ -369,8 +369,6 @@ def Morphism.pathMap {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         exact nil _
       | cons e p' => 
         rename_i w₁' w₁'' u'
-        let tail := 
-          pathMap f u' w₁ p' (f.vertexMap u') w₂ rfl hw
         let e₁ := f.edgeMap e.edge
         let init_vert : G₂.ι e₁ = v₂ := by
           rw [←hv, ←e.source, ←morphism_init_commutes] 
@@ -378,14 +376,109 @@ def Morphism.pathMap {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
           rw [morphism_term_commutes, e.target]
         let edge₂ : EdgeBetween G₂ v₂ (f.vertexMap u') :=
           ⟨e₁, init_vert, term_vert⟩
-        exact cons edge₂ tail
+        exact cons edge₂ (pathMap f u' w₁ p' (f.vertexMap u') w₂ rfl hw)
 
-structure PathLift (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
+def EdgePath.toEdgeList {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
+  List E := 
+  match p with
+  | nil _ => []
+  | cons e p' =>  e.edge :: p'.toEdgeList
+
+theorem nil_edgeList {G : Graph V E} {v : V}  : 
+  (nil v : EdgePath G v v).toEdgeList = [] := rfl
+
+theorem cons_edgeList {G: Graph V E} {v w u: V} (e : EdgeBetween G v w) 
+    (p : EdgePath G w u) : 
+  (cons e p).toEdgeList = e.edge :: p.toEdgeList := rfl
+
+theorem cons_eq {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w) 
+    (e' : EdgeBetween G v w' )(p : EdgePath G w u) (p' : EdgePath G w' u) (eq₁ : e.edge = e'.edge) (eq₂ : w = w') (eq₃ :  p = eq₂ ▸  p'): 
+      cons e' p' = cons e p := by 
+      match p, p', e, e', eq₂ with
+      | p, p', e, e', rfl => 
+        simp [cons_edgeList,  eq₃]
+        ext
+        symm
+        assumption
+
+theorem edgeList_shift {G: Graph V E} {v v' w : V}  
+    (p : EdgePath G v w)(eqn : v = v'):
+      p.toEdgeList = (eqn ▸ p).toEdgeList := by
+      match p, eqn with
+      | p, rfl => rfl
+
+theorem edgelist_eq_implies_eq {G: Graph V E}{v w: V}
+  (p₁ p₂ : EdgePath G v w) : p₁.toEdgeList = p₂.toEdgeList → p₁ = p₂ := by
+  induction p₁ with
+  | nil v =>
+    match p₂ with
+    | EdgePath.nil v => 
+      intro h
+      rw [nil_edgeList] at h      
+    | EdgePath.cons e₂ p₂  =>
+      intro h
+      simp [cons_edgeList, nil_edgeList] at h
+  | cons e p ih =>
+    intro h
+    induction p₂ with
+    | nil w =>
+      simp [cons_edgeList, nil_edgeList] at h
+    | cons e₂ p₂ ih₂ =>
+      rename_i w₁ w₂ u₁ u₂ v' w' u' v'' w'' u''
+      simp [cons_edgeList] at h
+      have e1t := e.target
+      have e2t := e₂.target
+      rw [h.1] at e1t
+      rw [e1t] at e2t
+      let l₂ := h.2
+      simp [h.2] at ih 
+      apply cons_eq 
+      · symm
+        exact h.1
+      · let p' := e1t ▸ p₂  
+        let step := ih (e2t ▸ p₂) 
+        symm   
+        have : p= (e2t ▸ p₂)  := by
+          apply step
+          exact edgeList_shift p₂ (Eq.symm e2t)
+        rw [this]
+        · simp
+          sorry
+        · symm
+          assumption
+
+#check Eq.mpr
+
+structure PathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) where
   w₁ : V₁ 
   path: EdgePath G₁ v₁ w₁
   h' : p.vertexMap w₁ = w₂
   commutes : p.pathMap v₁ w₁ path v₂ w₂ h h' = e
+
+def pathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
+    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂):
+    PathLift p v₁ v₂ w₂ h e := by
+    match e with
+    | nil _ => exact ⟨v₁, nil _, h, (by simp [Morphism.pathMap])⟩
+    | cons e₂ b₂ =>
+      rename_i w₂' w₂''
+      let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.source]) 
+        -- lift of the edge
+      let v₁' := G₁.τ e₁ -- the final vertex of the lift
+      have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init
+      have term_vert : p.vertexMap (G₁.τ e₁) = w₂'' := by
+        rw [← e₂.target]
+        rw [←morphism_term_commutes ]
+        congr
+        apply p.left_inverse
+      let ⟨w₁, tail, pf₁, pf₂⟩ := pathLift  p v₁' w₂'' w₂ term_vert b₂
+      let edge₁ : EdgeBetween G₁ v₁ v₁' :=
+        ⟨e₁, init_vert, rfl⟩
+      exact ⟨w₁, cons edge₁ tail, pf₁, by 
+        unfold Morphism.pathMap
+        sorry⟩
 
 end Graph
