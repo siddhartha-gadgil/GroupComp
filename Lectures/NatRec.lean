@@ -101,18 +101,17 @@ def hcf (a b : ℕ) : ℕ :=
 -/
 
 def hcf (a b : ℕ) : ℕ :=
-  if c:b < a then hcf b a
+  if b < a then hcf b a
   else
     if c'':a = 0 then b
+
     else
-      have _ : b - a < b := by 
-        apply Nat.sub_lt_of_pos_le
-        · apply Nat.pos_of_ne_zero
-          assumption
-        · apply Nat.le_of_not_lt
-          assumption
-      hcf a (b - a)
-termination_by _ a b => (a, b)
+      have a_pos : a > 0 := by 
+        apply Nat.pos_of_ne_zero
+        assumption
+      have _ : b % a < a :=  
+        Nat.mod_lt b a_pos
+      hcf (b % a) a
 
 /-!
 ```lean
@@ -132,6 +131,7 @@ failed to compile partial definition 'wrong', failed to show that type is inhabi
 
 #check Nat.pos_of_ne_zero
 #check Nat.sub_lt_of_pos_le
+#check Nat.mod_lt -- ∀ (x : ℕ) {y : ℕ}, y > 0 → x % y < y
 
 /-!
 Lean has to allow partial definitions due to deep results of Church-Gödel-Turing-..., which say for example that we cannot prove that a Lean interpreter in Lean terminates.
