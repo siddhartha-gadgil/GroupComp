@@ -104,7 +104,6 @@ def hcf (a b : ℕ) : ℕ :=
   if b < a then hcf b a
   else
     if c'':a = 0 then b
-
     else
       have a_pos : a > 0 := by 
         apply Nat.pos_of_ne_zero
@@ -112,7 +111,6 @@ def hcf (a b : ℕ) : ℕ :=
       have _ : b % a < a :=  
         Nat.mod_lt b a_pos
       hcf (b % a) a
-termination_by _ a b => (a, b)
 
 /-!
 ```lean
@@ -147,3 +145,12 @@ theorem sum_formula (n: ℕ) :  sum n = (n * (n + 1) : ℚ) / 2  := by
   | succ n ih => 
     simp [sum]
     linarith
+
+def sumAux (n: ℕ)(accum : ℕ) : ℕ :=
+  match n with
+  | 0 => accum
+  | n + 1 => sumAux n (accum + (n + 1))
+
+#eval sumAux 3 1
+
+  
