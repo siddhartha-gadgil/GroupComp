@@ -296,12 +296,12 @@ def getPath (G: Graph V E) [ConnectedGraph G] (v w: V) : G.EdgePath v w :=
 @[ext] structure Morphism (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) where
   vertexMap : V₁ → V₂
   edgeMap : E₁ → E₂
-  commutes : ∀ (e : E₁), G₂.ι (edgeMap e) = vertexMap (G₁.ι e)
+  commutes : ∀ (e : E₁),  vertexMap (G₁.ι e) = G₂.ι (edgeMap e) 
   bar_commutes : ∀ (e : E₁), edgeMap (G₁.bar e) = G₂.bar (edgeMap e)
 
 theorem morphism_init_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     (f: Morphism G₁ G₂) : 
-      ∀ (e : E₁), G₂.ι (f.edgeMap e) = f.vertexMap (G₁.ι e) := by
+      ∀ (e : E₁), f.vertexMap (G₁.ι e) = G₂.ι (f.edgeMap e)  := by
   intro e
   exact f.commutes e
 
@@ -330,8 +330,9 @@ structure CoveringMap (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
     (h : vertexMap v₁ = G₂.ι e₂) → 
     edgeMap (localSection v₁ e₂ h) = e₂
   right_inverse : (v₁ : V₁) → (e₁ : E₁) →
-    (h : vertexMap v₁ = G₂.ι (edgeMap e₁)) →  
-    localSection v₁ (edgeMap e₁) h = e₁ 
+    (h : v₁ = G₁.ι e₁) →  
+    localSection v₁ (edgeMap e₁) (by rw [← commutes, h]) = 
+      e₁ 
 
 /--
 Path lifting function. 
@@ -536,5 +537,37 @@ theorem PathLift.commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     p.pathMap v₁ lift.w₁ lift.path v₂ w₂ h lift.h' = e := by
       apply eq_of_edgeList_eq
       rw [pathMap_toList, lift.list_commutes]      
+
+theorem lifts_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+    {v₁ w₁ v₂ w₂ : V₁}
+    (p : CoveringMap G₁ G₂)  
+    (e₁ : EdgePath G₁ v₁ w₁) (e₂ : EdgePath G₁ v₂ w₂) (hv: v₁ = v₂) :
+    e₁.toEdgeList.map p.edgeMap = e₂.toEdgeList.map p.edgeMap →
+    e₁.toEdgeList = e₂.toEdgeList := by
+    intro hyp
+    match e₁ with
+    | nil v => 
+      simp [nil_edgeList] at hyp
+      simp [nil_edgeList]
+      symm at hyp
+      rw [List.map_eq_nil] at hyp
+      symm
+      exact hyp
+    | cons edg₁ p₁' => 
+      match e₂, hv with
+      | nil v, _ => 
+        simp [nil_edgeList] at hyp
+      | cons edg₂ p₂', rfl => 
+        simp [cons_edgeList] at *
+        let ⟨h₁, h₂⟩ := hyp
+        have edg_eq : edg₁.edge = edg₂.edge := by 
+          let eq₁ := p.right_inverse v₁ edg₁.edge (Eq.symm edg₁.source)
+          let eq₂ := p.right_inverse v₁ edg₂.edge (Eq.symm edg₂.source)
+          rw [← eq₁, ← eq₂]
+          congr
+        simp [edg_eq] 
+        apply lifts_equiv p p₁' p₂' 
+        · rw [← edg₁.target, ← edg₂.target, edg_eq]
+        · exact h₂
 
 end Graph
