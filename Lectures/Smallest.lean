@@ -30,26 +30,7 @@ The result of `smallest` is a member of the list.
 -/
 theorem smallest_mem (l : List α) (hyp : l ≠ []) : 
   smallest l hyp ∈ l := by
-  match l with
-  | head::tail =>
-    simp [smallest]
-    split 
-    · rename_i h
-      simp [h]
-      intro contra
-      contradiction
-    · rename_i h
-      simp [h]
-      by_cases h':(head ≤ smallest tail h)      
-      · simp [h']
-      · simp [h', h]
-        have lem : 
-          min head (smallest tail h) = smallest tail h :=   by 
-            apply min_eq_right
-            apply le_of_not_ge
-            exact h'
-        rw [lem]
-        simp [smallest_mem]
+  sorry
 
 
 /--
@@ -57,36 +38,7 @@ The result of `smallest` is `≤` every member of the list.
 -/
 theorem smallest_le (l : List α) (hyp : l ≠ []) : 
   ∀ a : α, a ∈ l → smallest l hyp ≤ a  := 
-  match l with
-  | head :: tail => by
-    simp [smallest, hyp]
-    apply And.intro
-    · split  <;> simp 
-    · intro a hyp'
-      simp [hyp]
-      have c''  := List.ne_nil_of_mem hyp'
-      simp [c'']
-      right
-      exact smallest_le tail c'' a hyp'
+  sorry
 
 
 #eval smallest [3, 4, 2] (by simp)
-
-
-/-!
-Other stuff
--/
-
-def defaultEg(α : Type) : Inhabited (ℕ × ℕ × (α → ℕ)) := inferInstance
-
-#reduce defaultEg
-
-instance (priority := low) (α : Type) : Inhabited (α → α) := 
-  ⟨id⟩
-
-def defaultEg'(α : Type) : Inhabited (ℕ × (Empty → Empty) × (α → ℕ)) := inferInstance
-
-#reduce defaultEg'
-
-partial def bad [Nonempty α]: ℕ → α 
-| n => bad n  
