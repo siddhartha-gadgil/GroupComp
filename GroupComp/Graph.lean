@@ -441,6 +441,27 @@ theorem edgeList_cast_term {G: Graph V E} {v w w' : V}
         · simp
           assumption
         
+theorem term_eq_of_edgeList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
+  (p₁ : EdgePath G v₁ w₁) (p₂ : EdgePath G v₂ w₂) : p₁.toEdgeList = p₂.toEdgeList → (v₁ = v₂) → (w₁ = w₂)  := by 
+  induction p₁ with
+  | nil v₁' =>
+    match p₂ with
+    | EdgePath.nil v => 
+      intro h heq
+      rw [nil_edgeList] at h      
+      exact heq
+    | EdgePath.cons e₂ p₂  =>
+      intro h
+      simp [cons_edgeList, nil_edgeList] at h
+  | cons e p₁' ih =>    
+    intro h heq
+    match p₂ with
+    | EdgePath.nil w =>
+      simp [cons_edgeList, nil_edgeList] at h
+    | EdgePath.cons e₂ p₂' =>
+      simp [cons_edgeList] at h
+      apply term_eq_of_edgeList_eq p₁' p₂' h.right
+      rw [←e₂.target, ←e.target, h.left]
 
 
 
