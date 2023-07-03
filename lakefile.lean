@@ -12,3 +12,8 @@ require mathlib from git
 lean_lib «GroupComp» {
   -- add any library configuration options here
 }
+
+@[default_target]
+lean_lib «Lectures» {
+  -- add any library configuration options here
+}

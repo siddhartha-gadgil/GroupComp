@@ -1,0 +1,12 @@
+import Lectures.CantorTree
+import Lectures.Graph
+import Lectures.GroupSquaresId
+import Lectures.Intro
+import Lectures.NatLe
+import Lectures.NatRec
+import Lectures.PowerIrrationals
+import Lectures.Smallest
+import Lectures.Trees
+import Lectures.Turing
+import Lectures.WordProblem.Diophantine
+import Lectures.WordProblem.FreeGroup
