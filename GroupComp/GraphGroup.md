@@ -2,6 +2,7 @@
 
 The first target is the Nielsen-Schreier theorem - every subgroup of a free group is free. Beyond the definition of the fundamental group, we need the following pieces (that are partly independent of each other):
 
+* Any path is equivalent to a reduced path (with the same endpoints).
 * Fundamental group of a wedge of circles is the free group
 * Spanning trees:
     - Definition of subgraphs.
@@ -16,6 +17,7 @@ The first target is the Nielsen-Schreier theorem - every subgroup of a free grou
     - Show that these maps are inverses of each other.
 * Covering spaces:
     - Definition of covering spaces and maps.
+    - Path lifting and homotopy lifting.
     - Injections from the fundamental group of the covering space to the fundamental group of the base space.
     - Construction of the cover corresponding to a subgroup of the fundamental group of the base space.
     - Proof that the cover indeed corresponds to the subgroup.
