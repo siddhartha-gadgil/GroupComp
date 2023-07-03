@@ -394,13 +394,19 @@ theorem cons_eq' {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w)
         symm
         assumption
 
-theorem edgeList_shift {G: Graph V E} {v v' w : V}  
+theorem edgeList_cast_init {G: Graph V E} {v v' w : V}  
     (p : EdgePath G v w)(eqn : v = v'):
       p.toEdgeList = (eqn ▸ p).toEdgeList := by
       match p, eqn with
       | p, rfl => rfl
 
-@[ext] theorem edgelist_eq_implies_eq {G: Graph V E}{v w: V}
+theorem edgeList_cast_term {G: Graph V E} {v w w' : V}  
+    (p : EdgePath G v w)(eqn : w = w'):
+      p.toEdgeList = (eqn ▸ p).toEdgeList := by
+      match p, eqn with
+      | p, rfl => rfl
+
+@[ext] theorem eq_of_edgeList_eq {G: Graph V E}{v w: V}
   (p₁ p₂ : EdgePath G v w) : p₁.toEdgeList = p₂.toEdgeList → p₁ = p₂ := by
   induction p₁ with
   | nil v =>
@@ -430,11 +436,13 @@ theorem edgeList_shift {G: Graph V E} {v v' w : V}
         symm   
         have : p₁' = (e2t ▸ p₂')  := by
           apply step
-          exact edgeList_shift p₂' (Eq.symm e2t)
+          exact edgeList_cast_init p₂' (Eq.symm e2t)
         rw [this]
         · simp
           assumption
         
+
+
 
 structure PathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
@@ -505,7 +513,7 @@ theorem PathLift.commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) 
     (lift : PathLift p v₁ v₂ w₂ h e) :
     p.pathMap v₁ lift.w₁ lift.path v₂ w₂ h lift.h' = e := by
-      apply edgelist_eq_implies_eq
+      apply eq_of_edgeList_eq
       rw [pathMap_toList, lift.list_commutes]      
 
 end Graph
