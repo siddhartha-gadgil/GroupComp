@@ -26,33 +26,34 @@ The topics covered are roughly in three groups:
   - Contexts, Expressions, Rules, Judgements.
   - Type theory: judgements, terms, types, universes.
   - Propositions as types.
-* Introduction:
+* [Introduction](Lectures/Intro.html):
   - Use Lean as a calculator
   - Some terms and functions; functions applications.
   - Some types.
   - Look at some proofs.
-* Recursive definitions in Lean:
+* [Recursive definitions](Lectures/NatRec.html) in Lean:
   - Some definitions.
   - Partial definitions.
   - Termination proofs.
-* Proofs in Lean
+* [Proofs](Lectures/NatLe.html) in Lean
   - Declarative proofs
   - Tactics
   - Decision problems
+  - An [example](Lectures/GroupSquaresId.html)
   - Induction
-* Programs with proofs: Smallest number in a list.
+* [Programs with proofs](Lectures/Smallest.html): Smallest number in a list.
 
 ## Word problems
 
-* Diophantine equations and a simple word problem.
-* Free groups and topology
+* [Diophantine equations](Lectures/WordProblem/Diophantine.html) and a simple word problem.
+* [Free groups and topology](Lectures/WordProblem/FreeGroup.html)
 
 ## Advanced topics
 
-* Noncomputable functions and existence proofs.
-* Inductive types.
-* Cantor's diagonalization and rules for inductive types.
-* Turing's diagonal argument and interpreters.
-* Graphs and group theory.
+* [Noncomputable functions](Lectures/PowerIrrationals) and existence proofs.
+* [Inductive types](Lectures/Trees.html).
+* [Cantor's diagonalization](Lectures/CantorTree.html) and rules for inductive types.
+* [Turing's diagonal](Lectures/Turing.html) argument and interpreters.
+* [Graphs](Lectures/Graph.html) and group theory.
 -/
 
