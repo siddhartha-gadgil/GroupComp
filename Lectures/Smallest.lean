@@ -20,10 +20,7 @@ variable {α : Type}[LinearOrder α]
 Smallest member of a non-empty list of elements of a linearly ordered type.
 -/
 def smallest (l: List α)(_: l ≠ []): α := 
-  match l with
-  | h::t => 
-      if c:(t = []) then  
-      h else min h (smallest t c)
+  sorry
 
 /--
 The result of `smallest` is a member of the list.
@@ -41,4 +38,4 @@ theorem smallest_le (l : List α) (hyp : l ≠ []) :
   sorry
 
 
-#eval smallest [3, 4, 2] (by simp)
+-- #eval smallest [3, 4, 2] (by simp)
