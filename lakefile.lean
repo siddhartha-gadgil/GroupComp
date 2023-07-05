@@ -12,3 +12,11 @@ require mathlib from git
 lean_lib «GroupComp» {
   -- add any library configuration options here
 }
+
+@[default_target]
+lean_lib «Lectures» {
+  -- add any library configuration options here
+}
+
+meta if get_config? doc = some "on" then -- do not download and build doc-gen4 by default
+require «doc-gen4» from git "https://github.com/leanprover/doc-gen4" @ "main"

@@ -1,6 +1,5 @@
 import Mathlib.Data.Bool.Basic
 import Mathlib.CategoryTheory.Groupoid
-import Mathlib.CategoryTheory.Endomorphism
 import Mathlib.Algebra.Group.Basic
 
 universe u v
@@ -270,7 +269,7 @@ end PathClass
 open PathClass
 
 @[instance]
-def FundamentalGroupoid (G : Graph V E) : CategoryTheory.Groupoid V where
+def FundamentalGroupoid : CategoryTheory.Groupoid V where
   Hom := G.PathClass
   id := .id
   comp := .mul (G := G)
@@ -280,10 +279,6 @@ def FundamentalGroupoid (G : Graph V E) : CategoryTheory.Groupoid V where
   inv := inv
   inv_comp := inv_mul
   comp_inv := mul_inv
-
-@[instance]
-def FundamentalGroup (G : Graph V E) (v : V) :=
-  @CategoryTheory.End.group _ G.FundamentalGroupoid v
 
 def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
   ι := fun _ ↦ ()
@@ -301,12 +296,12 @@ def getPath (G: Graph V E) [ConnectedGraph G] (v w: V) : G.EdgePath v w :=
 @[ext] structure Morphism (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) where
   vertexMap : V₁ → V₂
   edgeMap : E₁ → E₂
-  commutes : ∀ (e : E₁),  vertexMap (G₁.ι e) = G₂.ι (edgeMap e) 
+  commutes : ∀ (e : E₁), G₂.ι (edgeMap e) = vertexMap (G₁.ι e)
   bar_commutes : ∀ (e : E₁), edgeMap (G₁.bar e) = G₂.bar (edgeMap e)
 
 theorem morphism_init_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     (f: Morphism G₁ G₂) : 
-      ∀ (e : E₁), f.vertexMap (G₁.ι e) = G₂.ι (f.edgeMap e)  := by
+      ∀ (e : E₁), G₂.ι (f.edgeMap e) = f.vertexMap (G₁.ι e) := by
   intro e
   exact f.commutes e
 
@@ -335,9 +330,8 @@ structure CoveringMap (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
     (h : vertexMap v₁ = G₂.ι e₂) → 
     edgeMap (localSection v₁ e₂ h) = e₂
   right_inverse : (v₁ : V₁) → (e₁ : E₁) →
-    (h : v₁ = G₁.ι e₁) →  
-    localSection v₁ (edgeMap e₁) (by rw [← commutes, h]) = 
-      e₁ 
+    (h : vertexMap v₁ = G₂.ι (edgeMap e₁)) →  
+    localSection v₁ (edgeMap e₁) h = e₁ 
 
 /--
 Path lifting function. 
@@ -474,9 +468,9 @@ theorem term_eq_of_edgeList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
 structure PathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) where
-  τ : V₁ 
-  path: EdgePath G₁ v₁ τ
-  h' : p.vertexMap τ = w₂
+  w₁ : V₁ 
+  path: EdgePath G₁ v₁ w₁
+  h' : p.vertexMap w₁ = w₂
   list_commutes : path.toEdgeList.map p.edgeMap = e.toEdgeList
 
 def pathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
@@ -539,67 +533,8 @@ theorem PathLift.commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) 
     (lift : PathLift p v₁ v₂ w₂ h e) :
-    p.pathMap v₁ lift.τ lift.path v₂ w₂ h lift.h' = e := by
+    p.pathMap v₁ lift.w₁ lift.path v₂ w₂ h lift.h' = e := by
       apply eq_of_edgeList_eq
       rw [pathMap_toList, lift.list_commutes]      
-
-theorem lifts_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
-    {v₁ w₁ v₂ w₂ : V₁}
-    (p : CoveringMap G₁ G₂)  
-    (e₁ : EdgePath G₁ v₁ w₁) (e₂ : EdgePath G₁ v₂ w₂) (hv: v₁ = v₂) :
-    e₁.toEdgeList.map p.edgeMap = e₂.toEdgeList.map p.edgeMap →
-    e₁.toEdgeList = e₂.toEdgeList := by
-    intro hyp
-    match e₁ with
-    | nil v => 
-      simp [nil_edgeList] at hyp
-      simp [nil_edgeList]
-      symm at hyp
-      rw [List.map_eq_nil] at hyp
-      symm
-      exact hyp
-    | cons edg₁ p₁' => 
-      match e₂, hv with
-      | nil v, _ => 
-        simp [nil_edgeList] at hyp
-      | cons edg₂ p₂', rfl => 
-        simp [cons_edgeList] at *
-        let ⟨h₁, h₂⟩ := hyp
-        have edg_eq : edg₁.edge = edg₂.edge := by 
-          let eq₁ := p.right_inverse v₁ edg₁.edge (Eq.symm edg₁.source)
-          let eq₂ := p.right_inverse v₁ edg₂.edge (Eq.symm edg₂.source)
-          rw [← eq₁, ← eq₂]
-          congr
-        simp [edg_eq] 
-        apply lifts_equiv p p₁' p₂' 
-        · rw [← edg₁.target, ← edg₂.target, edg_eq]
-        · exact h₂
-
-theorem edgeList_append {G : Graph V E}{v w u : V} (p₁ : EdgePath G v w) (p₂ : EdgePath G w u) :
-    (p₁ ++ p₂).toEdgeList = p₁.toEdgeList ++ p₂.toEdgeList := by
-    induction p₁ with
-    | nil v => 
-      simp [nil_edgeList]
-    | cons e p' ih =>
-      simp [cons_edgeList]
-      apply ih
-
-theorem edgeList_concat {G : Graph V E}{v w u : V} (p : EdgePath G v w) (e : EdgeBetween G w u) :
-    (concat p e).toEdgeList = List.concat p.toEdgeList e.edge := by
-    induction p with
-    | nil v => 
-      simp [nil_edgeList]
-      rw [concat, cons_edgeList, nil_edgeList]
-    | cons e p' ih =>
-      simp [cons_edgeList, ih]
-
-theorem edgeList_reverse {G : Graph V E}{v w : V} (p : EdgePath G v w):
-  p.toEdgeList.reverse = p.reverse.toEdgeList.map (G.bar) := by
-  induction p with
-  | nil _ => 
-    simp [nil_edgeList]
-  | cons e p' ih =>
-    simp [cons_edgeList, reverse_cons, edgeList_concat]
-    simp [ih, EdgeBetween.bar]
 
 end Graph
