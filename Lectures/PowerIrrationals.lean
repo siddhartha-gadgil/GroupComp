@@ -40,17 +40,33 @@ There exist irrational numbers `a` and `b` such that `a^b` is rational.
 -/
 theorem exists_irrationals_pow_rational :
   ∃ a b : ℝ, (Irrational a) ∧ (Irrational b) ∧ ¬ (Irrational (a ^ b)) := by
-    sorry
+    let b := Real.sqrt 2
+    by_cases c:Irrational (b ^ b)
+    · let a := b ^ b
+      use a, b
+      simp [irrational_sqrt_two, c, sq2_pow_twice]
+      simp [irrational_iff_ne_rational]
+      use 2, 1
+      simp
+    · use b, b
+      simp [irrational_sqrt_two, c]
+
 
 #check Classical.choice -- {α : Sort u} → Nonempty α → α
 
 /-- 
 Function giving a pair of irrational numbers `a` and `b` such that `a^b` is rational, together with a proof of their irrationality.
 -/
-def irrationalPairWithRationalPower : 
+noncomputable def irrationalPairWithRationalPower : 
     {ab : ℝ × ℝ  // 
       Irrational ab.1 ∧ Irrational ab.2 ∧ ¬ Irrational (ab.1 ^ ab.2)} := by
-      sorry
+      apply Classical.choice
+      let ⟨a, b, h⟩ :=
+        exists_irrationals_pow_rational
+      use (a, b)
+      assumption
 
 #check irrationalPairWithRationalPower.val -- ℝ × ℝ
+
+-- #eval irrationalPairWithRationalPower.val
 

@@ -101,17 +101,63 @@ def hcf (a b : ℕ) : ℕ :=
 #eval hcf 18 12 -- 6
 ```
 -/
-partial def hcf (a b : ℕ) : ℕ :=
+
+#check Nat.mod_lt
+
+def hcf (a b : ℕ) : ℕ :=
   if b < a then hcf b a
   else 
-    if a = 0 then b
+    if c':a = 0 then b
   else
+    have : b % a < a := by
+      apply Nat.mod_lt
+      apply Nat.pos_of_ne_zero
+      assumption
     hcf (b % a) a
+termination_by _ a b => a
 
 #eval hcf 8 12 -- 4
 
 #check Empty
 
+
+/-!
+Lean has to allow partial definitions due to deep results of Church-Gödel-Turing-..., which say for example that we cannot prove that a Lean interpreter in Lean terminates.
+-/
+
+def sumUpto : ℕ → ℕ
+| 0 => 0
+| n + 1 => n + 1 + sumUpto n
+
+theorem sum_formula (n: ℕ) :  sumUpto n = (n * (n + 1) : ℚ) / 2  := by 
+  induction n with
+  | zero => rfl
+  | succ n ih => 
+    simp [sumUpto, ih]
+    linarith
+
+def sumAux (n: ℕ)(accum : ℕ) : ℕ :=
+  match n with
+  | 0 => accum
+  | n + 1 => sumAux n (accum + (n + 1))
+
+#eval sumAux 3 1
+
+  -- partial def wrong(n: ℕ): Empty :=
+--   wrong (n + 1)
+
+axiom wrong : ℕ → Empty  
+
+theorem vac_contra : ∀ e : Empty, ∀ n: ℕ,  
+  wrong n = e →  n = 2 := by
+  intro e 
+  induction e
+
+theorem one_eq_two : 1 = 2 := by
+  let e := wrong 1
+  let h := vac_contra e 1
+  apply h
+  rfl
 
 /-!
 ```lean
@@ -124,47 +170,3 @@ gives the error message
 failed to compile partial definition 'wrong', failed to show that type is inhabited and non empty
 ```
 -/
--- partial def wrong(n: ℕ): Empty :=
---   wrong (n + 1)
-
-axiom wrong : ℕ → Empty  
-
-theorem vac_contra : ∀ e : Empty, ∀ n: ℕ,  
-  wrong n = e →  n = 2 := by
-  intro e 
-  cases e
-
-theorem one_eq_two : 1 = 2 := by
-  let e := wrong 1
-  let h := vac_contra e 1
-  apply h
-  rfl
-
-#eval hcf 18 12 -- 6
-
-#check Nat.pos_of_ne_zero
-#check Nat.sub_lt_of_pos_le
-
-/-!
-Lean has to allow partial definitions due to deep results of Church-Gödel-Turing-..., which say for example that we cannot prove that a Lean interpreter in Lean terminates.
--/
-
-def sum : ℕ → ℕ
-| 0 => 0
-| n + 1 => n + 1 + sum n
-
-theorem sum_formula (n: ℕ) :  sum n = (n * (n + 1) : ℚ) / 2  := by 
-  induction n with
-  | zero => rfl
-  | succ n ih => 
-    simp [sum]
-    linarith
-
-def sumAux (n: ℕ)(accum : ℕ) : ℕ :=
-  match n with
-  | 0 => accum
-  | n + 1 => sumAux n (accum + (n + 1))
-
-#eval sumAux 3 1
-
-  

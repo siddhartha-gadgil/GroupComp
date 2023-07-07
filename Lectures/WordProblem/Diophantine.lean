@@ -41,7 +41,7 @@ We construct the quotient group and show that the word problem is decidable.
 
 /-- If `a * x + b * y = c` has a solution, then `gcd a b` divides `c`.
 -/
-lemma eqn_solvable_iff_divides_gcd (a b c : ℤ) :
+theorem eqn_solvable_iff_divides_gcd (a b c : ℤ) :
     (∃ x : ℤ, ∃ y : ℤ,  a * x + b * y = c) ↔  ↑(Int.gcd a b) ∣ c := by
     sorry
 
