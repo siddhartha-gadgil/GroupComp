@@ -77,7 +77,9 @@ theorem smallest_le (l : List α) (hyp : l ≠ []) :
 
 -- #eval smallest [(3, 2), (4, 5), (7, 0)]
 
-#synth LE <| ℕ × ℕ 
+#eval decide  <| (2, 3) ≤ (3, 2) -- false
+#eval decide  <| (2, 3) ≤ (3, 3) -- true
+
 
 namespace Lexicographic
 
@@ -158,3 +160,5 @@ end Lexicographic
 open Lexicographic
 
 #eval smallest [(3, 2, 20), (4, 1, 5), (7, 1, 0), (3, 2, 10)] (by simp) -- (3, 2, 10)
+
+#eval decide  <| (2, 3) ≤ (3, 2) -- true
