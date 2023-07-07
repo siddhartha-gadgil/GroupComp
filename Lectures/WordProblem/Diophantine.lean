@@ -43,18 +43,44 @@ We construct the quotient group and show that the word problem is decidable.
 -/
 lemma eqn_solvable_iff_divides_gcd (a b c : ℤ) :
     (∃ x : ℤ, ∃ y : ℤ,  a * x + b * y = c) ↔  ↑(Int.gcd a b) ∣ c := by
-    sorry
+    apply Iff.intro
+    · intro ⟨x, y, h⟩
+      rw [← h]
+      apply dvd_add
+      · trans a
+        · apply Int.gcd_dvd_left  
+        · apply Int.dvd_mul_right
+      · trans b
+        · apply Int.gcd_dvd_right  
+        · apply Int.dvd_mul_right    
+    · intro h
+      let d := c / Int.gcd a b
+      let h' : Int.gcd a b * d = c := by 
+        apply Int.mul_ediv_cancel_of_emod_eq_zero
+        apply Int.emod_eq_zero_of_dvd
+        assumption
+      use d * (Int.gcdA a b), d * (Int.gcdB a b)
+      rw [← h', Int.gcd_eq_gcd_ab]
+      linarith
 
 
 
 def spanGroup(a b : ℤ) : AddSubgroup ℤ  where
   carrier := {z | ∃ x y : ℤ, a * x + b * y = z}
-  zero_mem' := by 
-    sorry
+  zero_mem' := by
+    use 0, 0
+    simp
   add_mem' := by
-    sorry
+    intro z₁ z₂ h₁ h₂
+    let ⟨x₁, y₁, eq₁⟩ := h₁
+    let ⟨x₂, y₂, eq₂⟩ := h₂
+    use x₁ + x₂, y₁ + y₂
+    linarith
   neg_mem' := by
-    sorry
+    intro z h
+    let ⟨x, y, eq⟩ := h
+    use -x, -y
+    linarith [eq]
 
 abbrev moduloSpan (a b : ℤ) := ℤ ⧸ (spanGroup a b)
 
@@ -67,4 +93,3 @@ instance wordProblemMod (a b n : ℤ) : Decidable (zeroModSpan a b n) := by
 
 
 #eval decide (zeroModSpan 2 3 5) 
-
