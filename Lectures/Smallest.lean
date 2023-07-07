@@ -137,9 +137,24 @@ scoped instance : LinearOrder (α × β) where
     · right
       simp [le_of_not_ge c, lt_of_not_ge c]
 
-  decidableLE := sorry
+  decidableLE := by
+    intro (a₁, b₁) (a₂, b₂)
+    by_cases c:a₁ ≤ a₂
+    · simp [c]
+      by_cases c':a₁ = a₂
+      · simp [c', le_total]
+        apply inferInstance
+      · apply isTrue
+        left
+        apply lt_of_le_of_ne c c'
+    · apply isFalse
+      simp [le_of_not_ge c, lt_of_not_ge c]
+      simp [c]
 
-#check le_antisymm
-#check le_total
+#eval smallest [(3, 2), (4, 5), (7, 0)] (by simp) -- (3, 2)
 
 end Lexicographic
+
+open Lexicographic
+
+#eval smallest [(3, 2, 20), (4, 1, 5), (7, 1, 0), (3, 2, 10)] (by simp) -- (3, 2, 10)
