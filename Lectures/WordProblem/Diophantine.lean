@@ -41,7 +41,7 @@ We construct the quotient group and show that the word problem is decidable.
 
 /-- If `a * x + b * y = c` has a solution, then `gcd a b` divides `c`.
 -/
-lemma eqn_solvable_iff_divides_gcd (a b c : ℤ) :
+theorem eqn_solvable_iff_divides_gcd (a b c : ℤ) :
     (∃ x : ℤ, ∃ y : ℤ,  a * x + b * y = c) ↔  ↑(Int.gcd a b) ∣ c := by
     apply Iff.intro
     · intro ⟨x, y, h⟩
@@ -69,7 +69,7 @@ def spanGroup(a b : ℤ) : AddSubgroup ℤ  where
   carrier := {z | ∃ x y : ℤ, a * x + b * y = z}
   zero_mem' := by
     use 0, 0
-    simp
+    simp only [mul_zero, add_zero]
   add_mem' := by
     intro z₁ z₂ h₁ h₂
     let ⟨x₁, y₁, eq₁⟩ := h₁
@@ -92,4 +92,6 @@ instance wordProblemMod (a b n : ℤ) : Decidable (zeroModSpan a b n) := by
   apply inferInstance
 
 
-#eval decide (zeroModSpan 2 3 5) 
+#eval decide (zeroModSpan 2 3 5) -- true
+  
+#eval decide (zeroModSpan 2 4 3) -- false
