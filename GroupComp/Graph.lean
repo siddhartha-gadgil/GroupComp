@@ -40,6 +40,8 @@ def EdgeBetween.bar (e : G.EdgeBetween v w) : G.EdgeBetween w v :=
   , target := by aesop
   }
 
+@[simp] theorem EdgeBetween.bar_def : e.bar.edge = G.bar e.edge := rfl
+
 @[simp] theorem EdgeBetween.bar_involution : e.bar.bar = e := by 
     ext; aesop (add norm simp [EdgeBetween.bar])
 
@@ -269,8 +271,7 @@ end PathClass
 
 open PathClass
 
-@[instance]
-def FundamentalGroupoid (G : Graph V E) : CategoryTheory.Groupoid V where
+instance FundamentalGroupoid (G : Graph V E) : CategoryTheory.Groupoid V where
   Hom := G.PathClass
   id := .id
   comp := .mul (G := G)
@@ -281,9 +282,13 @@ def FundamentalGroupoid (G : Graph V E) : CategoryTheory.Groupoid V where
   inv_comp := inv_mul
   comp_inv := mul_inv
 
-@[instance]
-def FundamentalGroup (G : Graph V E) (v : V) :=
+def LoopClass (G : Graph V E) (v : V) := @CategoryTheory.End V G.FundamentalGroupoid.toCategoryStruct v
+
+notation "π₁(" G ", " v ")" => LoopClass G v
+
+instance FundamentalGroup (G : Graph V E) (v : V) : Group π₁(G, v) :=
   @CategoryTheory.End.group _ G.FundamentalGroupoid v
+  
 
 def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
   ι := fun _ ↦ ()
