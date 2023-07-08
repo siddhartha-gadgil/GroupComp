@@ -383,9 +383,11 @@ instance wordProblem : DecidableEq (FreeGroup α) := by
 def a : FreeGroup (Fin 2) := mk [(0, false)]
 def b : FreeGroup (Fin 2) := mk [(1, false)]
 
-#eval decide (a = b⁻¹)
+#eval decide (a = b⁻¹) -- false
 #eval decide (a * b * b⁻¹ = a) -- true
 #eval decide (a * b * b⁻¹ * a⁻¹ = 1) -- true
 
 example : a * b * b⁻¹ * a⁻¹ = 1 := by decide
 example : a * b * a⁻¹ * b⁻¹ ≠ 1 := by decide 
+
+#eval reducedWord <| a * b * b⁻¹ * a⁻¹ * a
