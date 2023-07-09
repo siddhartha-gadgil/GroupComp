@@ -293,72 +293,6 @@ class ConnectedGraph (G: Graph V E) where
 def getPath (G: Graph V E) [ConnectedGraph G] (v w: V) : G.EdgePath v w :=
   ConnectedGraph.path v w
 
-@[ext] structure Morphism (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) where
-  vertexMap : V₁ → V₂
-  edgeMap : E₁ → E₂
-  commutes : ∀ (e : E₁),  vertexMap (G₁.ι e) = G₂.ι (edgeMap e) 
-  bar_commutes : ∀ (e : E₁), edgeMap (G₁.bar e) = G₂.bar (edgeMap e)
-
-theorem morphism_init_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
-    (f: Morphism G₁ G₂) : 
-      ∀ (e : E₁), f.vertexMap (G₁.ι e) = G₂.ι (f.edgeMap e)  := by
-  intro e
-  exact f.commutes e
-
-theorem morphism_bar_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
-    (f: Morphism G₁ G₂) : 
-      ∀ (e : E₁), f.edgeMap (G₁.bar e) = G₂.bar (f.edgeMap e) := by
-  intro e
-  exact f.bar_commutes e
-
-theorem morphism_term_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
-    (f: Morphism G₁ G₂) : 
-      ∀ (e : E₁), G₂.τ (f.edgeMap e) = f.vertexMap (G₁.τ e) := by
-  intro e
-  rw [Graph.τ, Graph.τ, ←morphism_bar_commutes, ←morphism_init_commutes]
-
-
-
-structure CoveringMap (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) 
-      extends Morphism G₁ G₂ where
-  localSection : (v₁ : V₁) → (e :E₂) → 
-      vertexMap v₁ = G₂.ι e   → E₁
-  section_init : (v₁ : V₁) → (e₂ : E₂) → 
-    (h : vertexMap v₁ = G₂.ι e₂) → 
-    G₁.ι (localSection v₁ e₂ h) = v₁ 
-  left_inverse : (v₁ : V₁) → (e₂ :E₂) → 
-    (h : vertexMap v₁ = G₂.ι e₂) → 
-    edgeMap (localSection v₁ e₂ h) = e₂
-  right_inverse : (v₁ : V₁) → (e₁ : E₁) →
-    (h : v₁ = G₁.ι e₁) →  
-    localSection v₁ (edgeMap e₁) (by rw [← commutes, h]) = 
-      e₁ 
-
-/--
-Path lifting function. 
--/
-def pathLift' (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
-    (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
-    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) : 
-      {pair : Σ w₁ : V₁, EdgePath G₁ v₁ w₁ // 
-        p.vertexMap pair.fst = w₂} := by
-    match e with
-    | nil _ => exact ⟨⟨v₁, nil _⟩, h⟩
-    | cons e₂ b₂ =>
-      rename_i w₂' w₂''
-      let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.source]) 
-        -- lift of the edge
-      let v₁' := G₁.τ e₁ -- the final vertex of the lift
-      have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init
-      have term_vert : p.vertexMap (G₁.τ e₁) = w₂'' := by
-        rw [← e₂.target]
-        rw [←morphism_term_commutes ]
-        congr
-        apply p.left_inverse
-      let ⟨⟨w₁, tail⟩, pf⟩ := pathLift' G₁ G₂ p v₁' w₂'' w₂ term_vert b₂
-      let edge₁ : EdgeBetween G₁ v₁ v₁' :=
-        ⟨e₁, init_vert, rfl⟩
-      exact ⟨⟨w₁, EdgePath.cons edge₁ tail⟩, pf⟩
 
 
 def EdgePath.toEdgeList {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
@@ -373,6 +307,33 @@ theorem nil_edgeList {G : Graph V E} {v : V}  :
 theorem cons_edgeList {G: Graph V E} {v w u: V} (e : EdgeBetween G v w) 
     (p : EdgePath G w u) : 
   (cons e p).toEdgeList = e.edge :: p.toEdgeList := rfl
+
+theorem edgeList_append {G : Graph V E}{v w u : V} (p₁ : EdgePath G v w) (p₂ : EdgePath G w u) :
+    (p₁ ++ p₂).toEdgeList = p₁.toEdgeList ++ p₂.toEdgeList := by
+    induction p₁ with
+    | nil v => 
+      simp [nil_edgeList]
+    | cons e p' ih =>
+      simp [cons_edgeList]
+      apply ih
+
+theorem edgeList_concat {G : Graph V E}{v w u : V} (p : EdgePath G v w) (e : EdgeBetween G w u) :
+    (concat p e).toEdgeList = List.concat p.toEdgeList e.edge := by
+    induction p with
+    | nil v => 
+      simp [nil_edgeList]
+      rw [concat, cons_edgeList, nil_edgeList]
+    | cons e p' ih =>
+      simp [cons_edgeList, ih]
+
+theorem edgeList_reverse {G : Graph V E}{v w : V} (p : EdgePath G v w):
+  p.toEdgeList.reverse = p.reverse.toEdgeList.map (G.bar) := by
+  induction p with
+  | nil _ => 
+    simp [nil_edgeList]
+  | cons e p' ih =>
+    simp [cons_edgeList, reverse_cons, edgeList_concat]
+    simp [ih, EdgeBetween.bar]
 
 
 theorem cons_eq {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w) 
@@ -463,6 +424,73 @@ theorem term_eq_of_edgeList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
       simp [cons_edgeList] at h
       apply term_eq_of_edgeList_eq p₁' p₂' h.right
       rw [←e₂.target, ←e.target, h.left]
+
+@[ext] structure Morphism (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) where
+  vertexMap : V₁ → V₂
+  edgeMap : E₁ → E₂
+  commutes : ∀ (e : E₁),  vertexMap (G₁.ι e) = G₂.ι (edgeMap e) 
+  bar_commutes : ∀ (e : E₁), edgeMap (G₁.bar e) = G₂.bar (edgeMap e)
+
+theorem morphism_init_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+    (f: Morphism G₁ G₂) : 
+      ∀ (e : E₁), f.vertexMap (G₁.ι e) = G₂.ι (f.edgeMap e)  := by
+  intro e
+  exact f.commutes e
+
+theorem morphism_bar_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+    (f: Morphism G₁ G₂) : 
+      ∀ (e : E₁), f.edgeMap (G₁.bar e) = G₂.bar (f.edgeMap e) := by
+  intro e
+  exact f.bar_commutes e
+
+theorem morphism_term_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+    (f: Morphism G₁ G₂) : 
+      ∀ (e : E₁), G₂.τ (f.edgeMap e) = f.vertexMap (G₁.τ e) := by
+  intro e
+  rw [Graph.τ, Graph.τ, ←morphism_bar_commutes, ←morphism_init_commutes]
+
+
+
+structure CoveringMap (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) 
+      extends Morphism G₁ G₂ where
+  localSection : (v₁ : V₁) → (e :E₂) → 
+      vertexMap v₁ = G₂.ι e   → E₁
+  section_init : (v₁ : V₁) → (e₂ : E₂) → 
+    (h : vertexMap v₁ = G₂.ι e₂) → 
+    G₁.ι (localSection v₁ e₂ h) = v₁ 
+  left_inverse : (v₁ : V₁) → (e₂ :E₂) → 
+    (h : vertexMap v₁ = G₂.ι e₂) → 
+    edgeMap (localSection v₁ e₂ h) = e₂
+  right_inverse : (v₁ : V₁) → (e₁ : E₁) →
+    (h : v₁ = G₁.ι e₁) →  
+    localSection v₁ (edgeMap e₁) (by rw [← commutes, h]) = 
+      e₁ 
+
+/--
+Path lifting function. 
+-/
+def pathLift' (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
+    (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
+    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) : 
+      {pair : Σ w₁ : V₁, EdgePath G₁ v₁ w₁ // 
+        p.vertexMap pair.fst = w₂} := by
+    match e with
+    | nil _ => exact ⟨⟨v₁, nil _⟩, h⟩
+    | cons e₂ b₂ =>
+      rename_i w₂' w₂''
+      let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.source]) 
+        -- lift of the edge
+      let v₁' := G₁.τ e₁ -- the final vertex of the lift
+      have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init
+      have term_vert : p.vertexMap (G₁.τ e₁) = w₂'' := by
+        rw [← e₂.target]
+        rw [←morphism_term_commutes ]
+        congr
+        apply p.left_inverse
+      let ⟨⟨w₁, tail⟩, pf⟩ := pathLift' G₁ G₂ p v₁' w₂'' w₂ term_vert b₂
+      let edge₁ : EdgeBetween G₁ v₁ v₁' :=
+        ⟨e₁, init_vert, rfl⟩
+      exact ⟨⟨w₁, EdgePath.cons edge₁ tail⟩, pf⟩
 
 
 @[ext]
@@ -570,31 +598,5 @@ theorem lifts_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         · rw [← edg₁.target, ← edg₂.target, edg_eq]
         · exact h₂
 
-theorem edgeList_append {G : Graph V E}{v w u : V} (p₁ : EdgePath G v w) (p₂ : EdgePath G w u) :
-    (p₁ ++ p₂).toEdgeList = p₁.toEdgeList ++ p₂.toEdgeList := by
-    induction p₁ with
-    | nil v => 
-      simp [nil_edgeList]
-    | cons e p' ih =>
-      simp [cons_edgeList]
-      apply ih
-
-theorem edgeList_concat {G : Graph V E}{v w u : V} (p : EdgePath G v w) (e : EdgeBetween G w u) :
-    (concat p e).toEdgeList = List.concat p.toEdgeList e.edge := by
-    induction p with
-    | nil v => 
-      simp [nil_edgeList]
-      rw [concat, cons_edgeList, nil_edgeList]
-    | cons e p' ih =>
-      simp [cons_edgeList, ih]
-
-theorem edgeList_reverse {G : Graph V E}{v w : V} (p : EdgePath G v w):
-  p.toEdgeList.reverse = p.reverse.toEdgeList.map (G.bar) := by
-  induction p with
-  | nil _ => 
-    simp [nil_edgeList]
-  | cons e p' ih =>
-    simp [cons_edgeList, reverse_cons, edgeList_concat]
-    simp [ih, EdgeBetween.bar]
 
 end Graph
