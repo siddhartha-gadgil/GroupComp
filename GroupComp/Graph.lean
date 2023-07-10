@@ -1,6 +1,8 @@
 import Mathlib.Data.Bool.Basic
 import Mathlib.CategoryTheory.Groupoid
 import Mathlib.Algebra.Group.Basic
+import Mathlib.CategoryTheory.Endomorphism
+import Mathlib
 
 universe u v
 
@@ -200,101 +202,6 @@ theorem reverse_step {v w : V} (a₁ a₂ : G.EdgePath v w) (rel : Reduction a�
   have := reverse_left_inverse p.reverse
   aesop
 
-namespace PathClass
-
-@[aesop norm unfold] 
-protected def id {G : Graph V E} (v : V) : G.PathClass v v :=
-  [[.nil v]]
-
-def mul {v w u : V} : 
-    G.PathClass v w → G.PathClass w u → G.PathClass v u := by
-  apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]]) <;>
-    aesop (add safe apply [left_append_step, right_append_step])
-
-@[aesop norm unfold] def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
-  Quot.lift ([[·.reverse]]) reverse_step
-
-@[simp] theorem mul_paths (p : G.EdgePath u v) (p' : G.EdgePath v w) :
-  mul [[p]] [[p']] = [[p ++ p']] := rfl
-
-@[simp] theorem id_mul  {u v : V} : ∀ p : G.PathClass u v, 
-  mul (.id u) p = p := by
-    apply Quot.ind; aesop
-
-@[simp] theorem mul_id  {u v : V} : ∀ p : G.PathClass u v,
-  mul p (.id v) = p := by 
-    apply Quot.ind; aesop
-
-@[simp] theorem inv_mul {u v : V} : ∀ p : G.PathClass u v,
-    mul p.inv p = .id v := by
-  apply Quot.ind; aesop
-
-@[simp] theorem mul_inv {u v : V} : ∀ p : G.PathClass u v,
-    mul p p.inv = .id u := by
-  apply Quot.ind; aesop
-
-theorem mul_assoc { v w u u' :  V}:
-  (p: PathClass G v w) → (q: PathClass G w u) → (r: PathClass G u u') →  
-    mul (mul p q) r = mul p (mul q r) := by
-    apply Quot.ind
-    intro a
-    apply Quot.ind
-    intro b
-    apply Quot.ind
-    intro c
-    simp [append_assoc]
-
-theorem append_mul {v w u : V} (p : EdgePath G v w) (q : EdgePath G w u) : 
-    [[p ++ q]] = mul [[ p ]] [[ q]] := by rfl
-
-theorem cons_natural{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
-   [[cons a  b₁]] = [[cons a b₂]] := by
-  intro rel
-  rw [show cons a b₁ = cons a (nil _) ++ b₁ by rfl, 
-      show cons a b₂ = cons a (nil _) ++ b₂ by rfl,
-      append_mul, append_mul, rel]
-
-theorem concat_natural {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgeBetween G w u) : [[a₁]] = [[a₂]] → 
-   [[concat a₁ b]] = [[concat a₂ b]] := by
-  intro rel
-  have: concat a₁  b = a₁ ++ (concat (nil _) b) := by 
-    rw [append_concat, append_nil]
-  rw [this]
-  have: concat a₂  b = a₂ ++ (concat (nil _) b) := by 
-    rw [append_concat, append_nil]
-  rw [this, append_mul, append_mul, rel]
-
-end PathClass
-
-open PathClass
-
-@[instance]
-def FundamentalGroupoid : CategoryTheory.Groupoid V where
-  Hom := G.PathClass
-  id := .id
-  comp := .mul (G := G)
-  id_comp := id_mul
-  comp_id := mul_id
-  assoc := mul_assoc
-  inv := inv
-  inv_comp := inv_mul
-  comp_inv := mul_inv
-
-def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
-  ι := fun _ ↦ ()
-  bar := fun (e, b) ↦ (e, !b)
-  bar_involution := by aesop
-  bar_no_fp := by aesop
-}
-
-class ConnectedGraph (G: Graph V E) where
-  path : (v w: V) → G.EdgePath v w
-
-def getPath (G: Graph V E) [ConnectedGraph G] (v w: V) : G.EdgePath v w :=
-  ConnectedGraph.path v w
-
-
-
 def EdgePath.toEdgeList {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
   List E := 
   match p with
@@ -424,6 +331,105 @@ theorem term_eq_of_edgeList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
       simp [cons_edgeList] at h
       apply term_eq_of_edgeList_eq p₁' p₂' h.right
       rw [←e₂.target, ←e.target, h.left]
+
+namespace PathClass
+
+@[aesop norm unfold] 
+protected def id {G : Graph V E} (v : V) : G.PathClass v v :=
+  [[.nil v]]
+
+def mul {v w u : V} : 
+    G.PathClass v w → G.PathClass w u → G.PathClass v u := by
+  apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]]) <;>
+    aesop (add safe apply [left_append_step, right_append_step])
+
+@[aesop norm unfold] def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
+  Quot.lift ([[·.reverse]]) reverse_step
+
+@[simp] theorem mul_paths (p : G.EdgePath u v) (p' : G.EdgePath v w) :
+  mul [[p]] [[p']] = [[p ++ p']] := rfl
+
+@[simp] theorem id_mul  {u v : V} : ∀ p : G.PathClass u v, 
+  mul (.id u) p = p := by
+    apply Quot.ind; aesop
+
+@[simp] theorem mul_id  {u v : V} : ∀ p : G.PathClass u v,
+  mul p (.id v) = p := by 
+    apply Quot.ind; aesop
+
+@[simp] theorem inv_mul {u v : V} : ∀ p : G.PathClass u v,
+    mul p.inv p = .id v := by
+  apply Quot.ind; aesop
+
+@[simp] theorem mul_inv {u v : V} : ∀ p : G.PathClass u v,
+    mul p p.inv = .id u := by
+  apply Quot.ind; aesop
+
+theorem mul_assoc { v w u u' :  V}:
+  (p: PathClass G v w) → (q: PathClass G w u) → (r: PathClass G u u') →  
+    mul (mul p q) r = mul p (mul q r) := by
+    apply Quot.ind
+    intro a
+    apply Quot.ind
+    intro b
+    apply Quot.ind
+    intro c
+    simp [append_assoc]
+
+theorem append_mul {v w u : V} (p : EdgePath G v w) (q : EdgePath G w u) : 
+    [[p ++ q]] = mul [[ p ]] [[ q]] := by rfl
+
+theorem cons_natural{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
+   [[cons a  b₁]] = [[cons a b₂]] := by
+  intro rel
+  rw [show cons a b₁ = cons a (nil _) ++ b₁ by rfl, 
+      show cons a b₂ = cons a (nil _) ++ b₂ by rfl,
+      append_mul, append_mul, rel]
+
+theorem concat_natural {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgeBetween G w u) : [[a₁]] = [[a₂]] → 
+   [[concat a₁ b]] = [[concat a₂ b]] := by
+  intro rel
+  have: concat a₁  b = a₁ ++ (concat (nil _) b) := by 
+    rw [append_concat, append_nil]
+  rw [this]
+  have: concat a₂  b = a₂ ++ (concat (nil _) b) := by 
+    rw [append_concat, append_nil]
+  rw [this, append_mul, append_mul, rel]
+
+end PathClass
+
+open PathClass
+
+@[instance]
+def FundamentalGroupoid  (G: Graph V E) : CategoryTheory.Groupoid V where
+  Hom := G.PathClass
+  id := .id
+  comp := .mul (G := G)
+  id_comp := id_mul
+  comp_id := mul_id
+  assoc := mul_assoc
+  inv := inv
+  inv_comp := inv_mul
+  comp_inv := mul_inv
+
+def π₁ (G: Graph V E) (v : V) := G.PathClass v v
+
+instance : Group (π₁ G v) where
+  mul := mul
+  mul_assoc := mul_assoc
+  one := .id v
+  one_mul := id_mul
+  mul_one := mul_id
+  inv := inv
+  mul_left_inv := inv_mul
+
+
+def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
+  ι := fun _ ↦ ()
+  bar := fun (e, b) ↦ (e, !b)
+  bar_involution := by aesop
+  bar_no_fp := by aesop
+}
 
 
 
