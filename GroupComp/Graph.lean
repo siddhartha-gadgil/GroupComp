@@ -282,13 +282,17 @@ instance FundamentalGroupoid (G : Graph V E) : CategoryTheory.Groupoid V where
   inv_comp := inv_mul
   comp_inv := mul_inv
 
-def LoopClass (G : Graph V E) (v : V) := @CategoryTheory.End V G.FundamentalGroupoid.toCategoryStruct v
+#check CategoryTheory.Category
 
-notation "π₁(" G ", " v ")" => LoopClass G v
+#check (G.FundamentalGroupoid.opposite).toCategoryStruct
 
-instance FundamentalGroup (G : Graph V E) (v : V) : Group π₁(G, v) :=
-  @CategoryTheory.End.group _ G.FundamentalGroupoid v
-  
+#check Group
+
+abbrev π₁ (G : Graph V E) (v : V) := @CategoryTheory.End V G.FundamentalGroupoid.toCategoryStruct v
+
+instance FundamentalGroup (G : Graph V E) (v : V) : Group (π₁ G v) :=
+  -- Group.op <| @CategoryTheory.End.group _ G.FundamentalGroupoid v
+  sorry 
 
 def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
   ι := fun _ ↦ ()
