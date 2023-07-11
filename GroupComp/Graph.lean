@@ -57,6 +57,8 @@ inductive EdgePath (G : Graph V E) : V → V → Type _ where
   | nil (v) : G.EdgePath v v
   | cons {v w u} : G.EdgeBetween v w → G.EdgePath w u → G.EdgePath v u
 
+abbrev singletonPath (G : Graph V E) (e : E) := EdgePath.cons (EdgeBetween.ofEdge e) (.nil <| G.τ e)
+
 namespace EdgePath
 
 def length {v w : V} : G.EdgePath v w → ℕ
@@ -95,7 +97,11 @@ def append { v w u : V}
   | nil .(v) => q
   | cons  e' p'  => 
       let tail := append p' q
-      cons e' tail 
+      cons e' tail
+
+def fold (φ : E → A) (comp : A → A → A) (init : A) {v w : V} : G.EdgePath v w → A
+  | .nil _ => init
+  | .cons e p => comp (φ e.edge) (fold φ comp init p)
 
 instance  G.EdgePath {v w u : V} {G : Graph V E} : 
   HAppend (G.EdgePath v w) (G.EdgePath w u) (G.EdgePath v u) := 

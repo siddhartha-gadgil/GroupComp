@@ -18,10 +18,7 @@ def labelEdge (e : Γ.EdgeBetween u v) : G := 𝓖.label e.edge
 @[simp] theorem labelEdge_bar (e : Γ.EdgeBetween u v) : 𝓖.labelEdge e.bar = (𝓖.labelEdge e)⁻¹ := by simp [labelEdge]
 
 
-def pathLabel {u v : V} : Γ.EdgePath u v → G
-  | .nil _ => 1
-  | .cons e p => (𝓖.labelEdge e) * (pathLabel p)
- 
+def pathLabel {u v : V} : Γ.EdgePath u v → G := Graph.EdgePath.fold 𝓖.label Mul.mul (1 : G) 
 
 @[simp] theorem pathLabel_nil {v : V} : 𝓖.pathLabel (.nil v) = (1 : G) := rfl
 
