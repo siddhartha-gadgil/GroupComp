@@ -257,4 +257,23 @@ theorem pathLift_reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         (pathLift p v₁ v₂ w₂ h e).reverse := by
         apply unique_Pathlift
 
+def PathLift.cons_bar_cons {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂  : V₂}
+    {h : p.vertexMap v₁ = v₂}{e: EdgeBetween G₂ v₂ w₂}{e': EdgePath G₂ v₂ w₂}(lift' : PathLift p v₁ v₂ w₂ h e') : 
+      PathLift p v₁ v₂ w₂ h (cons e (cons e.bar e')) := 
+      let edgeLift := p.localSection v₁ e.edge (by rw [h, e.source])
+      let edgeBetween : EdgeBetween G₁ v₁ (G₁.τ edgeLift) := 
+        { edge := edgeLift, 
+          source := by rw [p.section_init] 
+          target := rfl, 
+          }
+      {τ := lift'.τ, 
+        path := cons edgeBetween (cons edgeBetween.bar lift'.path), 
+        lift_term := lift'.lift_term, 
+        list_commutes := by 
+          simp [cons_edgeList, p.left_inverse, EdgeBetween.bar]
+          apply And.intro
+          · rw [p.bar_commutes, p.left_inverse]
+          · rw [lift'.list_commutes]}
+
 end Graph
