@@ -77,31 +77,6 @@ theorem right_inverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
           CoveringMap.right_inverse v₁ e₁ h
 
 end Morphism
-/--
-Path lifting function. 
--/
-def pathLift' (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
-    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
-    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) : 
-      {pair : Σ w₁ : V₁, EdgePath G₁ v₁ w₁ // 
-        p.vertexMap pair.fst = w₂} := by
-    match e with
-    | nil _ => exact ⟨⟨v₁, nil _⟩, h⟩
-    | cons e₂ b₂ =>
-      rename_i w₂' w₂''
-      let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.source]) 
-        -- lift of the edge
-      let v₁' := G₁.τ e₁ -- the final vertex of the lift
-      have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init
-      have term_vert : p.vertexMap (G₁.τ e₁) = w₂'' := by
-        rw [← e₂.target]
-        rw [←morphism_term_commutes ]
-        congr
-        apply p.left_inverse
-      let ⟨⟨w₁, tail⟩, pf⟩ := pathLift' G₁ G₂ p v₁' w₂'' w₂ term_vert b₂
-      let edge₁ : EdgeBetween G₁ v₁ v₁' :=
-        ⟨e₁, init_vert, rfl⟩
-      exact ⟨⟨w₁, EdgePath.cons edge₁ tail⟩, pf⟩
 
 @[ext]
 structure PathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
@@ -109,7 +84,7 @@ structure PathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) where
   τ : V₁ 
   path: EdgePath G₁ v₁ τ
-  h' : p.vertexMap τ = w₂
+  lift_term : p.vertexMap τ = w₂
   list_commutes : path.toEdgeList.map p.edgeMap = e.toEdgeList
 
 def pathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
@@ -172,7 +147,7 @@ theorem pathLift_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) 
     (lift : PathLift p v₁ v₂ w₂ h e) :
-    p.pathMap v₁ lift.τ lift.path v₂ w₂ h lift.h' = e := by
+    p.pathMap v₁ lift.τ lift.path v₂ w₂ h lift.lift_term = e := by
       apply eq_of_edgeList_eq
       rw [pathMap_toList, lift.list_commutes]      
 
@@ -234,5 +209,27 @@ theorem unique_Pathlift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         match path₁, h₁, lc₁, path₂, h₂, lc₂, peq with
         | _, _, _, _, _, _, rfl => rfl
           
+
+def PathLift.append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂ u₂ : V₂}
+    {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂}{e': EdgePath G₂ w₂ u₂}
+    (lift : PathLift p v₁ v₂ w₂ h e) 
+    (lift' : PathLift p lift.τ w₂ u₂ lift.lift_term e') : 
+      PathLift p v₁ v₂ u₂ h (e ++ e') := 
+      {τ := lift'.τ, 
+        path := lift.path ++ lift'.path, 
+        lift_term := lift'.lift_term, 
+        list_commutes := by 
+          simp [edgeList_append]
+          rw [lift.list_commutes, lift'.list_commutes]}
+          
+theorem Pathlift.lift_append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ u₂ : V₂}
+    {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂}{e': EdgePath G₂ w₂ u₂}: 
+      pathLift p v₁ v₂ u₂ h (e ++ e') =
+        (pathLift p v₁ v₂ w₂ h e).append 
+          (pathLift p (pathLift p v₁ v₂ w₂ h e).τ w₂ u₂ 
+            (pathLift p v₁ v₂ w₂ h e).lift_term e') := by
+        apply unique_Pathlift 
 
 end Graph
