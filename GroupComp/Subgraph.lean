@@ -13,7 +13,7 @@ namespace Subgraph
 
 variable {V E : Type _} {G : Graph V E} (H : Subgraph G)
 
--- attribute [aesop safe apply] edges_bar edges_init
+attribute [aesop safe apply] edges_bar edges_init
 
 theorem edges_term : ∀ e ∈ H.edges, G.τ e ∈ H.verts := by
   intro e he 
@@ -37,6 +37,23 @@ def contains {u v : V} : G.EdgePath u v → Prop
   | .nil x => x ∈ H.verts
   | .cons e p => e.edge ∈ H.edges ∧ contains p
 
+@[simp] theorem contains_nil : H.contains (.nil v) ↔ v ∈ H.verts := Iff.rfl 
+
+@[simp] theorem contains_cons : H.contains (.cons e p) ↔ e.edge ∈ H.edges ∧ H.contains p := Iff.rfl
+
+@[aesop safe apply] theorem contains_head (p : G.EdgePath u v) : H.contains p → u ∈ H.verts := by
+  induction p with
+  | nil => simp
+  | cons e _ _ =>
+    simp_rw [← e.source]
+    aesop
+
+@[aesop safe apply] theorem contains_tail (p : G.EdgePath u v) : H.contains p → v ∈ H.verts := by
+  induction p <;> aesop 
+
+@[simp] theorem contains_append {u v w : V} (p : G.EdgePath u v) (p' : G.EdgePath v w) : H.contains (p ++ p') ↔ H.contains p ∧ H.contains p' := by
+  induction p <;> aesop    
+
 instance : PartialOrder (Subgraph G) where
   le := sorry
   lt := sorry
@@ -50,16 +67,28 @@ end Subgraph
 structure PreconnectedSubgraph (G : Graph V E) extends Subgraph G where
   path : (u v : verts) → {p : G.EdgePath ↑u ↑v // toSubgraph.contains p}
 
-structure Subtree (G : Graph V E) extends PreconnectedSubgraph G where
-  path_unique : ∀ u v : verts, ∀ p : G.EdgePath ↑u ↑v, 
-    [[p]] = [[path u v]]
+structure PointedSubgraph {V E : Type _} (G : Graph V E) extends Subgraph G where
+  basePoint : verts
 
+structure Subtree (G : Graph V E) extends PreconnectedSubgraph G where
+  path_unique : ∀ u v : verts, ∀ p : G.EdgePath u v, toSubgraph.contains p →
+    [[p]] = [[(path u v).val]]
+
+@[simp] theorem PreconnectedSubgraph.contains_path (H : PreconnectedSubgraph G) (u v : H.verts) : H.contains (H.path u v).val := 
+  (H.path u v).property
+
+attribute [aesop safe apply] Subtree.path_unique
+
+open Graph.PathClass in
 theorem Subtree.pathBetween_inv (Γ : Subtree G) (u v : Γ.verts) : 
-    G.FundamentalGroupoid.comp [[(Γ.path u v).val]] [[(Γ.path v u).val]] = G.FundamentalGroupoid.id _ := by
-  show [[_ ++ _]] = [[_]]
-  trans
+    mul [[(Γ.path u v).val]] [[(Γ.path v u).val]] = .id _ := by
+  rw [Graph.PathClass.mul_paths]
+  trans ([[Γ.path u u]])
   · apply Γ.path_unique
-  · symm; apply Γ.path_unique
+    simp only [Subgraph.contains_append, PreconnectedSubgraph.contains_path, and_self]
+  · symm
+    apply Subtree.path_unique
+    simp only [Subgraph.contains_nil, Subtype.coe_prop]
 
 structure Graph.hom {V E V' E' : Type _} (G : Graph V E) (G' : Graph V' E') where
   vertexMap : V → V'
@@ -100,7 +129,7 @@ def pathMap_append {u v w : V} (p : G.EdgePath u v) (p' : G.EdgePath v w) :
       congr
       apply ih
 
-instance : @CategoryTheory.Functor V G.FundamentalGroupoid.toCategory V' G'.FundamentalGroupoid.toCategory := sorry
+-- instance : @CategoryTheory.Functor V G.FundamentalGroupoid.toCategory V' G'.FundamentalGroupoid.toCategory := sorry
   
 end Graph.hom
 
@@ -113,20 +142,65 @@ def SpanningSubgraph.coe {V E : Type _} {G : Graph V E} (H : SpanningSubgraph G)
   let H' := H.spanning ▸ H.toSubgraph.coe
   { H' with ι := Subtype.val ∘ H'.ι }
 
-structure SpanningSubtree (G : Graph V E) extends SpanningSubgraph G, Subtree G
+structure SpanningSubtree (G : Graph V E) extends SpanningSubgraph G, Subtree G, PointedSubgraph G
 
 namespace SpanningSubtree
 
 variable {V E : Type _} {G : Graph V E} (Γ : SpanningSubtree G)
 
+def base : V := Γ.basePoint.val
+
 def coe : Graph V Γ.edges := Γ.toSpanningSubgraph.coe
 
-def pathBetween (u v : V) := Γ.toSubtree.path ⟨u, by simp⟩ ⟨v, by simp⟩
+abbrev vertex_coe (v : V) : Γ.verts := ⟨v, by simp⟩
 
-def surroundEdge {u v : V} (e : G.EdgeBetween u v) (base : V) := 
-  (Γ.pathBetween base u).val ++ Graph.EdgePath.cons e (Γ.pathBetween v base).val
+open CategoryTheory
 
-def surroundPath {u v : V} (p : G.EdgePath u v) (base : V) :=
-  (Γ.pathBetween base u).val ++ p ++ (Γ.pathBetween v base).val
+#check Category
+
+def pathClassBetween (u v : V) : u ⟶ v := [[(Γ.toSubtree.path (Γ.vertex_coe u) (Γ.vertex_coe v)).val]]
+
+@[simp] theorem contains_path {u v : V} : Γ.contains (Γ.path (Γ.vertex_coe u) (Γ.vertex_coe v)).val := 
+  Γ.toSubtree.toPreconnectedSubgraph.contains_path (Γ.vertex_coe u) (Γ.vertex_coe v)
+
+notation u " ⤳[" Γ "] " v  => pathClassBetween Γ u v 
+
+def surround {u v : V} (p : u ⟶ v) : Γ.base ⟶ Γ.base :=
+  (Γ.base ⤳[Γ] u) ≫ p ≫ (v ⤳[Γ] Γ.base)
+
+def surroundEdge (e : E) := Γ.surround [[G.singletonPath e]]
+
+@[simp] theorem tree_path_id {u : V} : (u ⤳[Γ] u) = 𝟙 u :=
+  Eq.symm <| Γ.path_unique (Γ.vertex_coe u) (Γ.vertex_coe u) (.nil u) (by simp)
+
+@[simp] theorem tree_path_comp {u v w : V} : (u ⤳[Γ] v) ≫ (v ⤳[Γ] w) = (u ⤳[Γ] w) := by
+  apply Γ.path_unique (Γ.vertex_coe u) (Γ.vertex_coe w) 
+  simp
+
+@[simp] theorem tree_path_comp_right {u v w x : V} (p : w ⟶ x) :
+    (u ⤳[Γ] v) ≫ (v ⤳[Γ] w) ≫ p = (u ⤳[Γ] w) ≫ p := by
+  rw [← Category.assoc, tree_path_comp]
+
+attribute [-simp] Graph.PathClass.comp_mul -- TODO ensure that this is removed in the source file
+
+theorem opp_path_eq_inv {u v : V} : (u ⤳[Γ] v) = inv (v ⤳[Γ] u) := by
+  rw [← hom_comp_eq_id]
+  trans (v ⤳[Γ] v)
+  <;> simp
+
+@[simp] theorem surround_append {u v w : V} (p : u ⟶ v) (q : v ⟶ w) : 
+    Γ.surround p ≫ Γ.surround q = Γ.surround (p ≫ q) := by
+  simp [surround]
+
+@[simp] theorem surround_loop (p : Γ.base ⟶ Γ.base) : Γ.surround p = p := by
+  simp [surround]  
+
+def surroundByEdges {u v : V} : G.EdgePath u v → G.π₁ Γ.base := 
+  Graph.EdgePath.fold Γ.surroundEdge CategoryStruct.comp (1 : G.π₁ Γ.base) 
+
+-- theorem surround_eq {u v : V} (p : u ⟶ v) : Γ.surround p = Γ.surroundByEdges p := by
+--   induction p with
+--   | nil _ => _
+--   | cons e p ih => _
 
 end SpanningSubtree
