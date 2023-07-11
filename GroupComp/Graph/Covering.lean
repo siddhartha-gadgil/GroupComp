@@ -232,4 +232,21 @@ theorem Pathlift.lift_append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
             (pathLift p v₁ v₂ w₂ h e).lift_term e') := by
         apply unique_Pathlift 
 
+def Pathlift.reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ : V₂}
+    {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂} 
+    (lift : PathLift p v₁ v₂ w₂ h e) : 
+      PathLift p lift.τ w₂ v₂ lift.lift_term e.reverse := 
+      {τ := v₁, 
+        path := lift.path.reverse, 
+        lift_term := h, 
+        list_commutes := by 
+          simp [edgeList_reverse]
+          rw [← lift.list_commutes]
+          simp [List.map_reverse]
+          congr
+          funext edge
+          show p.edgeMap (G₁.bar edge) = G₂.bar (p.edgeMap edge)
+          rw [morphism_bar_commutes]}
+
 end Graph

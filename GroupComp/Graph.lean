@@ -234,6 +234,15 @@ theorem edgeList_concat {G : Graph V E}{v w u : V} (p : EdgePath G v w) (e : Edg
       simp [cons_edgeList, ih]
 
 theorem edgeList_reverse {G : Graph V E}{v w : V} (p : EdgePath G v w):
+  p.reverse.toEdgeList  = p.toEdgeList.reverse.map (G.bar) := by
+  induction p with
+  | nil _ => 
+    simp [nil_edgeList]
+  | cons e p' ih =>
+    simp [cons_edgeList, reverse_cons, edgeList_concat]
+    simp [ih, EdgeBetween.bar]
+
+theorem edgeList_reverse' {G : Graph V E}{v w : V} (p : EdgePath G v w):
   p.toEdgeList.reverse = p.reverse.toEdgeList.map (G.bar) := by
   induction p with
   | nil _ => 
