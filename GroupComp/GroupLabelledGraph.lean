@@ -1,16 +1,16 @@
 import GroupComp.Graph
 import Mathlib.GroupTheory.IsFreeGroup
 
-@[ext] structure GraphLabelledGroup {V E : Type _} (Γ : Graph V E) (G : Type _) [Group G] where
+@[ext] structure GroupLabelledGraph {V E : Type _} (Γ : Graph V E) (G : Type _) [Group G] where
   label : E → G
   label_bar : ∀ e : E, label (Γ.bar e) = (label e)⁻¹
 
 
-namespace GraphLabelledGroup
+namespace GroupLabelledGraph
 
 attribute [simp] label_bar
 
-variable {V E G : Type _} {Γ : Graph V E} [Group G] {u v w : V} {g h : G} (𝓖 : GraphLabelledGroup Γ G)
+variable {V E G : Type _} {Γ : Graph V E} [Group G] {u v w : V} {g h : G} (𝓖 : GroupLabelledGraph Γ G)
 
 
 def labelEdge (e : Γ.EdgeBetween u v) : G := 𝓖.label e.edge
@@ -43,20 +43,13 @@ theorem pathLabel_reduction {u v : V} (p p' : Graph.EdgePath Γ u v) : Graph.Edg
     𝓖.pathLabel p = 𝓖.pathLabel p'
   | .step e p p' => by simp
 
-#check Quot.induction_on₂
-
-#check Quot.ind
-
-def Quot.ind₂ {r : α → α → Prop} {β : Quot r → Quot r → Prop} (h : ∀ a a' : α, β (Quot.mk r a) (Quot.mk r a')) :
-  ∀ q q' : Quot r, β q q' := sorry
-
 def inducedHom : Γ.π₁ v →* G where
   toFun := Quot.lift 𝓖.pathLabel 𝓖.pathLabel_reduction
   map_one' := rfl
   map_mul' := by
-    apply Quot.ind₂
-    intro p p'
-    simp
+    apply Quot.ind; intro p
+    apply Quot.ind; intro p'
+    show pathLabel _ _ = _
+    simp only [pathLabel_append]
 
-
-end GraphLabelledGroup
+end GroupLabelledGraph
