@@ -34,26 +34,54 @@ theorem morphism_term_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
 
 
 
-structure CoveringMap (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) 
-      extends Morphism G₁ G₂ where
+class CoveringMap {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+      (p: Morphism G₁ G₂)  where
   localSection : (v₁ : V₁) → (e :E₂) → 
-      vertexMap v₁ = G₂.ι e   → E₁
+      p.vertexMap v₁ = G₂.ι e   → E₁
   section_init : (v₁ : V₁) → (e₂ : E₂) → 
-    (h : vertexMap v₁ = G₂.ι e₂) → 
+    (h : p.vertexMap v₁ = G₂.ι e₂) → 
     G₁.ι (localSection v₁ e₂ h) = v₁ 
   left_inverse : (v₁ : V₁) → (e₂ :E₂) → 
-    (h : vertexMap v₁ = G₂.ι e₂) → 
-    edgeMap (localSection v₁ e₂ h) = e₂
+    (h : p.vertexMap v₁ = G₂.ι e₂) → 
+    p.edgeMap (localSection v₁ e₂ h) = e₂
   right_inverse : (v₁ : V₁) → (e₁ : E₁) →
     (h : v₁ = G₁.ι e₁) →  
-    localSection v₁ (edgeMap e₁) (by rw [← commutes, h]) = 
+    localSection v₁ (p.edgeMap e₁) (by rw [← p.commutes, h]) = 
       e₁ 
 
+namespace Morphism
+
+def localSection {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+      (p: Morphism G₁ G₂) [CoveringMap p] (v₁ : V₁) (e₂ : E₂) 
+      (h : p.vertexMap v₁ = G₂.ι e₂) : E₁ := 
+        CoveringMap.localSection v₁ e₂ h
+
+def section_init {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+      (p: Morphism G₁ G₂) [CoveringMap p] (v₁ : V₁) (e₂ : E₂) 
+      (h : p.vertexMap v₁ = G₂.ι e₂) : 
+      G₁.ι (localSection p v₁ e₂ h) = v₁ := 
+        CoveringMap.section_init v₁ e₂ h
+
+theorem left_inverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+      (p: Morphism G₁ G₂) [CoveringMap p] (v₁ : V₁) (e₂ : E₂) 
+      (h : p.vertexMap v₁ = G₂.ι e₂) : 
+      p.edgeMap (localSection p v₁ e₂ h) = e₂ := 
+        CoveringMap.left_inverse v₁ e₂ h
+
+
+theorem right_inverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+      (p: Morphism G₁ G₂) [CoveringMap p] (v₁ : V₁) (e₁ : E₁) 
+      (h : v₁ = G₁.ι e₁) : 
+      localSection p v₁ (p.edgeMap e₁) (by rw [← p.commutes, h]) = 
+        e₁ := 
+          CoveringMap.right_inverse v₁ e₁ h
+
+end Morphism
 /--
 Path lifting function. 
 -/
 def pathLift' (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
-    (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) : 
       {pair : Σ w₁ : V₁, EdgePath G₁ v₁ w₁ // 
         p.vertexMap pair.fst = w₂} := by
@@ -78,7 +106,7 @@ def pathLift' (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
 
 @[ext]
 structure PathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) where
   τ : V₁ 
   path: EdgePath G₁ v₁ τ
@@ -86,7 +114,7 @@ structure PathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   list_commutes : path.toEdgeList.map p.edgeMap = e.toEdgeList
 
 def pathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂):
     PathLift p v₁ v₂ w₂ h e := by
     match e with
@@ -142,7 +170,7 @@ theorem pathMap_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
 
 
 theorem PathLift.commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) 
     (lift : PathLift p v₁ v₂ w₂ h e) :
     p.pathMap v₁ lift.τ lift.path v₂ w₂ h lift.h' = e := by
@@ -151,7 +179,7 @@ theorem PathLift.commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
 
 theorem lifts_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     {v₁ w₁ v₂ w₂ : V₁}
-    (p : CoveringMap G₁ G₂)  
+    (p : Morphism G₁ G₂)[CoveringMap p]  
     (e₁ : EdgePath G₁ v₁ w₁) (e₂ : EdgePath G₁ v₂ w₂) (hv: v₁ = v₂) :
     e₁.toEdgeList.map p.edgeMap = e₂.toEdgeList.map p.edgeMap →
     e₁.toEdgeList = e₂.toEdgeList := by
