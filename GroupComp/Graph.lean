@@ -342,7 +342,7 @@ theorem term_eq_of_edgeList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
 
 namespace PathClass
 
-@[aesop norm unfold] 
+@[aesop norm unfold]
 protected def id {G : Graph V E} (v : V) : G.PathClass v v :=
   [[.nil v]]
 
@@ -351,27 +351,44 @@ def mul {v w u : V} :
   apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]]) <;>
     aesop (add safe apply [left_append_step, right_append_step])
 
-@[aesop norm unfold] def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
+@[aesop norm unfold]
+def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
   Quot.lift ([[·.reverse]]) reverse_step
+
+open CategoryTheory
+
+set_option synthInstance.checkSynthOrder false in -- HACK
+instance [G : Graph V E] : CategoryStruct V where
+  Hom := G.PathClass
+  id := PathClass.id
+  comp := PathClass.mul
+
+def PathClass.ind {β : (u ⟶ v) → Prop} : 
+   (∀ p : G.EdgePath u v, β [[p]]) → (∀ q : u ⟶ v, β q) :=
+  Quot.ind
 
 @[simp] theorem mul_paths (p : G.EdgePath u v) (p' : G.EdgePath v w) :
   mul [[p]] [[p']] = [[p ++ p']] := rfl
 
-@[simp] theorem id_mul  {u v : V} : ∀ p : G.PathClass u v, 
-  mul (.id u) p = p := by
-    apply Quot.ind; aesop
+@[simp] theorem comp_mul (p : u ⟶ v) (p' : v ⟶ w) :
+  p ≫ p' = mul p p' := rfl
 
-@[simp] theorem mul_id  {u v : V} : ∀ p : G.PathClass u v,
-  mul p (.id v) = p := by 
-    apply Quot.ind; aesop
+@[simp] theorem id_mul  {u v : V} : ∀ p : u ⟶ v, 
+  (𝟙 u) ≫ p = p := by
+    apply PathClass.ind; aesop
 
-@[simp] theorem inv_mul {u v : V} : ∀ p : G.PathClass u v,
-    mul p.inv p = .id v := by
-  apply Quot.ind; aesop
+@[simp] theorem mul_id  {u v : V} : ∀ p : u ⟶ v,
+  p ≫ (𝟙 v) = p := by
+    show ∀ p, mul p (.id v) = p 
+    apply PathClass.ind; aesop
 
-@[simp] theorem mul_inv {u v : V} : ∀ p : G.PathClass u v,
-    mul p p.inv = .id u := by
-  apply Quot.ind; aesop
+@[simp] theorem inv_mul {u v : V} : ∀ p : u ⟶ v,
+    p.inv ≫ p = 𝟙 v := by
+  apply PathClass.ind; aesop
+
+@[simp] theorem mul_inv {u v : V} : ∀ p : u ⟶ v,
+    p ≫ p.inv = 𝟙 u := by
+  apply PathClass.ind; aesop
 
 theorem mul_assoc { v w u u' :  V}:
   (p: PathClass G v w) → (q: PathClass G w u) → (r: PathClass G u u') →  
@@ -384,25 +401,24 @@ theorem mul_assoc { v w u u' :  V}:
     intro c
     simp [append_assoc]
 
-theorem append_mul {v w u : V} (p : EdgePath G v w) (q : EdgePath G w u) : 
-    [[p ++ q]] = mul [[ p ]] [[ q]] := by rfl
+attribute [-simp] mul_paths comp_mul
 
 theorem cons_natural{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
    [[cons a  b₁]] = [[cons a b₂]] := by
-  intro rel
+  intro r
   rw [show cons a b₁ = cons a (nil _) ++ b₁ by rfl, 
       show cons a b₂ = cons a (nil _) ++ b₂ by rfl,
-      append_mul, append_mul, rel]
+      ← mul_paths, ← mul_paths, r]
 
 theorem concat_natural {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgeBetween G w u) : [[a₁]] = [[a₂]] → 
    [[concat a₁ b]] = [[concat a₂ b]] := by
-  intro rel
+  intro r
   have: concat a₁  b = a₁ ++ (concat (nil _) b) := by 
     rw [append_concat, append_nil]
   rw [this]
   have: concat a₂  b = a₂ ++ (concat (nil _) b) := by 
     rw [append_concat, append_nil]
-  rw [this, append_mul, append_mul, rel]
+  rw [this, ← mul_paths, ← mul_paths, r]
 
 end PathClass
 
@@ -410,9 +426,6 @@ open PathClass
 
 set_option synthInstance.checkSynthOrder false in -- HACK
 @[instance] def FundamentalGroupoid [G : Graph V E] : CategoryTheory.Groupoid V where
-  Hom := G.PathClass
-  id := .id
-  comp := .mul (G := G)
   id_comp := id_mul
   comp_id := mul_id
   assoc := mul_assoc
