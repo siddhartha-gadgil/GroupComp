@@ -7,7 +7,7 @@ import Mathlib
 
 universe u v
 
-structure Graph (V : Type u) (E : Type v) where
+@[class] structure Graph (V : Type u) (E : Type v) where
   ι : E → V
   bar : E → E
   bar_involution : ∀ e, bar (bar e) = e
@@ -41,6 +41,11 @@ def EdgeBetween.bar (e : G.EdgeBetween v w) : G.EdgeBetween w v :=
   , source := by aesop
   , target := by aesop
   }
+
+def EdgeBetween.ofEdge (e : E) : G.EdgeBetween (G.ι e) (G.τ e) where
+  edge := e
+  source := rfl
+  target := rfl
 
 @[simp] theorem EdgeBetween.bar_def : e.bar.edge = G.bar e.edge := rfl
 
@@ -403,8 +408,8 @@ end PathClass
 
 open PathClass
 
-@[instance]
-def FundamentalGroupoid  (G: Graph V E) : CategoryTheory.Groupoid V where
+set_option synthInstance.checkSynthOrder false in -- HACK
+@[instance] def FundamentalGroupoid [G : Graph V E] : CategoryTheory.Groupoid V where
   Hom := G.PathClass
   id := .id
   comp := .mul (G := G)
@@ -433,7 +438,5 @@ def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
   bar_involution := by aesop
   bar_no_fp := by aesop
 }
-
-
 
 end Graph
