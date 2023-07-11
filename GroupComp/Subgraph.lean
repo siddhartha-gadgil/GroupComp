@@ -33,6 +33,34 @@ def coe {G : Graph V E} (H : Subgraph G) : Graph H.verts H.edges where
   bar_involution := by intro; simp only [Graph.bar_involution]
   bar_no_fp := by intro ⟨_, _⟩; simp [Graph.bar_no_fp]
 
+instance : CompleteDistribLattice (Subgraph G) where
+  sup := sorry
+  le := sorry
+  lt := sorry
+  le_refl := sorry
+  le_trans := sorry
+  lt_iff_le_not_le := sorry
+  le_antisymm := sorry
+  le_sup_left := sorry
+  le_sup_right := sorry
+  sup_le := sorry
+  inf := sorry
+  inf_le_left := sorry
+  inf_le_right := sorry
+  le_inf := sorry
+  sSup := sorry
+  le_sSup := sorry
+  sSup_le := sorry
+  sInf := sorry
+  sInf_le := sorry
+  le_sInf := sorry
+  top := sorry
+  bot := sorry
+  le_top := sorry
+  bot_le := sorry
+  inf_sSup_le_iSup_inf := sorry
+  iInf_sup_le_sup_sInf := sorry
+
 end Subgraph
 
 structure PreconnectedSubgraph (G : Graph V E) extends Subgraph G where
@@ -109,4 +137,6 @@ def coe := Γ.toSpanningSubgraph.coe
 
 end SpanningSubtree
 
-def Graph.spanningTree (G : Graph V E) : SpanningSubtree G := sorry
+def Graph.spanningTree (G : Graph V E) : SpanningSubtree G := 
+  -- idea : construct a maximal tree using Zorn's lemma and then prove that it is spanning
+  sorry
