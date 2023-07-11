@@ -223,7 +223,7 @@ def PathLift.append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
           simp [edgeList_append]
           rw [lift.list_commutes, lift'.list_commutes]}
           
-theorem Pathlift.lift_append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem pathLift_lift_append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ u₂ : V₂}
     {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂}{e': EdgePath G₂ w₂ u₂}: 
       pathLift p v₁ v₂ u₂ h (e ++ e') =
@@ -232,7 +232,7 @@ theorem Pathlift.lift_append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
             (pathLift p v₁ v₂ w₂ h e).lift_term e') := by
         apply unique_Pathlift 
 
-def Pathlift.reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+def PathLift.reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ : V₂}
     {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂} 
     (lift : PathLift p v₁ v₂ w₂ h e) : 
@@ -248,5 +248,13 @@ def Pathlift.reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
           funext edge
           show p.edgeMap (G₁.bar edge) = G₂.bar (p.edgeMap edge)
           rw [morphism_bar_commutes]}
+
+theorem pathLift_reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ : V₂}
+    {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂}: 
+      pathLift p (pathLift p v₁ v₂ w₂ h e).τ w₂ v₂ 
+        (pathLift p v₁ v₂ w₂ h e).lift_term (e.reverse) = 
+        (pathLift p v₁ v₂ w₂ h e).reverse := by
+        apply unique_Pathlift
 
 end Graph
