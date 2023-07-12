@@ -393,12 +393,12 @@ def PathClass.ind {β : (u ⟶ v) → Prop} :
    (∀ p : G.EdgePath u v, β [[p]]) → (∀ q : u ⟶ v, β q) :=
   Quot.ind
 
-@[simp] lemma nil_path_class_eq (u : V) : [[Graph.EdgePath.nil (G := G) u]] = 𝟙 u := rfl
+@[local simp] lemma id_eq_nil (u : V) : 𝟙 u = [[.nil (G := G) u]] := rfl
 
-@[local simp] theorem mul_paths (p : G.EdgePath u v) (p' : G.EdgePath v w) :
+@[local simp] lemma mul_paths (p : G.EdgePath u v) (p' : G.EdgePath v w) :
   mul [[p]] [[p']] = [[p ++ p']] := rfl
 
-@[local simp] theorem comp_mul (p : u ⟶ v) (p' : v ⟶ w) :
+@[local simp] lemma comp_mul (p : u ⟶ v) (p' : v ⟶ w) :
   p ≫ p' = mul p p' := rfl
 
 @[simp] theorem id_mul  {u v : V} : ∀ p : u ⟶ v, 
@@ -406,9 +406,8 @@ def PathClass.ind {β : (u ⟶ v) → Prop} :
     apply PathClass.ind; aesop
 
 @[simp] theorem mul_id  {u v : V} : ∀ p : u ⟶ v,
-  p ≫ (𝟙 v) = p := by
-    show ∀ p, mul p (.id v) = p 
-    apply PathClass.ind; aesop
+    p ≫ (𝟙 v) = p := by
+  apply PathClass.ind; aesop
 
 @[simp] theorem inv_mul {u v : V} : ∀ p : u ⟶ v,
     p.inv ≫ p = 𝟙 v := by
@@ -428,6 +427,8 @@ theorem mul_assoc { v w u u' :  V}:
     apply Quot.ind
     intro c
     simp [append_assoc]
+
+@[simp] lemma nil_eq_id (u : V) : [[Graph.EdgePath.nil (G := G) u]] = 𝟙 u := rfl
 
 theorem cons_natural{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
    [[cons a  b₁]] = [[cons a b₂]] := by
