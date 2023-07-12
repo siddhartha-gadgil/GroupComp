@@ -2,8 +2,8 @@ import GroupComp.Graph
 import Mathlib.GroupTheory.IsFreeGroup
 
 @[ext] structure GroupLabelledGraph {V E : Type _} (Γ : Graph V E) (G : Type _) [Group G] where
-  label : E → G
-  label_bar : ∀ e : E, label (Γ.bar e) = (label e)⁻¹
+  label : {u v : V} → Γ.EdgeBetween u v → G
+  label_bar : ∀ {u v : V}, ∀ e : Γ.EdgeBetween u v, label e.bar = (label e)⁻¹
 
 
 namespace GroupLabelledGraph
@@ -12,25 +12,19 @@ attribute [simp] label_bar
 
 variable {V E G : Type _} {Γ : Graph V E} [Group G] {u v w : V} {g h : G} (𝓖 : GroupLabelledGraph Γ G)
 
-
-def labelEdge (e : Γ.EdgeBetween u v) : G := 𝓖.label e.edge
-
-@[simp] theorem labelEdge_bar (e : Γ.EdgeBetween u v) : 𝓖.labelEdge e.bar = (𝓖.labelEdge e)⁻¹ := by simp [labelEdge]
-
-
 def pathLabel {u v : V} : Γ.EdgePath u v → G := Graph.EdgePath.fold 𝓖.label Mul.mul (1 : G) 
 
 @[simp] theorem pathLabel_nil {v : V} : 𝓖.pathLabel (.nil v) = (1 : G) := rfl
 
 @[simp] theorem pathLabel_cons {u v w : V} (e : Γ.EdgeBetween u v) (p : Γ.EdgePath v w) : 
-  𝓖.pathLabel (.cons e p) = (𝓖.labelEdge e) * (𝓖.pathLabel p) := rfl 
+  𝓖.pathLabel (.cons e p) = (𝓖.label e) * (𝓖.pathLabel p) := rfl 
 
 @[simp] theorem pathLabel_append {u v w : V} (p : Γ.EdgePath u v) (p' : Γ.EdgePath v w) :
     𝓖.pathLabel (p ++ p') = (𝓖.pathLabel p) * (𝓖.pathLabel p') := by
   induction p <;> aesop (add norm simp [mul_assoc])
 
 @[simp] theorem pathLabel_concat {u v w : V} (p : Γ.EdgePath u v) (e : Γ.EdgeBetween v w) :
-    𝓖.pathLabel (p.concat e) = 𝓖.pathLabel p * (𝓖.labelEdge e) := by
+    𝓖.pathLabel (p.concat e) = 𝓖.pathLabel p * (𝓖.label e) := by
   induction p <;> aesop (add norm simp [Graph.EdgePath.concat, mul_assoc])
 
 @[simp] theorem pathLabel_reverse {u v : V} (p : Γ.EdgePath u v) : 𝓖.pathLabel p.reverse = (𝓖.pathLabel p)⁻¹ := by
