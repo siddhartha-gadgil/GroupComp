@@ -47,6 +47,12 @@ def EdgeBetween.ofEdge (e : E) : G.EdgeBetween (G.ι e) (G.τ e) where
   source := rfl
   target := rfl
 
+@[simp] theorem ofEdge_edge (e : E) : 
+  (EdgeBetween.ofEdge (G := G) e).edge = e := rfl
+
+-- theorem edge_ofEdge (e : G.EdgeBetween u v) :
+--   e = (e.source ▸ (e.target ▸ (EdgeBetween.ofEdge (G := G) e.edge))) := rfl
+
 @[simp] theorem EdgeBetween.bar_def : e.bar.edge = G.bar e.edge := rfl
 
 @[simp] theorem EdgeBetween.bar_involution : e.bar.bar = e := by 
@@ -127,6 +133,11 @@ instance  G.EdgePath {v w u : V} {G : Graph V E} :
 theorem append_concat {v w w' u : V} (e : EdgeBetween G w' u)(p: EdgePath G v w)(q: EdgePath G w w') :
   p ++ (concat q e) = concat (p ++ q) e := by
   induction p <;> aesop
+
+theorem cons_eq_append_singleton {u v w : V} (e : G.EdgeBetween u v) (p : G.EdgePath v w) : 
+    EdgePath.cons e p = (e.source ▸ e.target ▸ G.singletonPath e.edge) ++ p := by
+  dsimp [singletonPath]
+  sorry
 
 theorem concat_eq_append_edge {v w u : V} (e : G.EdgeBetween w u) (p : G.EdgePath v w) :
     p.concat e = p ++ (cons e (nil u)) := by
@@ -382,10 +393,12 @@ def PathClass.ind {β : (u ⟶ v) → Prop} :
    (∀ p : G.EdgePath u v, β [[p]]) → (∀ q : u ⟶ v, β q) :=
   Quot.ind
 
-@[simp] theorem mul_paths (p : G.EdgePath u v) (p' : G.EdgePath v w) :
+@[simp] lemma nil_path_class_eq (u : V) : [[Graph.EdgePath.nil (G := G) u]] = 𝟙 u := rfl
+
+@[local simp] theorem mul_paths (p : G.EdgePath u v) (p' : G.EdgePath v w) :
   mul [[p]] [[p']] = [[p ++ p']] := rfl
 
-@[simp] theorem comp_mul (p : u ⟶ v) (p' : v ⟶ w) :
+@[local simp] theorem comp_mul (p : u ⟶ v) (p' : v ⟶ w) :
   p ≫ p' = mul p p' := rfl
 
 @[simp] theorem id_mul  {u v : V} : ∀ p : u ⟶ v, 
@@ -415,8 +428,6 @@ theorem mul_assoc { v w u u' :  V}:
     apply Quot.ind
     intro c
     simp [append_assoc]
-
-attribute [-simp] mul_paths comp_mul
 
 theorem cons_natural{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
    [[cons a  b₁]] = [[cons a b₂]] := by
