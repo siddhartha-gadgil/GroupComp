@@ -205,7 +205,6 @@ theorem unique_Pathlift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       term_eq_of_edgeList_eq p₁.path p₂.path eq_edgepath rfl
     match p₁, p₂ with
     | ⟨τ₁, path₁, h₁, lc₁⟩, ⟨τ₂, path₂, h₂, lc₂⟩ => 
-    simp [term_eq] at h₂
     have teq : τ₁ = τ₂ := term_eq
     cases teq
     have peq : path₁ = path₂ := by 
@@ -320,12 +319,17 @@ theorem homotopy_step_lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   have endEq : liftCanc.τ = appLift.τ := by
     rw [pathLift_append_tail]
     rfl
-  let p₁ := liftCanc.path
-  let p₂ := appLift.path
   show (⟨liftCanc.τ, [[ liftCanc.path ]]⟩ : PathClassFrom G₁ v₁) = 
     ⟨appLift.τ, [[ appLift.path ]]⟩
+  match liftCanc.τ, appLift.τ, endEq, liftCanc.path, appLift.path with
+  | τ₁, _, rfl, p₁, p₂ => 
+    have : [[ p₁ ]] = [[ p₂ ]] := by 
+      apply Quot.sound
+      
+      sorry
+    rw [this]
   
-  sorry
+
 
 /-
 *  We construct a lifted path with pieces reflecting cancellation of edges.
