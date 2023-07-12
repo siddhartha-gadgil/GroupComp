@@ -1,8 +1,6 @@
 import GroupComp.Graph
 import Mathlib.Data.SetLike.Basic
 
-#check SetLike
-
 structure Subgraph {V E : Type _} (G : Graph V E) where
   verts : Set V
   edges : Set E
@@ -166,7 +164,7 @@ notation u " ⤳[" Γ "] " v  => pathClassBetween Γ u v
 def surround {u v : V} (p : u ⟶ v) : Γ.base ⟶ Γ.base :=
   (Γ.base ⤳[Γ] u) ≫ p ≫ (v ⤳[Γ] Γ.base)
 
-def surroundEdge (e : E) := Γ.surround [[G.singletonPath e]]
+def surroundEdge {u v : V} (e : G.EdgeBetween u v) := Γ.surround [[G.singletonPath e]]
 
 @[simp] lemma path_class_of_contains_path (p : G.EdgePath u v) (hpΓ : Γ.contains p) :
     [[p]] = u ⤳[Γ] v := by
@@ -186,7 +184,7 @@ def surroundEdge (e : E) := Γ.surround [[G.singletonPath e]]
     (u ⤳[Γ] v) ≫ (v ⤳[Γ] w) ≫ p = (u ⤳[Γ] w) ≫ p := by
   rw [← Category.assoc, tree_path_comp]
 
-@[simp] theorem singleton_tree_path (e : E) (heΓ : e ∈ Γ.edges) : [[G.singletonPath e]] = G.ι e ⤳[Γ] G.τ e := by
+@[simp] theorem singleton_tree_path (e : G.EdgeBetween u v) (heΓ : e.edge ∈ Γ.edges) : [[G.singletonPath e]] = u ⤳[Γ] v := by
   apply path_class_of_contains_path
   simp; assumption
 
@@ -203,8 +201,9 @@ theorem opp_path_eq_inv {u v : V} : (u ⤳[Γ] v) = inv (v ⤳[Γ] u) := by
   simp [surround]
 
 @[simp] theorem surround_cons : 
-    Γ.surround [[.cons e p]] = Γ.surroundEdge e.edge ≫ Γ.surround [[p]] := by
-  sorry
+    Γ.surround [[.cons e p]] = Γ.surroundEdge e ≫ Γ.surround [[p]] := by
+  rw [Graph.EdgePath.cons_eq_append_singletonPath, surroundEdge, surround_append]
+  rfl
 
 @[simp] theorem surround_loop (p : Γ.base ⟶ Γ.base) : Γ.surround p = p := by
   simp [surround]  
@@ -215,7 +214,7 @@ def surroundEdgewise {u v : V} : G.EdgePath u v → G.π₁ Γ.base :=
 @[simp] lemma surroundEdgewise_nil {u : V} : Γ.surroundEdgewise (Graph.EdgePath.nil (G := G) u) = 𝟙 Γ.base := rfl
 
 @[simp] lemma surroundEdgewise_cons {u v : V} : 
-  Γ.surroundEdgewise (Graph.EdgePath.cons e p) = (Γ.surroundEdge e.edge) ≫ (Γ.surroundEdgewise p) := rfl 
+  Γ.surroundEdgewise (Graph.EdgePath.cons e p) = (Γ.surroundEdge e) ≫ (Γ.surroundEdgewise p) := rfl 
 
 theorem surround_eq {u v : V} (p : G.EdgePath u v) : 
     Γ.surround [[p]] = Γ.surroundEdgewise p := by
