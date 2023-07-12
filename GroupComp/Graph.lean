@@ -50,9 +50,6 @@ def EdgeBetween.ofEdge (e : E) : G.EdgeBetween (G.ι e) (G.τ e) where
 @[simp] theorem ofEdge_edge (e : E) : 
   (EdgeBetween.ofEdge (G := G) e).edge = e := rfl
 
--- theorem edge_ofEdge (e : G.EdgeBetween u v) :
---   e = (e.source ▸ (e.target ▸ (EdgeBetween.ofEdge (G := G) e.edge))) := rfl
-
 @[simp] theorem EdgeBetween.bar_def : e.bar.edge = G.bar e.edge := rfl
 
 @[simp] theorem EdgeBetween.bar_involution : e.bar.bar = e := by 
@@ -63,7 +60,7 @@ inductive EdgePath (G : Graph V E) : V → V → Type _ where
   | nil (v) : G.EdgePath v v
   | cons {v w u} : G.EdgeBetween v w → G.EdgePath w u → G.EdgePath v u
 
-abbrev singletonPath (G : Graph V E) (e : E) := EdgePath.cons (EdgeBetween.ofEdge e) (.nil <| G.τ e)
+abbrev singletonPath (e : G.EdgeBetween u v) := EdgePath.cons e (.nil v)
 
 namespace EdgePath
 
@@ -134,10 +131,8 @@ theorem append_concat {v w w' u : V} (e : EdgeBetween G w' u)(p: EdgePath G v w)
   p ++ (concat q e) = concat (p ++ q) e := by
   induction p <;> aesop
 
-theorem cons_eq_append_singleton {u v w : V} (e : G.EdgeBetween u v) (p : G.EdgePath v w) : 
-    EdgePath.cons e p = (e.source ▸ e.target ▸ G.singletonPath e.edge) ++ p := by
-  dsimp [singletonPath]
-  sorry
+theorem cons_eq_append_singletonPath {u v w : V} (e : G.EdgeBetween u v) (p : G.EdgePath v w) : 
+    EdgePath.cons e p = G.singletonPath e ++ p := rfl
 
 theorem concat_eq_append_edge {v w u : V} (e : G.EdgeBetween w u) (p : G.EdgePath v w) :
     p.concat e = p ++ (cons e (nil u)) := by
