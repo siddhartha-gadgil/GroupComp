@@ -293,42 +293,44 @@ theorem homotopy_step_lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     {h : p.vertexMap v₁ = v₂}{η₁: EdgePath G₂ v₂ w₂}{e: EdgeBetween G₂ w₂ w₂'}{η₂: EdgePath G₂ w₂ u₂}:
     (pathLift p v₁ v₂ u₂ h (η₁ ++ (cons e (cons e.bar η₂)))).pathClass = 
     (pathLift p v₁ v₂ u₂ h (η₁ ++ η₂)).pathClass := by
-  let w₁ := (pathLift p v₁ v₂ w₂ h η₁).τ
-  let hw : p.vertexMap w₁ = w₂ := (pathLift p v₁ v₂ w₂ h η₁).lift_term
+  let θ₁ := pathLift p v₁ v₂ w₂ h η₁
+  let w₁ := θ₁.τ
+  let hw : p.vertexMap w₁ = w₂ := θ₁.lift_term
   let edgeLift := p.localSection w₁ e.edge (by rw [hw, e.source])
-  let edgeBetween : EdgeBetween G₁ w₁ (G₁.τ edgeLift) := 
+  let e' : EdgeBetween G₁ w₁ (G₁.τ edgeLift) := 
           ⟨edgeLift, p.section_init _ _ _, rfl⟩ 
-  let liftTail := pathLift p w₁ w₂ u₂ hw η₂
+  let θ₂ := pathLift p w₁ w₂ u₂ hw η₂
   let liftTailCanc : PathLift p w₁ w₂ u₂ hw (cons e (cons e.bar η₂)) :=
-    {τ := liftTail.τ, 
-        path := cons edgeBetween (cons edgeBetween.bar liftTail.path), 
-        lift_term := liftTail.lift_term, 
+    {τ := θ₂.τ, 
+        path := cons e' (cons e'.bar θ₂.path), 
+        lift_term := θ₂.lift_term, 
         list_commutes := by 
           simp [cons_edgeList, p.left_inverse, EdgeBetween.bar]
           apply And.intro
           · rw [p.bar_commutes, p.left_inverse]
-          · rw [liftTail.list_commutes]}
+          · rw [θ₂.list_commutes]}
   let liftCanc :=
-    (pathLift p v₁ v₂ w₂ h η₁).append liftTailCanc
+    θ₁.append liftTailCanc
   have splitLift :
     pathLift p v₁ v₂ u₂ h (η₁ ++ (cons e (cons e.bar η₂))) =
       liftCanc := by
         apply unique_Pathlift
   rw [splitLift]
-  let appLift := pathLift p v₁ v₂ u₂ h (η₁ ++ η₂)
-  have endEq : liftCanc.τ = appLift.τ := by
-    rw [pathLift_append_tail]
-    rfl
-  show (⟨liftCanc.τ, [[ liftCanc.path ]]⟩ : PathClassFrom G₁ v₁) = 
-    ⟨appLift.τ, [[ appLift.path ]]⟩
-  match liftCanc.τ, appLift.τ, endEq, liftCanc.path, appLift.path with
-  | τ₁, _, rfl, p₁, p₂ => 
-    have : [[ p₁ ]] = [[ p₂ ]] := by 
-      apply Quot.sound
-      
-      sorry
-    rw [this]
-  
+  have splitLift' :
+    pathLift p v₁ v₂ u₂ h (η₁ ++ η₂) =
+      θ₁.append θ₂ := by
+        apply unique_Pathlift
+  rw [splitLift']
+  show (⟨θ₂.τ, [[ liftCanc.path ]]⟩ : PathClassFrom G₁ v₁) = 
+    ⟨θ₂.τ, [[ (θ₁.append θ₂).path ]]⟩
+  have path1 : liftCanc.path =
+    θ₁.path ++ (cons e' (cons e'.bar θ₂.path)) := by
+      rfl
+  have : [[ liftCanc.path ]] = [[ (θ₁.append θ₂).path ]] := by
+    apply Quot.sound
+    rw [path1]
+    apply Reduction.step
+  rw [this]
 
 
 /-
