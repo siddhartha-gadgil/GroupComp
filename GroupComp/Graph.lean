@@ -47,7 +47,7 @@ def EdgeBetween.ofEdge (e : E) : G.EdgeBetween (G.ι e) (G.τ e) where
   source := rfl
   target := rfl
 
-@[simp] theorem ofEdge_edge (e : E) : 
+@[simp] theorem EdgeBetween.ofEdge_edge (e : E) : 
   (EdgeBetween.ofEdge (G := G) e).edge = e := rfl
 
 @[simp] theorem EdgeBetween.bar_def : e.bar.edge = G.bar e.edge := rfl

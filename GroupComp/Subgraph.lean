@@ -1,6 +1,8 @@
 import GroupComp.Graph
 import Mathlib.Data.SetLike.Basic
 
+namespace Graph
+
 structure Subgraph {V E : Type _} (G : Graph V E) where
   verts : Set V
   edges : Set E
@@ -173,9 +175,13 @@ notation u " ⤳[" Γ "] " v  => pathClassBetween Γ u v
     (u ⤳[Γ] v) ≫ (v ⤳[Γ] w) ≫ p = (u ⤳[Γ] w) ≫ p := by
   rw [← Category.assoc, tree_path_comp]
 
-@[simp] theorem singleton_tree_path (e : G.EdgeBetween u v) (heΓ : e.edge ∈ Γ.edges) : [[G.singletonPath e]] = u ⤳[Γ] v := by
+lemma singleton_tree_path {e : G.EdgeBetween u v} (heΓ : e.edge ∈ Γ.edges) : [[G.singletonPath e]] = u ⤳[Γ] v := by
   apply path_class_of_contains_path
   simp; assumption
+
+@[simp] theorem surround_tree_edge {e : G.EdgeBetween u v} (heΓ : e.edge ∈ Γ.edges) :
+    Γ.surroundEdge e = 𝟙 Γ.base := by
+  simp [surroundEdge, Γ.singleton_tree_path heΓ]
 
 theorem opp_path_eq_inv {u v : V} : (u ⤳[Γ] v) = inv (v ⤳[Γ] u) := by
   rw [← hom_comp_eq_id]
@@ -207,6 +213,17 @@ theorem opp_path_eq_inv {u v : V} : (u ⤳[Γ] v) = inv (v ⤳[Γ] u) := by
   rw [surroundEdge, surroundEdge, ← surround_inv, Graph.EdgePath.singletonPath_bar, 
     Graph.PathClass.reverse_class_eq_inv, Graph.PathClass.inv_eq_inv]
 
+theorem surroundEdge_cast {u v u' v' : V} (huu' : u = u') (hvv' : v = v') 
+    (e : G.EdgeBetween u v) (e' : G.EdgeBetween u' v') 
+    (hee' : e.edge = e'.edge) : Γ.surroundEdge e = Γ.surroundEdge e' := by
+  cases huu'; cases hvv'
+  congr; ext
+  exact hee'
+
+@[simp] theorem surroundEdge_bar' (e : E) : Γ.surroundEdge (EdgeBetween.ofEdge (G := G) (G.bar e)) = inv (Γ.surroundEdge (EdgeBetween.ofEdge (G := G) e)) := by
+  rw [← surroundEdge_bar]
+  apply surroundEdge_cast <;> simp
+
 def surroundEdgewise {u v : V} : G.EdgePath u v → G.π₁ Γ.base := 
   Graph.EdgePath.fold Γ.surroundEdge CategoryStruct.comp (1 : G.π₁ Γ.base) 
 
@@ -223,3 +240,5 @@ theorem surround_eq {u v : V} (p : G.EdgePath u v) :
   | cons _ _ ih => simp only [surroundEdgewise_cons, ← ih, surround_cons]
 
 end SpanningSubtree
+
+end Graph
