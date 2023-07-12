@@ -277,34 +277,32 @@ theorem edgeList_reverse' {G : Graph V E}{v w : V} (p : EdgePath G v w):
 theorem cons_eq {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w) 
     (e' : EdgeBetween G v w' )(p : EdgePath G w u) (p' : EdgePath G w' u) (eq₁ : e.edge = e'.edge) (eq₂ : w = w') (eq₃ :  p = eq₂ ▸  p'): 
       cons e' p' = cons e p := by 
-      match p, p', e, e', eq₂ with
-      | p, p', e, e', rfl => 
-        simp [cons_edgeList,  eq₃]
-        ext
-        symm
-        assumption
+    cases eq₂
+    simp [cons_edgeList,  eq₃]
+    ext
+    symm
+    assumption
 
 theorem cons_eq' {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w) 
     (e' : EdgeBetween G v w' )(p : EdgePath G w u) (p' : EdgePath G w' u) (eq₁ : e.edge = e'.edge) (eq₂ : w' = w) (eq₃ : eq₂ ▸ p =   p'): 
       cons e' p' = cons e p := by 
-      match p, p', e, e', eq₂ with
-      | p, p', e, e', rfl => 
-        simp [cons_edgeList, Eq.symm eq₃]
-        ext
-        symm
-        assumption
+    cases eq₂
+    simp [cons_edgeList, Eq.symm eq₃]
+    ext
+    symm
+    assumption
 
 theorem edgeList_cast_init {G: Graph V E} {v v' w : V}  
     (p : EdgePath G v w)(eqn : v = v'):
       p.toEdgeList = (eqn ▸ p).toEdgeList := by
-      match p, eqn with
-      | p, rfl => rfl
+      cases eqn 
+      rfl
 
 theorem edgeList_cast_term {G: Graph V E} {v w w' : V}  
     (p : EdgePath G v w)(eqn : w = w'):
       p.toEdgeList = (eqn ▸ p).toEdgeList := by
-      match p, eqn with
-      | p, rfl => rfl
+      cases eqn 
+      rfl
 
 @[ext] theorem eq_of_edgeList_eq {G: Graph V E}{v w: V}
   (p₁ p₂ : EdgePath G v w) : p₁.toEdgeList = p₂.toEdgeList → p₁ = p₂ := by
@@ -493,5 +491,10 @@ def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
   bar_involution := by aesop
   bar_no_fp := by aesop
 }
+
+
+structure PathClassFrom (G : Graph V E) (v : V) where
+  τ  : V
+  pathClass : PathClass G v τ
 
 end Graph
