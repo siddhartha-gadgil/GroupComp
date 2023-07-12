@@ -269,7 +269,7 @@ def PathLift.cons_bar_cons {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       let edgeLift := p.localSection v₁ e.edge (by rw [h, e.source])
       let edgeBetween : EdgeBetween G₁ v₁ (G₁.τ edgeLift) := 
         { edge := edgeLift, 
-          source := by rw [p.section_init] 
+          source := by apply p.section_init 
           target := rfl, 
           }
       {τ := lift'.τ, 

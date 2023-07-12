@@ -119,15 +119,6 @@ theorem concat_eq_append_edge {v w u : V} (e : G.EdgeBetween w u) (p : G.EdgePat
   have := concat_append e p (.nil _)
   aesop
 
--- theorem append_cons {v w u u' : V}
---     (p: G.EdgePath v w)(e: G.EdgeBetween w u)(q: G.EdgePath u u') :
---     p ++ (cons e q) = cons e (p ++ q) := by 
---     induction p with
---     | nil  => 
---       rfl
---     | cons  e' p ih =>
---       simp [cons_append, ih]
-
 theorem append_assoc { v w u u' :  V}
   (p: G.EdgePath v w)(q: G.EdgePath w u)(r: G.EdgePath u u') : 
     (p ++ q) ++ r = p ++ (q ++ r) := by 
@@ -251,37 +242,6 @@ theorem edgeList_reverse' {G : Graph V E}{v w : V} (p : EdgePath G v w):
     simp [cons_edgeList, reverse_cons, edgeList_concat]
     simp [ih, EdgeBetween.bar]
 
-
-theorem cons_eq {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w) 
-    (e' : EdgeBetween G v w' )(p : EdgePath G w u) (p' : EdgePath G w' u) (eq₁ : e.edge = e'.edge) (eq₂ : w = w') (eq₃ :  p = eq₂ ▸  p'): 
-      cons e' p' = cons e p := by 
-    cases eq₂
-    simp [cons_edgeList,  eq₃]
-    ext
-    symm
-    assumption
-
-theorem cons_eq' {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w) 
-    (e' : EdgeBetween G v w' )(p : EdgePath G w u) (p' : EdgePath G w' u) (eq₁ : e.edge = e'.edge) (eq₂ : w' = w) (eq₃ : eq₂ ▸ p =   p'): 
-      cons e' p' = cons e p := by 
-    cases eq₂
-    simp [cons_edgeList, Eq.symm eq₃]
-    ext
-    symm
-    assumption
-
-theorem edgeList_cast_init {G: Graph V E} {v v' w : V}  
-    (p : EdgePath G v w)(eqn : v = v'):
-      p.toEdgeList = (eqn ▸ p).toEdgeList := by
-      cases eqn 
-      rfl
-
-theorem edgeList_cast_term {G: Graph V E} {v w w' : V}  
-    (p : EdgePath G v w)(eqn : w = w'):
-      p.toEdgeList = (eqn ▸ p).toEdgeList := by
-      cases eqn 
-      rfl
-
 @[ext] theorem eq_of_edgeList_eq {G: Graph V E}{v w: V}
   (p₁ p₂ : EdgePath G v w) : p₁.toEdgeList = p₂.toEdgeList → p₁ = p₂ := by
   induction p₁ with
@@ -304,18 +264,12 @@ theorem edgeList_cast_term {G: Graph V E} {v w w' : V}
       have e2t := e₂.target
       rw [h.1] at e1t
       rw [e1t] at e2t
-      simp [h.2] at ih 
-      apply cons_eq' 
-      · symm
+      cases e2t
+      congr
+      · ext
         exact h.1
-      · let step := ih (e2t ▸ p₂') 
-        symm   
-        have : p₁' = (e2t ▸ p₂')  := by
-          apply step
-          exact edgeList_cast_init p₂' (Eq.symm e2t)
-        rw [this]
-        · simp
-          assumption
+      · apply ih
+        exact h.2  
         
 theorem term_eq_of_edgeList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
   (p₁ : EdgePath G v₁ w₁) (p₂ : EdgePath G v₂ w₂) : p₁.toEdgeList = p₂.toEdgeList → (v₁ = v₂) → (w₁ = w₂)  := by 
