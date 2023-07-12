@@ -105,9 +105,9 @@ def append { v w u : V}
       let tail := append p' q
       cons e' tail
 
-def fold (φ : E → A) (comp : A → A → A) (init : A) {v w : V} : G.EdgePath v w → A
+def fold (φ : {u v : V} → G.EdgeBetween u v → A) (comp : A → A → A) (init : A) {v w : V} : G.EdgePath v w → A
   | .nil _ => init
-  | .cons e p => comp (φ e.edge) (fold φ comp init p)
+  | .cons e p => comp (φ e) (fold φ comp init p)
 
 instance  G.EdgePath {v w u : V} {G : Graph V E} : 
   HAppend (G.EdgePath v w) (G.EdgePath w u) (G.EdgePath v u) := 
