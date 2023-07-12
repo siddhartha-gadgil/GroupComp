@@ -4,7 +4,7 @@ import Mathlib.GroupTheory.IsFreeGroup
 
 -- TODO Integrate this with the definition of a graph
 class ProperInvolutiveInv (X : Type _) extends InvolutiveInv X where   
-  no_fixed_points : ∀ x : X, x⁻¹ ≠ x
+  no_fixed_points : ∀ x : X, x ≠ x⁻¹
 
 instance (X : Type _) : ProperInvolutiveInv (X ⊕ X) where
   inv := fun | .inl x => .inr x | .inr x => .inl x
@@ -45,18 +45,18 @@ class SymmFreeGroup (G : Type _) [Group G] (X : Type _) [ProperInvolutiveInv X] 
 
 namespace SymmFreeGroup
 
-variable [Group G] [ProperInvolutiveInv X] [𝓕 : SymmFreeGroup G X] [Group H]
+variable [Group G] [ProperInvolutiveInv X] [Group H]
 
-theorem induced_restrict_eq_iff_lift_unique :
-    (∀ ψ : G →* H, 𝓕.induced (𝓕.ι.comp ψ.toInvHom) = ψ) ↔
-    (∀ φ : X →⁻¹ H, ∀ ψ : G →* H, (𝓕.ι.comp ψ.toInvHom = φ) → 𝓕.induced φ = ψ) := by
+theorem induced_restrict_eq_iff_lift_unique (ι : X →⁻¹ G) (ind : {H : Type _} → [Group H] → (X →⁻¹ H) → (G →* H)) :
+    (∀ ψ : G →* H, ind (ι.comp ψ.toInvHom) = ψ) ↔
+    (∀ φ : X →⁻¹ H, ∀ ψ : G →* H, (ι.comp ψ.toInvHom = φ) → ind φ = ψ) := by
   constructor
   · intro h φ ψ hres
     exact hres ▸ (h ψ)
   · intro h ψ
-    exact h (𝓕.ι.comp ψ.toInvHom) ψ rfl   
+    exact h (ι.comp ψ.toInvHom) ψ rfl   
 
-def lift : (X →⁻¹ H) ≃ (G →* H) where
+def lift [SymmFreeGroup G X] : (X →⁻¹ H) ≃ (G →* H) where
   toFun := SymmFreeGroup.induced
   invFun := fun φ ↦ SymmFreeGroup.ι.comp φ.toInvHom
   left_inv := SymmFreeGroup.induced_is_lift
