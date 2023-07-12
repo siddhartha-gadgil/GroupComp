@@ -77,17 +77,6 @@ structure Subtree (G : Graph V E) extends PreconnectedSubgraph G where
 
 attribute [aesop safe apply] Subtree.path_unique
 
-open Graph.PathClass in
-theorem Subtree.pathBetween_inv (Γ : Subtree G) (u v : Γ.verts) : 
-    mul [[(Γ.path u v).val]] [[(Γ.path v u).val]] = .id _ := by
-  rw [Graph.PathClass.mul_paths]
-  trans ([[Γ.path u u]])
-  · apply Γ.path_unique
-    simp only [Subgraph.contains_append, PreconnectedSubgraph.contains_path, and_self]
-  · symm
-    apply Subtree.path_unique
-    simp only [Subgraph.contains_nil, Subtype.coe_prop]
-
 structure Graph.hom {V E V' E' : Type _} (G : Graph V E) (G' : Graph V' E') where
   vertexMap : V → V'
   edgeMap : E → E'
@@ -161,10 +150,10 @@ def pathClassBetween (u v : V) : u ⟶ v := [[(Γ.toSubtree.path (Γ.vertex_coe 
 
 notation u " ⤳[" Γ "] " v  => pathClassBetween Γ u v 
 
-def surround {u v : V} (p : u ⟶ v) : Γ.base ⟶ Γ.base :=
+@[local simp] def surround {u v : V} (p : u ⟶ v) : Γ.base ⟶ Γ.base :=
   (Γ.base ⤳[Γ] u) ≫ p ≫ (v ⤳[Γ] Γ.base)
 
-def surroundEdge {u v : V} (e : G.EdgeBetween u v) := Γ.surround [[G.singletonPath e]]
+@[local simp] def surroundEdge {u v : V} (e : G.EdgeBetween u v) := Γ.surround [[G.singletonPath e]]
 
 @[simp] lemma path_class_of_contains_path (p : G.EdgePath u v) (hpΓ : Γ.contains p) :
     [[p]] = u ⤳[Γ] v := by
@@ -197,16 +186,26 @@ theorem opp_path_eq_inv {u v : V} : (u ⤳[Γ] v) = inv (v ⤳[Γ] u) := by
   apply opp_path_eq_inv
 
 @[simp] theorem surround_append {u v w : V} (p : u ⟶ v) (q : v ⟶ w) : 
-    Γ.surround p ≫ Γ.surround q = Γ.surround (p ≫ q) := by
-  simp [surround]
+    Γ.surround p ≫ Γ.surround q = Γ.surround (p ≫ q) := by 
+  simp only [surround, path_to_base_eq, Category.assoc, IsIso.inv_hom_id_assoc]
+
+@[simp] theorem surround_nil (u : V) : Γ.surround (𝟙 u) = 𝟙 Γ.base := by 
+  simp only [surround, path_to_base_eq, Category.id_comp, IsIso.hom_inv_id]
 
 @[simp] theorem surround_cons : 
     Γ.surround [[.cons e p]] = Γ.surroundEdge e ≫ Γ.surround [[p]] := by
-  rw [Graph.EdgePath.cons_eq_append_singletonPath, surroundEdge, surround_append]
-  rfl
+  erw [Graph.EdgePath.cons_eq_append_singletonPath, surround_append]; rfl
+
+@[simp] theorem surround_inv {u v : V} (p : u ⟶ v) : Γ.surround (inv p) = inv (Γ.surround p) := by
+  rw [← hom_comp_eq_id]; simp only [surround, path_to_base_eq, Category.assoc, IsIso.inv_hom_id_assoc,
+    IsIso.hom_inv_id_assoc, IsIso.hom_inv_id]
 
 @[simp] theorem surround_loop (p : Γ.base ⟶ Γ.base) : Γ.surround p = p := by
-  simp [surround]  
+  simp only [surround, tree_path_id, Category.comp_id, Category.id_comp]  
+
+@[simp] theorem surroundEdge_bar (e : G.EdgeBetween u v) : Γ.surroundEdge e.bar = inv (Γ.surroundEdge e) := by
+  rw [surroundEdge, surroundEdge, ← surround_inv, Graph.EdgePath.singletonPath_bar, 
+    Graph.PathClass.reverse_class_eq_inv, Graph.PathClass.inv_eq_inv]
 
 def surroundEdgewise {u v : V} : G.EdgePath u v → G.π₁ Γ.base := 
   Graph.EdgePath.fold Γ.surroundEdge CategoryStruct.comp (1 : G.π₁ Γ.base) 
@@ -219,7 +218,8 @@ def surroundEdgewise {u v : V} : G.EdgePath u v → G.π₁ Γ.base :=
 theorem surround_eq {u v : V} (p : G.EdgePath u v) : 
     Γ.surround [[p]] = Γ.surroundEdgewise p := by
   induction p with
-  | nil _ => simp [surround]
-  | cons _ _ ih => simp [← ih]
+  | nil _ => simp only [surround, Subgraph.contains_nil, SpanningSubgraph.spanning, Set.top_eq_univ, Set.mem_univ,
+    Graph.PathClass.nil_eq_id, path_to_base_eq, Category.id_comp, IsIso.hom_inv_id, surroundEdgewise_nil]
+  | cons _ _ ih => simp only [surroundEdgewise_cons, ← ih, surround_cons]
 
 end SpanningSubtree
