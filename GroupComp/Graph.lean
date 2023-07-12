@@ -392,7 +392,7 @@ def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
   bar_no_fp := by aesop
 }
 
-
+@[ext]
 structure PathClassFrom (G : Graph V E) (v : V) where
   τ  : V
   pathClass : PathClass G v τ
