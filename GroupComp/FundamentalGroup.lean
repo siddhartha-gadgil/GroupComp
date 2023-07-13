@@ -13,10 +13,10 @@ def inducedLabelling (φ : X.π₁ Γ.base →* G) : GroupLabelledGraph X G wher
     dsimp only [Function.comp_apply]
     rw [← map_inv, Γ.surroundEdge_bar, Graph.π₁.inv_def]
 
-lemma induced_label_eq_surround_map (e : X.EdgeBetween u v) : 
+@[simp] lemma induced_label_eq_surround_map (e : X.EdgeBetween u v) : 
     (inducedLabelling (G := G) φ).label e = φ (Γ.surroundEdge e) := rfl
 
-lemma label_path_map (φ : X.π₁ Γ.base →* G) {u v : V} (p : X.EdgePath u v) : 
+@[simp] lemma label_path_map (φ : X.π₁ Γ.base →* G) {u v : V} (p : X.EdgePath u v) : 
     (inducedLabelling φ).pathLabel p = φ (Γ.surround [[p]]) := by
   induction p with
     | nil _ => rw [GroupLabelledGraph.pathLabel_nil, Graph.PathClass.nil_eq_id, Γ.surround_nil, 
@@ -30,8 +30,8 @@ theorem hom_induce_induce_eq_self (φ : X.π₁ Γ.base →* G) :
   revert x
   apply Graph.PathClass.ind
   intro p
-  simp only [GroupLabelledGraph.inducedHom, MonoidHom.coe_mk, OneHom.coe_mk, label_path_map,
-    Γ.surround_loop]
+  simp only [GroupLabelledGraph.inducedHom, MonoidHom.coe_mk, OneHom.coe_mk,
+    GroupLabelledGraph.pathClassLabel_of_pathLabel, label_path_map, Graph.SpanningSubtree.surround_loop]
 
 namespace Graph
 
@@ -67,30 +67,52 @@ abbrev SpanningSubtree.ofOutEdge : ↑(Γ.edgesᶜ) →⁻¹ X.π₁ Γ.base whe
   toFun e := Γ.surroundEdge (EdgeBetween.ofEdge e.val) 
   inv_map' := by simp [Inv.inv, Graph.PathClass.inv_eq_inv]
 
-abbrev SpanningSubtree.inducedMap 
-  [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edgesᶜ)]
-  [Group H] (φ : ↑(Γ.edgesᶜ) →⁻¹ H) : X.π₁ Γ.base →* H := 
-  GroupLabelledGraph.inducedHom {
+variable {H : Type _} [Group H]
+variable  [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges)]
+
+abbrev SpanningSubtree.edgeLabelExtension (φ : ↑(Γ.edgesᶜ) →⁻¹ H) : GroupLabelledGraph X H := {
     label := fun e ↦
-      if h : e.edge ∈ Γ.edgesᶜ then
-        φ ⟨e.edge, h⟩
-      else (1 : _) 
+    if h : e.edge ∈ Γ.edges then
+      (1 : _)
+    else
+      φ ⟨e.edge, h⟩
     label_bar := by
       intro _ _ ⟨e, _, _⟩
-      dsimp
-      sorry
+      by_cases h : e ∈ Γ.edges
+      · have : X.bar e ∈ Γ.edges := Γ.edges_bar e h
+        simp only [EdgeBetween.bar_def, this, dite_true, h, inv_one]
+      · have : X.bar e ∉ Γ.edges := h ∘ (Γ.bar_edges e)
+        simp only [EdgeBetween.bar_def, this, dite_false, h]
+        erw [← φ.inv_map']; rfl
   }
 
-instance [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edgesᶜ)] : -- TODO remove instance 
+
+abbrev SpanningSubtree.inducedMap (φ : ↑(Γ.edgesᶜ) →⁻¹ H) : X.π₁ Γ.base →* H := 
+  (Γ.edgeLabelExtension φ).inducedHom 
+
+@[simp] theorem pathLabel_on_tree_path {u v : V} (p : X.EdgePath u v) (hpΓ : Γ.contains p) :
+    (Γ.edgeLabelExtension φ).pathLabel p = (1 : H) := by
+  induction p with
+    | nil _ => simp
+    | cons _ _ ih => simp_all [ih] 
+
+@[simp] theorem pathClassLabel_on_tree_path {u v : V} :
+    (Γ.edgeLabelExtension φ).pathClassLabel (u ⤳[Γ] v) = (1 : H) := by
+  show (Γ.edgeLabelExtension φ).pathClassLabel ([[_]]) = _
+  simp only [GroupLabelledGraph.pathClassLabel_of_pathLabel, SpanningSubtree.contains_path, pathLabel_on_tree_path]
+
+instance [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges)] : -- TODO remove instance 
     SymmFreeGroup (X.π₁ Γ.base) ↑(Γ.edgesᶜ) where
   ι := Γ.ofOutEdge
   induced := Γ.inducedMap 
   induced_is_lift := by
     intro H _ φ
     ext ⟨e, h⟩
+    have h' : ¬(e ∈ Γ.edges) := h
     show (Γ.inducedMap φ) (Γ.surroundEdge _) = _
-    -- simp [SpanningSubtree.inducedMap]
-    sorry
+    dsimp [SpanningSubtree.surroundEdge, SpanningSubtree.surround, SpanningSubtree.inducedMap, GroupLabelledGraph.inducedHom]
+    simp [h']
+    rfl
   lift_unique := by
     intro H _ 
     rw [← SymmFreeGroup.induced_restrict_eq_iff_lift_unique (H := H) Γ.ofOutEdge Γ.inducedMap]
@@ -99,16 +121,14 @@ instance [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges�
     congr
     rw [hom_induce_induce_eq_self ψ]
     ext u v e
+    dsimp [SpanningSubtree.edgeLabelExtension]
     split
+    · simp
+      rw [SpanningSubtree.surround_tree_edge, ← map_one ψ]
+      rfl; assumption
     · show ψ.toFun (Γ.surroundEdge _) = ψ.toFun (Γ.surroundEdge _)
       congr 1
-      dsimp
-      apply Γ.surroundEdge_cast <;> simp
-    · rename_i h
-      simp only [Set.mem_compl_iff, not_not] at h
-      simp
-      sorry -- use `surround_tree_edge`
-        
-    
+      apply Γ.surroundEdge_cast <;> 
+      simp [EdgeBetween.source, EdgeBetween.target]
 
 end Graph
