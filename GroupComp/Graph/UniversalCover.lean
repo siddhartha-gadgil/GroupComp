@@ -45,14 +45,13 @@ theorem reduced_prepReduced (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (
     let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
     cases p₁ with
     | nil _ => 
-      simp [nil_append] at eqn
-      
-      sorry
-    -- single edge
+      rw [nil_append] at eqn
+      let leqn := congrArg EdgePath.toEdgeList eqn
+      simp [cons_edgeList, nil_edgeList] at leqn      
     | cons h t => 
       rw [cons_append] at eqn
-      simp at eqn
-      sorry
+      let leqn := congrArg EdgePath.toEdgeList eqn
+      simp [cons_edgeList, nil_edgeList, edgeList_append] at leqn 
   | cons e' p' => 
     rename_i w' w''
     if c:w'' = u then
@@ -68,7 +67,10 @@ theorem reduced_prepReduced (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (
           apply Reduction.step
         else 
           simp [prepReduced_cons_edge_neq p' c']
+          
           sorry
     else
     simp [prepReduced_cons_vertex_neq e e' p' c]
     sorry
+
+#check EdgePath.noConfusion
