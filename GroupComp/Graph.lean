@@ -143,7 +143,7 @@ inductive Reduction {v w : V}:
 def reduced  {v w : V} (p : G.EdgePath v w) : Prop := 
   ∀ p', ¬ Reduction p p'
 
-theorem Reduction.existence {v w : V} (p p' : G.EdgePath v w) : 
+theorem Reduction.existence {v w : V} {p' : G.EdgePath v w}(p : G.EdgePath v w) : 
   Reduction p p' →
   ∃ u u': V, ∃ e : G.EdgeBetween u u', 
     ∃ p₁ : G.EdgePath v u,
