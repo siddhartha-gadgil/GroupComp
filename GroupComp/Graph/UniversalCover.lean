@@ -67,10 +67,13 @@ theorem reduced_prepReduced (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (
           apply Reduction.step
         else 
           simp [prepReduced_cons_edge_neq p' c']
-          
+          intro p'' red'
+          let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
           sorry
     else
-    simp [prepReduced_cons_vertex_neq e e' p' c]
-    sorry
+      simp [prepReduced_cons_vertex_neq e e' p' c]
+      intro p'' red'
+      let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
+      sorry
 
 #check EdgePath.noConfusion
