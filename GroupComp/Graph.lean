@@ -32,7 +32,7 @@ def τ (e : E) : V := G.ι (G.bar e)
   source : G.ι edge = v
   target : G.τ edge = w
 
-attribute [aesop safe forward] EdgeBetween.source EdgeBetween.target
+attribute [aesop safe apply] EdgeBetween.source EdgeBetween.target
 
 variable {G} (e : G.EdgeBetween v w)
 
@@ -47,7 +47,7 @@ def EdgeBetween.ofEdge (e : E) : G.EdgeBetween (G.ι e) (G.τ e) where
   source := rfl
   target := rfl
 
-@[simp] theorem EdgeBetween.ofEdge_edge (e : E) : 
+@[simp] lemma EdgeBetween.ofEdge_edge (e : E) : 
   (EdgeBetween.ofEdge (G := G) e).edge = e := rfl
 
 @[simp] theorem EdgeBetween.bar_def : e.bar.edge = G.bar e.edge := rfl
