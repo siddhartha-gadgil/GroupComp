@@ -3,6 +3,7 @@ import Mathlib.CategoryTheory.Groupoid
 import Mathlib.CategoryTheory.Endomorphism
 import Mathlib.Algebra.Group.Basic
 import Mathlib.CategoryTheory.Endomorphism
+import Mathlib
 
 universe u v
 
@@ -33,7 +34,7 @@ def τ (e : E) : V := G.ι (G.bar e)
   target : G.τ edge = w
 deriving DecidableEq
 
-attribute [aesop safe apply] EdgeBetween.source EdgeBetween.target
+attribute [aesop safe forward] EdgeBetween.source EdgeBetween.target
 
 variable {G} (e : G.EdgeBetween v w)
 
