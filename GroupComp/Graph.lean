@@ -148,10 +148,10 @@ theorem Reduction.existence {v w : V} (p p' : G.EdgePath v w) :
   ∃ u u': V, ∃ e : G.EdgeBetween u u', 
     ∃ p₁ : G.EdgePath v u,
     ∃ p₂ : G.EdgePath u w, 
-      (p₁ ++ p₂ = p') ∧  (p₁ ++ (cons e (cons e.bar p₂)) = p) 
+      p₁ ++ (cons e (cons e.bar p₂)) = p 
 | Reduction.step u u' e' p₁ p₂ => by
   use u, u', e', p₁, p₂
-  simp  
+  
 
 end EdgePath
 
@@ -159,21 +159,15 @@ open EdgePath
 
 theorem reverse_reduced {v w : V} (p : G.EdgePath v w): reduced p →   reduced p.reverse := by
   intro red rev_targ rev_red
-  let ⟨u, u', e, p₁, p₂, eqns⟩   := rev_red.existence
-  apply red (reverse rev_targ)
-  let eqn₁ := eqns.1
-  have eqn₁' : (reverse p₂) ++ (reverse p₁) =
-    reverse rev_targ := by
-      rw [← eqn₁, reverse_append]
-  rw [←eqn₁']
-  let eqn₂ := eqns.2
-  let eqn₂' := congrArg reverse eqn₂
-  simp [reverse_reverse] at eqn₂'
-  have eqn₂'' : (reverse p₂) ++ (cons e (cons e.bar (reverse p₁))) =
+  let ⟨u, u', e, p₁, p₂, eqn⟩   := rev_red.existence
+  apply red (reverse p₂ ++ reverse p₁)
+  let eqn' := congrArg reverse eqn
+  simp [reverse_reverse] at eqn'
+  have eqn'' : (reverse p₂) ++ (cons e (cons e.bar (reverse p₁))) =
     p := by
-      rw [←eqn₂', reverse_append]
+      rw [←eqn', reverse_append]
       simp [reverse_cons]
-  rw [←eqn₂'']
+  rw [←eqn'']
   apply Reduction.step
   
 theorem reverse_reduced_iff {v w : V} (p : G.EdgePath v w) :
