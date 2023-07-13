@@ -1,4 +1,5 @@
 import GroupComp.Graph
+import Mathlib.Data.List.Basic
 
 namespace Graph 
 

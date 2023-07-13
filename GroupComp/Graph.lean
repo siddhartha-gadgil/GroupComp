@@ -2,7 +2,6 @@ import Mathlib.Data.Bool.Basic
 import Mathlib.CategoryTheory.Groupoid
 import Mathlib.Algebra.Group.Basic
 import Mathlib.CategoryTheory.Endomorphism
-import Mathlib
 
 universe u v
 
@@ -136,15 +135,45 @@ theorem reverse_append {u v w : V} (p : G.EdgePath u v) (q : G.EdgePath v w) :
 @[aesop safe [constructors, cases]]
 inductive Reduction {v w : V}:
       G.EdgePath v w →  G.EdgePath v w →  Prop where
-  | step {u u' : V}(e : G.EdgeBetween u u') (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) : 
+  | step (u u' : V)(e : G.EdgeBetween u u') (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) : 
       Reduction (p₁ ++ (cons e (cons e.bar p₂))) (p₁ ++ p₂)
 
 def reduced  {v w : V} (p : G.EdgePath v w) : Prop := 
   ∀ p', ¬ Reduction p p'
 
+theorem Reduction.existence {v w : V} (p p' : G.EdgePath v w) : 
+  Reduction p p' →
+  ∃ u u': V, ∃ e : G.EdgeBetween u u', 
+    ∃ p₁ : G.EdgePath v u,
+    ∃ p₂ : G.EdgePath u w, 
+      (p₁ ++ p₂ = p') ∧  (p₁ ++ (cons e (cons e.bar p₂)) = p) 
+| Reduction.step u u' e' p₁ p₂ => by
+  use u, u', e', p₁, p₂
+  simp  
+
 end EdgePath
 
 open EdgePath
+
+theorem reverse_reduced {v w : V} (p : G.EdgePath v w): reduced p →   reduced p.reverse := by
+  intro red rev_targ rev_red
+  let ⟨u, u', e, p₁, p₂, eqns⟩   := rev_red.existence
+  apply red (reverse rev_targ)
+  let eqn₁ := eqns.1
+  have eqn₁' : (reverse p₂) ++ (reverse p₁) =
+    reverse rev_targ := by
+      rw [← eqn₁, reverse_append]
+  rw [←eqn₁']
+  let eqn₂ := eqns.2
+  let eqn₂' := congrArg reverse eqn₂
+  simp [reverse_reverse] at eqn₂'
+  have eqn₂'' : (reverse p₂) ++ (cons e (cons e.bar (reverse p₁))) =
+    p := by
+      rw [←eqn₂', reverse_append]
+      simp [reverse_cons]
+  rw [←eqn₂'']
+  apply Reduction.step
+  
 
 abbrev PathClass (G: Graph V E) (v w : V)  := 
     Quot <| @Reduction _ _ G v w
@@ -159,7 +188,7 @@ attribute [aesop safe apply] Quot.sound
 
 @[simp] theorem append_cons_bar_cons (e : G.EdgeBetween u u') (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) :
     [[p₁ ++ (p₂ |>.cons e.bar |>.cons e)]] = [[p₁ ++ p₂]] := by
-  have := Reduction.step e p₁ p₂
+  have := Reduction.step _ _ e p₁ p₂
   aesop
 
 @[simp] theorem append_cons_cons_bar (e : G.EdgeBetween u' u) (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) : 
