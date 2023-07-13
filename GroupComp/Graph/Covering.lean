@@ -5,9 +5,7 @@ namespace Graph
 
 open EdgePath PathClass
 
-variable {V : Type u} {E : Type v} (G : Graph V E)
-variable {u v w : V}
-variable {G} (e : G.EdgeBetween v w)
+variable {V : Type u} {E : Type v} 
 
 @[ext] structure Morphism (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) where
   vertexMap : V₁ → V₂
@@ -127,7 +125,7 @@ def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         rw [←hw, hv]
         exact ⟨nil _, by simp [nil_edgeList]⟩
       | cons e p' => 
-        rename_i w₁' w₁'' u'
+        rename_i  w₁'' u'
         let e₁ := f.edgeMap e.edge
         let init_vert : G₂.ι e₁ = v₂ := by
           rw [←hv, ←e.source, ←morphism_init_commutes] 

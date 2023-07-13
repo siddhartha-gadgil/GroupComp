@@ -13,7 +13,8 @@ structure Graph (V : Type u) (E : Type v) where
 
 namespace Graph
 
-variable {V : Type u} {E : Type v} (G : Graph V E)
+variable {V : Type u} {E : Type v} [DecidableEq V] [DecidableEq E]
+(G : Graph V E)
 variable {u v w : V}
 
 attribute [simp] bar_involution
@@ -29,6 +30,7 @@ def τ (e : E) : V := G.ι (G.bar e)
   edge : E
   source : G.ι edge = v
   target : G.τ edge = w
+deriving DecidableEq
 
 attribute [aesop safe forward] EdgeBetween.source EdgeBetween.target
 
@@ -174,6 +176,14 @@ theorem reverse_reduced {v w : V} (p : G.EdgePath v w): reduced p →   reduced 
   rw [←eqn₂'']
   apply Reduction.step
   
+theorem reverse_reduced_iff {v w : V} (p : G.EdgePath v w) :
+  reduced p ↔ reduced p.reverse := by
+  apply Iff.intro
+  · exact reverse_reduced p
+  · intro h
+    rw [← reverse_reverse p]
+    apply reverse_reduced 
+    assumption
 
 abbrev PathClass (G: Graph V E) (v w : V)  := 
     Quot <| @Reduction _ _ G v w
