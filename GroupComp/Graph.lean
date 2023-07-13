@@ -3,7 +3,6 @@ import Mathlib.CategoryTheory.Groupoid
 import Mathlib.CategoryTheory.Endomorphism
 import Mathlib.Algebra.Group.Basic
 import Mathlib.CategoryTheory.Endomorphism
-import Mathlib
 
 universe u v
 
@@ -15,7 +14,8 @@ universe u v
 
 namespace Graph
 
-variable {V : Type u} {E : Type v} (G : Graph V E)
+variable {V : Type u} {E : Type v} [DecidableEq V] [DecidableEq E]
+(G : Graph V E)
 variable {u v w : V}
 
 attribute [simp] bar_involution
@@ -31,6 +31,7 @@ def τ (e : E) : V := G.ι (G.bar e)
   edge : E
   source : G.ι edge = v
   target : G.τ edge = w
+deriving DecidableEq
 
 attribute [aesop safe apply] EdgeBetween.source EdgeBetween.target
 
@@ -141,15 +142,6 @@ theorem concat_eq_append_edge {v w u : V} (e : G.EdgeBetween w u) (p : G.EdgePat
   have := concat_append e p (.nil _)
   aesop
 
--- theorem append_cons {v w u u' : V}
---     (p: G.EdgePath v w)(e: G.EdgeBetween w u)(q: G.EdgePath u u') :
---     p ++ (cons e q) = cons e (p ++ q) := by 
---     induction p with
---     | nil  => 
---       rfl
---     | cons  e' p ih =>
---       simp [cons_append, ih]
-
 theorem append_assoc { v w u u' :  V}
   (p: G.EdgePath v w)(q: G.EdgePath w u)(r: G.EdgePath u u') : 
     (p ++ q) ++ r = p ++ (q ++ r) := by 
@@ -167,15 +159,47 @@ theorem reverse_append {u v w : V} (p : G.EdgePath u v) (q : G.EdgePath v w) :
 @[aesop safe [constructors, cases]]
 inductive Reduction {v w : V}:
       G.EdgePath v w →  G.EdgePath v w →  Prop where
-  | step {u u' : V}(e : G.EdgeBetween u u') (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) : 
+  | step (u u' : V)(e : G.EdgeBetween u u') (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) : 
       Reduction (p₁ ++ (cons e (cons e.bar p₂))) (p₁ ++ p₂)
 
 def reduced  {v w : V} (p : G.EdgePath v w) : Prop := 
   ∀ p', ¬ Reduction p p'
 
+theorem Reduction.existence {v w : V} (p p' : G.EdgePath v w) : 
+  Reduction p p' →
+  ∃ u u': V, ∃ e : G.EdgeBetween u u', 
+    ∃ p₁ : G.EdgePath v u,
+    ∃ p₂ : G.EdgePath u w, 
+      p₁ ++ (cons e (cons e.bar p₂)) = p 
+| Reduction.step u u' e' p₁ p₂ => by
+  use u, u', e', p₁, p₂
+  
+
 end EdgePath
 
 open EdgePath
+
+theorem reverse_reduced {v w : V} (p : G.EdgePath v w): reduced p →   reduced p.reverse := by
+  intro red rev_targ rev_red
+  let ⟨u, u', e, p₁, p₂, eqn⟩   := rev_red.existence
+  apply red (reverse p₂ ++ reverse p₁)
+  let eqn' := congrArg reverse eqn
+  simp [reverse_reverse] at eqn'
+  have eqn'' : (reverse p₂) ++ (cons e (cons e.bar (reverse p₁))) =
+    p := by
+      rw [←eqn', reverse_append]
+      simp [reverse_cons]
+  rw [←eqn'']
+  apply Reduction.step
+  
+theorem reverse_reduced_iff {v w : V} (p : G.EdgePath v w) :
+  reduced p ↔ reduced p.reverse := by
+  apply Iff.intro
+  · exact reverse_reduced p
+  · intro h
+    rw [← reverse_reverse p]
+    apply reverse_reduced 
+    assumption
 
 abbrev PathClass (G: Graph V E) (v w : V)  := 
     Quot <| @Reduction _ _ G v w
@@ -190,7 +214,7 @@ attribute [aesop safe apply] Quot.sound
 
 @[simp] theorem append_cons_bar_cons (e : G.EdgeBetween u u') (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) :
     [[p₁ ++ (p₂ |>.cons e.bar |>.cons e)]] = [[p₁ ++ p₂]] := by
-  have := Reduction.step e p₁ p₂
+  have := Reduction.step _ _ e p₁ p₂
   aesop
 
 @[simp] theorem append_cons_cons_bar (e : G.EdgeBetween u' u) (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) : 
@@ -273,37 +297,6 @@ theorem edgeList_reverse' {G : Graph V E}{v w : V} (p : EdgePath G v w):
     simp [cons_edgeList, reverse_cons, edgeList_concat]
     simp [ih, EdgeBetween.bar]
 
-
-theorem cons_eq {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w) 
-    (e' : EdgeBetween G v w' )(p : EdgePath G w u) (p' : EdgePath G w' u) (eq₁ : e.edge = e'.edge) (eq₂ : w = w') (eq₃ :  p = eq₂ ▸  p'): 
-      cons e' p' = cons e p := by 
-    cases eq₂
-    simp [cons_edgeList,  eq₃]
-    ext
-    symm
-    assumption
-
-theorem cons_eq' {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w) 
-    (e' : EdgeBetween G v w' )(p : EdgePath G w u) (p' : EdgePath G w' u) (eq₁ : e.edge = e'.edge) (eq₂ : w' = w) (eq₃ : eq₂ ▸ p =   p'): 
-      cons e' p' = cons e p := by 
-    cases eq₂
-    simp [cons_edgeList, Eq.symm eq₃]
-    ext
-    symm
-    assumption
-
-theorem edgeList_cast_init {G: Graph V E} {v v' w : V}  
-    (p : EdgePath G v w)(eqn : v = v'):
-      p.toEdgeList = (eqn ▸ p).toEdgeList := by
-      cases eqn 
-      rfl
-
-theorem edgeList_cast_term {G: Graph V E} {v w w' : V}  
-    (p : EdgePath G v w)(eqn : w = w'):
-      p.toEdgeList = (eqn ▸ p).toEdgeList := by
-      cases eqn 
-      rfl
-
 @[ext] theorem eq_of_edgeList_eq {G: Graph V E}{v w: V}
   (p₁ p₂ : EdgePath G v w) : p₁.toEdgeList = p₂.toEdgeList → p₁ = p₂ := by
   induction p₁ with
@@ -326,18 +319,12 @@ theorem edgeList_cast_term {G: Graph V E} {v w w' : V}
       have e2t := e₂.target
       rw [h.1] at e1t
       rw [e1t] at e2t
-      simp [h.2] at ih 
-      apply cons_eq' 
-      · symm
+      cases e2t
+      congr
+      · ext
         exact h.1
-      · let step := ih (e2t ▸ p₂') 
-        symm   
-        have : p₁' = (e2t ▸ p₂')  := by
-          apply step
-          exact edgeList_cast_init p₂' (Eq.symm e2t)
-        rw [this]
-        · simp
-          assumption
+      · apply ih
+        exact h.2  
         
 theorem term_eq_of_edgeList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
   (p₁ : EdgePath G v₁ w₁) (p₂ : EdgePath G v₂ w₂) : p₁.toEdgeList = p₂.toEdgeList → (v₁ = v₂) → (w₁ = w₂)  := by 
@@ -492,7 +479,7 @@ def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
   bar_no_fp := by aesop
 }
 
-
+@[ext]
 structure PathClassFrom (G : Graph V E) (v : V) where
   τ  : V
   pathClass : PathClass G v τ

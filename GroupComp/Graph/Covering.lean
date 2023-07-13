@@ -1,12 +1,11 @@
 import GroupComp.Graph
+import Mathlib.Data.List.Basic
 
 namespace Graph 
 
 open EdgePath PathClass
 
-variable {V : Type u} {E : Type v} (G : Graph V E)
-variable {u v w : V}
-variable {G} (e : G.EdgeBetween v w)
+variable {V : Type u} {E : Type v} 
 
 @[ext] structure Morphism (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) where
   vertexMap : V₁ → V₂
@@ -126,7 +125,7 @@ def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         rw [←hw, hv]
         exact ⟨nil _, by simp [nil_edgeList]⟩
       | cons e p' => 
-        rename_i w₁' w₁'' u'
+        rename_i  w₁'' u'
         let e₁ := f.edgeMap e.edge
         let init_vert : G₂.ι e₁ = v₂ := by
           rw [←hv, ←e.source, ←morphism_init_commutes] 
@@ -205,7 +204,6 @@ theorem unique_Pathlift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       term_eq_of_edgeList_eq p₁.path p₂.path eq_edgepath rfl
     match p₁, p₂ with
     | ⟨τ₁, path₁, h₁, lc₁⟩, ⟨τ₂, path₂, h₂, lc₂⟩ => 
-    simp [term_eq] at h₂
     have teq : τ₁ = τ₂ := term_eq
     cases teq
     have peq : path₁ = path₂ := by 
@@ -236,6 +234,15 @@ theorem pathLift_append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
           (pathLift p (pathLift p v₁ v₂ w₂ h e).τ w₂ u₂ 
             (pathLift p v₁ v₂ w₂ h e).lift_term e') := by
         apply unique_Pathlift 
+
+theorem pathLift_append_tail {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ u₂ : V₂}
+    {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂}{e': EdgePath G₂ w₂ u₂}: 
+      (pathLift p v₁ v₂ u₂ h (e ++ e')).τ = 
+        (pathLift p (pathLift p v₁ v₂ w₂ h e).τ w₂ u₂ 
+            (pathLift p v₁ v₂ w₂ h e).lift_term e').τ := by
+        simp [pathLift_append]
+        rfl
 
 def PathLift.reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ : V₂}
@@ -268,10 +275,8 @@ def PathLift.cons_bar_cons {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       PathLift p v₁ v₂ w₂ h (cons e (cons e.bar e')) := 
       let edgeLift := p.localSection v₁ e.edge (by rw [h, e.source])
       let edgeBetween : EdgeBetween G₁ v₁ (G₁.τ edgeLift) := 
-        { edge := edgeLift, 
-          source := by rw [p.section_init] 
-          target := rfl, 
-          }
+          ⟨edgeLift, p.section_init _ _ _, rfl⟩ 
+          
       {τ := lift'.τ, 
         path := cons edgeBetween (cons edgeBetween.bar lift'.path), 
         lift_term := lift'.lift_term, 
@@ -287,16 +292,52 @@ theorem homotopy_step_lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     {h : p.vertexMap v₁ = v₂}{η₁: EdgePath G₂ v₂ w₂}{e: EdgeBetween G₂ w₂ w₂'}{η₂: EdgePath G₂ w₂ u₂}:
     (pathLift p v₁ v₂ u₂ h (η₁ ++ (cons e (cons e.bar η₂)))).pathClass = 
     (pathLift p v₁ v₂ u₂ h (η₁ ++ η₂)).pathClass := by
-    sorry
+  let θ₁ := pathLift p v₁ v₂ w₂ h η₁
+  let w₁ := θ₁.τ
+  let hw : p.vertexMap w₁ = w₂ := θ₁.lift_term
+  let edgeLift := p.localSection w₁ e.edge (by rw [hw, e.source])
+  let e' : EdgeBetween G₁ w₁ (G₁.τ edgeLift) := 
+          ⟨edgeLift, p.section_init _ _ _, rfl⟩ 
+  let θ₂ := pathLift p w₁ w₂ u₂ hw η₂
+  let liftTailCanc : PathLift p w₁ w₂ u₂ hw (cons e (cons e.bar η₂)) :=
+    {τ := θ₂.τ, 
+        path := cons e' (cons e'.bar θ₂.path), 
+        lift_term := θ₂.lift_term, 
+        list_commutes := by 
+          simp [cons_edgeList, p.left_inverse, EdgeBetween.bar]
+          apply And.intro
+          · rw [p.bar_commutes, p.left_inverse]
+          · rw [θ₂.list_commutes]}
+  let liftCanc :=
+    θ₁.append liftTailCanc
+  have splitLift :
+    pathLift p v₁ v₂ u₂ h (η₁ ++ (cons e (cons e.bar η₂))) =
+      liftCanc := by
+        apply unique_Pathlift
+  rw [splitLift]
+  have splitLift' :
+    pathLift p v₁ v₂ u₂ h (η₁ ++ η₂) =
+      θ₁.append θ₂ := by
+        apply unique_Pathlift
+  rw [splitLift']
+  show (⟨θ₂.τ, [[ liftCanc.path ]]⟩ : PathClassFrom G₁ v₁) = 
+    ⟨θ₂.τ, [[ (θ₁.append θ₂).path ]]⟩
+  have path1 : liftCanc.path =
+    θ₁.path ++ (cons e' (cons e'.bar θ₂.path)) := by
+      rfl
+  have : [[ liftCanc.path ]] = [[ (θ₁.append θ₂).path ]] := by
+    apply Quot.sound
+    rw [path1]
+    apply Reduction.step
+  rw [this]
 
-/-
-*  We construct a lifted path with pieces reflecting cancellation of edges.
-* Using `uniquePath` we show that this equals the original path.
-* Rewrite to change the goal.
-* Resolve the class to reduce the goal to a path class equality.
-* Use `Quot.sound` and construct a step.
-- May want a lemma about equality of classes for paths with the same endpoints.
--/
-
+def homotopyLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂   : V₂}
+    {h : p.vertexMap v₁ = v₂}: PathClass G₂ v₂ w₂ → 
+    PathClassFrom G₁ v₁ := by
+  apply Quot.lift (fun η₂ => (pathLift p v₁ v₂ w₂ h η₂).pathClass)
+  intro η₂ η₂' red
+  induction red
+  apply homotopy_step_lift
 
 end Graph
