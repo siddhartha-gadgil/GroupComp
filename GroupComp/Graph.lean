@@ -175,10 +175,18 @@ theorem Reduction.existence {v w : V} {p' : G.EdgePath v w}(p : G.EdgePath v w) 
 | Reduction.step u u' e' p₁ p₂ => by
   use u, u', e', p₁, p₂
   
-
 end EdgePath
 
 open EdgePath
+
+theorem not_reduced_of_split {v w u u': V}{p : G.EdgePath v w}
+    {e : G.EdgeBetween u u'}{p₁ : G.EdgePath v u}{p₂ : G.EdgePath u w} :
+    p = p₁ ++ (cons e (cons e.bar p₂)) → ¬ reduced p := by
+  intro eqn red
+  have red' := red (p₁ ++ p₂)
+  rw [eqn] at red'
+  apply red'
+  apply Reduction.step
 
 theorem reverse_reduced {v w : V} (p : G.EdgePath v w): reduced p →   reduced p.reverse := by
   intro red rev_targ rev_red
