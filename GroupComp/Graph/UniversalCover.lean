@@ -123,7 +123,7 @@ theorem reduced_prepReduced (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (
               tail_reducible_of_split eqn
             contradiction
 
-theorem cancelling_steps_prepReduced (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) (hyp : reduced p):
+theorem cancelling_steps_prepReduced {G : Graph V E} {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) (hyp : reduced p):
   prepReduced G e.bar (prepReduced G e p) = p := by
   match p with
   | nil _ => 
@@ -166,3 +166,88 @@ theorem cancelling_steps_prepReduced (G : Graph V E) {u v w : V} (e: EdgeBetween
           prepReduced_cons_edge_eq]
     else
       simp [prepReduced_cons_vertex_neq e e' p' c, prepReduced_cons_edge_eq]
+
+def reducedConcat {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: EdgeBetween G w u) : 
+  EdgePath G v u := 
+  reverse <| prepReduced G e.bar (reverse p)
+
+infixl:65 ":+" => reducedConcat
+
+theorem reducedConcat_reduced {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: EdgeBetween G w u) (hyp : reduced p) :
+  reduced (p :+ e) := by
+  simp only [reducedConcat]
+  apply reverse_reduced
+  apply reduced_prepReduced
+  apply reverse_reduced
+  apply hyp
+
+theorem reducedConcat_cancel_pair {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: EdgeBetween G w u) (hyp : reduced p) :
+    p :+ e :+ e.bar = p := by
+  have hyp' :=  reverse_reduced p hyp
+  simp only [reducedConcat, EdgeBetween.bar_involution, reverse_reverse]
+  let lm : 
+    prepReduced G e.bar.bar (prepReduced G (EdgeBetween.bar e) (reverse p)) 
+      = reverse p :=
+    by
+      apply cancelling_steps_prepReduced
+      assumption
+  simp at lm
+  rw [lm, reverse_reverse]
+
+
+/-!
+## Construction of the Universal covering
+
+We construct the universal cover given a baspoint `x₀` with
+
+* Vertices: reduced edge paths starting at `x₀`
+* Edges: reduces edge paths starting at `x₀` followed by an edge.
+
+The non-trivial part is the construction of the `bar` map. The initial vertex should be the terminal vertex of the given edge. This is obtained by reduced concat, using the fact that the result is reduced. The other result is used to show that the `bar` map is an involution.
+-/
+
+namespace UniversalCover
+
+variable (G: Graph V E) (x₀ : V)
+
+@[ext]
+structure Vert' where
+  τ : V
+  p : EdgePath G x₀ τ
+  
+
+@[ext]
+structure Edge' where
+  τ₀ : V
+  τ₁ : V
+  nxt: EdgeBetween G τ₀ τ₁
+  p : EdgePath G x₀ τ₀
+
+abbrev Vert := {v: Vert' G x₀ // reduced v.p}
+abbrev Edge := {e: Edge' G x₀ // reduced e.p}
+  
+  
+namespace Edge
+
+def initial (e : Edge G x₀) : Vert G x₀ := 
+  ⟨⟨e.val.τ₀, e.val.p⟩, e.property⟩
+
+def terminal (e : Edge G x₀) : Vert G x₀ :=
+  ⟨⟨e.val.τ₁, e.val.p :+ e.val.nxt⟩,
+  reducedConcat_reduced e.val.p e.val.nxt e.property⟩
+
+def bar (e : Edge G x₀) : Edge G x₀ :=
+  ⟨⟨e.val.τ₁, e.val.τ₀, e.val.nxt.bar, e.val.p :+ e.val.nxt⟩,
+  reducedConcat_reduced e.val.p e.val.nxt e.property⟩
+
+theorem bar_involution (e : Edge G x₀) : 
+    bar G x₀ (bar G x₀ e) = e := by
+  apply Subtype.eq
+  simp only [bar, EdgeBetween.bar_involution]  
+  ext
+  · rfl
+  · rfl
+  · rfl  
+  · simp [reducedConcat_cancel_pair, e.property]
+
+end Edge
