@@ -211,43 +211,41 @@ namespace UniversalCover
 variable (G: Graph V E) (x₀ : V)
 
 @[ext]
-structure Vert' where
+structure Vert where
   τ : V
   p : EdgePath G x₀ τ
-  
+  is_reduced : @reduced V E G x₀ τ p
 
 @[ext]
-structure Edge' where
+structure Edge where
   τ₀ : V
   τ₁ : V
   nxt: EdgeBetween G τ₀ τ₁
   p : EdgePath G x₀ τ₀
-
-abbrev Vert := {v: Vert' G x₀ // reduced v.p}
-abbrev Edge := {e: Edge' G x₀ // reduced e.p}
+  is_reduced : reduced p
+  
   
   
 namespace Edge
 
 def initial (e : Edge G x₀) : Vert G x₀ := 
-  ⟨⟨e.val.τ₀, e.val.p⟩, e.property⟩
+  ⟨e.τ₀, e.p, e.is_reduced⟩
 
 def terminal (e : Edge G x₀) : Vert G x₀ :=
-  ⟨⟨e.val.τ₁, e.val.p :+ e.val.nxt⟩,
-  reducedConcat_reduced e.val.p e.val.nxt e.property⟩
+  ⟨e.τ₁, e.p :+ e.nxt, reducedConcat_reduced e.p e.nxt e.is_reduced⟩
 
 def bar (e : Edge G x₀) : Edge G x₀ :=
-  ⟨⟨e.val.τ₁, e.val.τ₀, e.val.nxt.bar, e.val.p :+ e.val.nxt⟩,
-  reducedConcat_reduced e.val.p e.val.nxt e.property⟩
+  ⟨e.τ₁, e.τ₀, e.nxt.bar, e.p :+ e.nxt,  reducedConcat_reduced e.p e.nxt e.is_reduced⟩
 
 theorem bar_involution (e : Edge G x₀) : 
     bar G x₀ (bar G x₀ e) = e := by
-  apply Subtype.eq
-  simp only [bar, EdgeBetween.bar_involution]  
+  simp only [bar, EdgeBetween.bar_involution]
   ext
   · rfl
   · rfl
   · rfl  
-  · simp [reducedConcat_cancel_pair, e.property]
+  · simp only [Eq.ndrec, id_eq, heq_eq_eq]
+    apply reducedConcat_cancel_pair
+    exact e.is_reduced
 
 end Edge
