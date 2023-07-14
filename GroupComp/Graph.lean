@@ -28,6 +28,11 @@ def τ (e : E) : V := G.ι (G.bar e)
 @[simp] theorem τ_bar (e : E) :  G.τ (G.bar e) = G.ι e := by
   aesop (add norm unfold [τ])
 
+@[ext] structure EdgeFrom (v : V) where
+  edge : E
+  source : G.ι edge = v
+deriving DecidableEq
+
 @[ext] structure EdgeBetween (v w : V) where
   edge : E
   source : G.ι edge = v

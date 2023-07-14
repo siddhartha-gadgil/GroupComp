@@ -311,14 +311,9 @@ def proj : Morphism (Guniv G x₀) G where
     rfl
       
 instance : CoveringMap (proj G x₀) where
-  localSection := by
-    intro v₁ e h
-    match v₁ with
-    | ⟨τ, p, red⟩ =>
-      have h' : τ = G.ι e := h 
-      cases h'
-      let edge : EdgeBetween G (G.ι e) (G.τ e) := ⟨e, rfl, rfl⟩
-      exact ⟨G.ι e, G.τ e, edge, p, red⟩
+  localSection := 
+    fun v₁ e h ↦
+      ⟨v₁.τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, v₁.p, v₁.is_reduced⟩
   section_init := by
     intro v₁ e h
     match v₁ with
@@ -334,17 +329,29 @@ instance : CoveringMap (proj G x₀) where
       cases h'
       rfl 
   right_inverse := by
-    intro v₁ e₁ h
+    intro v₁ e₁ h₁   
+    have : (proj G x₀).edgeMap e₁ = e₁.nxt.edge := rfl
+    let l := e₁.nxt.target
+    rw [← this] at l
     match e₁ with
     | ⟨τ₀, τ₁, nxt, p, red⟩ =>
-      let h' : Morphism.vertexMap (proj G x₀) v₁ = ι G nxt.edge :=
-        by sorry
-      cases h
-      have l₁ := nxt.source
-      have l₂ := nxt.target
+      cases h₁ 
+      show _ = (⟨τ₀, τ₁, nxt, p, red⟩ : Edge G x₀)
       ext
-      · sorry
-      · sorry
-      · sorry
-      · sorry 
+      · rfl
+      · rw [← l]
+      · show HEq 
+          (⟨nxt.edge, nxt.source , rfl⟩  : EdgeBetween G τ₀ (G.τ nxt.edge)) nxt
+        have typEq : EdgeBetween G τ₀ (G.τ nxt.edge) =
+          EdgeBetween G τ₀ τ₁ := by
+            rw [nxt.target]
+        let ceq := cast_heq (Eq.symm typEq) nxt
+        apply HEq.symm
+        apply HEq.trans (HEq.symm ceq)
+        apply heq_of_eq
+        ext
+        simp
+        
+        sorry 
+      · rfl 
 end Edge
