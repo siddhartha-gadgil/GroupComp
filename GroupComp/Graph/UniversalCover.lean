@@ -1,5 +1,5 @@
 import GroupComp.Graph.Covering
-
+import Mathlib
 namespace Graph
 
 open EdgePath PathClass
@@ -165,7 +165,29 @@ theorem cancelling_steps_prepReduced {G : Graph V E} {u v w : V} (e: EdgeBetween
           simp [prepReduced_cons_edge_neq p' c', 
           prepReduced_cons_edge_eq]
     else
-      simp [prepReduced_cons_vertex_neq e e' p' c, prepReduced_cons_edge_eq]
+      simp only [prepReduced_cons_vertex_neq e e' p' c, EdgeBetween.bar_involution, prepReduced_cons_edge_eq]
+
+theorem prepend_changes_parity {G : Graph V E} {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) (hyp : reduced p):
+  Even ((prepReduced G e p).toEdgeList.length) ↔ ¬ Even (p.toEdgeList.length) := by
+  match p with
+  | nil _ => 
+    simp only [prepReduced_nil, cons_edgeList, nil_edgeList, List.length_singleton, Nat.not_even_one, List.length_nil,
+      even_zero, not_true]    
+  | cons e' p' =>
+    rename_i w' w''
+    if c:w'' = u then
+      cases c
+      if c':e' = e.bar 
+        then
+          simp only [prepReduced_cons_edge_eq p' c', cons_edgeList, List.length_cons]
+          simp [Nat.even_add_one]
+        else
+          simp [prepReduced_cons_edge_neq p' c', cons_edgeList, List.length_cons]
+          apply Nat.even_add_one
+    else
+      simp only [prepReduced_cons_vertex_neq e e' p' c, cons_edgeList, List.length_cons, ne_eq]
+      simp [Nat.even_add_one]
+
 
 def reducedConcat {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: EdgeBetween G w u) : 
   EdgePath G v u := 
@@ -194,6 +216,11 @@ theorem reducedConcat_cancel_pair {G : Graph V E} {v w u : V}  (p : EdgePath G v
   simp at lm
   rw [lm, reverse_reverse]
 
+theorem concat_parity {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: EdgeBetween G w u) (hyp : reduced p) :
+  Even ((p :+ e).toEdgeList.length) ↔ ¬ Even (p.toEdgeList.length) := by
+  simp  [reducedConcat, edgeList_reverse]
+  rw [prepend_changes_parity e.bar (reverse p) (reverse_reduced p hyp)]
+  simp [edgeList_reverse]
 
 /-!
 ## Construction of the Universal covering
@@ -248,4 +275,76 @@ theorem bar_involution (e : Edge G x₀) :
     apply reducedConcat_cancel_pair
     exact e.is_reduced
 
+def edgeList (e : Edge G x₀) : List E := 
+  e.p.toEdgeList
+
+theorem bar_neq_self (e: Edge G x₀) :
+  e ≠ bar G x₀ e := by
+  intro contra
+  have : e.p.toEdgeList.length =  (bar G x₀ e).p.toEdgeList.length 
+     := by
+      rw [← contra]
+  simp [bar, Edge.p] at this
+  let h' := concat_parity e.p e.nxt e.is_reduced
+  rw [this] at h' 
+  symm at h'
+  let h'' := not_iff_self  h'
+  assumption
+
+def Guniv : Graph (Vert G x₀) (Edge G x₀) where
+  ι := initial G x₀
+  bar := bar G x₀
+  bar_involution := bar_involution G x₀
+  bar_no_fp := bar_neq_self G x₀
+
+def proj : Morphism (Guniv G x₀) G where
+  vertexMap := Vert.τ
+  edgeMap := fun e ↦ e.nxt.edge 
+  commutes := by
+    intro e
+    match e with
+    | ⟨τ₀, τ₁, nxt, _, _⟩ => 
+      show τ₀ = G.ι nxt.edge
+      rw [nxt.source]
+  bar_commutes := by
+    intro e
+    rfl
+      
+instance : CoveringMap (proj G x₀) where
+  localSection := by
+    intro v₁ e h
+    match v₁ with
+    | ⟨τ, p, red⟩ =>
+      have h' : τ = G.ι e := h 
+      cases h'
+      let edge : EdgeBetween G (G.ι e) (G.τ e) := ⟨e, rfl, rfl⟩
+      exact ⟨G.ι e, G.τ e, edge, p, red⟩
+  section_init := by
+    intro v₁ e h
+    match v₁ with
+    | ⟨τ, p, red⟩ =>
+      have h' : τ = G.ι e := h
+      cases h'
+      rfl
+  left_inverse := by
+    intro v₁ e h
+    match v₁ with
+    | ⟨τ, p, red⟩ =>
+      have h' : τ = G.ι e := h
+      cases h'
+      rfl 
+  right_inverse := by
+    intro v₁ e₁ h
+    match e₁ with
+    | ⟨τ₀, τ₁, nxt, p, red⟩ =>
+      let h' : Morphism.vertexMap (proj G x₀) v₁ = ι G nxt.edge :=
+        by sorry
+      cases h
+      have l₁ := nxt.source
+      have l₂ := nxt.target
+      ext
+      · sorry
+      · sorry
+      · sorry
+      · sorry 
 end Edge
