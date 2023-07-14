@@ -351,7 +351,11 @@ instance : CoveringMap (proj G x₀) where
         apply heq_of_eq
         ext
         simp
-        
-        sorry 
+        -- have cast_thm (τ₂ : V): 
+        --   (eql : EdgeBetween G τ₀ τ₁ = EdgeBetween G τ₀ τ₂) → 
+        --   (cast eql nxt).edge = nxt.edge  := 
+        --     Eq.rec (by rfl) 
+        sorry
+        -- apply cast_thm (G.τ nxt.edge)
       · rfl 
 end Edge
