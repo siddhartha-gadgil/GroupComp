@@ -123,4 +123,46 @@ theorem reduced_prepReduced (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (
               tail_reducible_of_split eqn
             contradiction
 
-#check EdgePath.noConfusion
+theorem cancelling_steps_prepReduced (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) (hyp : reduced p):
+  prepReduced G e.bar (prepReduced G e p) = p := by
+  match p with
+  | nil _ => 
+    simp [prepReduced_nil, prepReduced_cons_edge_eq]
+  | cons e' p' => 
+    rename_i w' w''
+    if c:w'' = u then
+      cases c
+      if c':e' = e.bar 
+        then 
+          simp [prepReduced_cons_edge_eq p' c']
+          match p' with
+          | nil _ => 
+            simp [prepReduced_nil, prepReduced_cons_edge_eq, c']
+          | cons e'' p'' =>
+            rename_i w₁ w₂
+            if c₁: w₂ = v then
+              cases c₁
+              if c₂ : e'' = e.bar.bar then
+                simp at c₂
+                rw [c₂, c'] at hyp
+                rw [c₂, c']
+                have split :
+                  cons e.bar (cons e p'') = 
+                    (nil v : EdgePath G v v) ++ 
+                      cons e.bar (cons e.bar.bar p'') := by
+                    simp [nil_append]
+                have :¬ reduced (cons e.bar (cons e p'')) := by
+                  apply not_reduced_of_split split
+                contradiction
+              else 
+                simp [prepReduced_cons_edge_neq p'' c₂]
+                rw [c']
+            else
+              simp [
+                prepReduced_cons_vertex_neq e.bar e'' p'' c₁]
+              rw [c']
+        else 
+          simp [prepReduced_cons_edge_neq p' c', 
+          prepReduced_cons_edge_eq]
+    else
+      simp [prepReduced_cons_vertex_neq e e' p' c, prepReduced_cons_edge_eq]
