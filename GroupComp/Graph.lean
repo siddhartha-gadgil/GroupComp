@@ -1,11 +1,13 @@
 import Mathlib.Data.Bool.Basic
 import Mathlib.CategoryTheory.Groupoid
+import Mathlib.CategoryTheory.Endomorphism
 import Mathlib.Algebra.Group.Basic
 import Mathlib.CategoryTheory.Endomorphism
+import Mathlib
 
 universe u v
 
-structure Graph (V : Type u) (E : Type v) where
+@[class] structure Graph (V : Type u) (E : Type v) where
   ι : E → V
   bar : E → E
   bar_involution : ∀ e, bar (bar e) = e
@@ -42,6 +44,16 @@ def EdgeBetween.bar (e : G.EdgeBetween v w) : G.EdgeBetween w v :=
   , target := by aesop
   }
 
+def EdgeBetween.ofEdge (e : E) : G.EdgeBetween (G.ι e) (G.τ e) where
+  edge := e
+  source := rfl
+  target := rfl
+
+@[simp] lemma EdgeBetween.ofEdge_edge (e : E) : 
+  (EdgeBetween.ofEdge (G := G) e).edge = e := rfl
+
+@[simp] theorem EdgeBetween.bar_def : e.bar.edge = G.bar e.edge := rfl
+
 @[simp] theorem EdgeBetween.bar_involution : e.bar.bar = e := by 
     ext; aesop (add norm simp [EdgeBetween.bar])
 
@@ -49,6 +61,8 @@ def EdgeBetween.bar (e : G.EdgeBetween v w) : G.EdgeBetween w v :=
 inductive EdgePath (G : Graph V E) : V → V → Type _ where
   | nil (v) : G.EdgePath v v
   | cons {v w u} : G.EdgeBetween v w → G.EdgePath w u → G.EdgePath v u
+
+abbrev singletonPath (e : G.EdgeBetween u v) := EdgePath.cons e (.nil v)
 
 namespace EdgePath
 
@@ -88,7 +102,11 @@ def append { v w u : V}
   | nil .(v) => q
   | cons  e' p'  => 
       let tail := append p' q
-      cons e' tail 
+      cons e' tail
+
+def fold (φ : {u v : V} → G.EdgeBetween u v → A) (comp : A → A → A) (init : A) {v w : V} : G.EdgePath v w → A
+  | .nil _ => init
+  | .cons e p => comp (φ e) (fold φ comp init p)
 
 instance  G.EdgePath {v w u : V} {G : Graph V E} : 
   HAppend (G.EdgePath v w) (G.EdgePath w u) (G.EdgePath v u) := 
@@ -114,6 +132,11 @@ instance  G.EdgePath {v w u : V} {G : Graph V E} :
 theorem append_concat {v w w' u : V} (e : EdgeBetween G w' u)(p: EdgePath G v w)(q: EdgePath G w w') :
   p ++ (concat q e) = concat (p ++ q) e := by
   induction p <;> aesop
+
+theorem cons_eq_append_singletonPath {u v w : V} (e : G.EdgeBetween u v) (p : G.EdgePath v w) : 
+    EdgePath.cons e p = G.singletonPath e ++ p := rfl
+
+theorem singletonPath_bar (e : G.EdgeBetween u v) : G.singletonPath e.bar = reverse (G.singletonPath e) := rfl
 
 theorem concat_eq_append_edge {v w u : V} (e : G.EdgeBetween w u) (p : G.EdgePath v w) :
     p.concat e = p ++ (cons e (nil u)) := by
@@ -328,40 +351,58 @@ theorem term_eq_of_edgeList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
 
 namespace PathClass
 
-@[aesop norm unfold] 
+@[aesop norm unfold]
 protected def id {G : Graph V E} (v : V) : G.PathClass v v :=
   [[.nil v]]
 
-def mul {v w u : V} : 
+protected def mul {v w u : V} : 
     G.PathClass v w → G.PathClass w u → G.PathClass v u := by
   apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]]) <;>
     aesop (add safe apply [left_append_step, right_append_step])
 
-@[aesop norm unfold] def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
+@[aesop norm unfold]
+protected def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
   Quot.lift ([[·.reverse]]) reverse_step
 
-@[simp] theorem mul_paths (p : G.EdgePath u v) (p' : G.EdgePath v w) :
-  mul [[p]] [[p']] = [[p ++ p']] := rfl
+open CategoryTheory
 
-@[simp] theorem id_mul  {u v : V} : ∀ p : G.PathClass u v, 
-  mul (.id u) p = p := by
-    apply Quot.ind; aesop
+set_option synthInstance.checkSynthOrder false in -- HACK
+instance [G : Graph V E] : CategoryStruct V where
+  Hom := G.PathClass
+  id := PathClass.id
+  comp := PathClass.mul
 
-@[simp] theorem mul_id  {u v : V} : ∀ p : G.PathClass u v,
-  mul p (.id v) = p := by 
-    apply Quot.ind; aesop
+def ind {β : (u ⟶ v) → Prop} : 
+   (∀ p : G.EdgePath u v, β [[p]]) → (∀ q : u ⟶ v, β q) :=
+  Quot.ind
 
-@[simp] theorem inv_mul {u v : V} : ∀ p : G.PathClass u v,
-    mul p.inv p = .id v := by
-  apply Quot.ind; aesop
+@[local simp] lemma id_eq_nil (u : V) : 𝟙 u = [[.nil (G := G) u]] := rfl
 
-@[simp] theorem mul_inv {u v : V} : ∀ p : G.PathClass u v,
-    mul p p.inv = .id u := by
-  apply Quot.ind; aesop
+@[local simp] lemma mul_paths (p : G.EdgePath u v) (p' : G.EdgePath v w) :
+  .mul [[p]] [[p']] = [[p ++ p']] := rfl
 
-theorem mul_assoc { v w u u' :  V}:
-  (p: PathClass G v w) → (q: PathClass G w u) → (r: PathClass G u u') →  
-    mul (mul p q) r = mul p (mul q r) := by
+@[local simp] lemma comp_mul (p : u ⟶ v) (p' : v ⟶ w) :
+  p ≫ p' = .mul p p' := rfl
+
+@[simp] protected theorem id_mul  {u v : V} : ∀ p : u ⟶ v, 
+  (𝟙 u) ≫ p = p := by
+    apply PathClass.ind; aesop
+
+@[simp] protected theorem mul_id  {u v : V} : ∀ p : u ⟶ v,
+    p ≫ (𝟙 v) = p := by
+  apply PathClass.ind; aesop
+
+@[simp] protected theorem inv_mul {u v : V} : ∀ p : u ⟶ v,
+    p.inv ≫ p = 𝟙 v := by
+  apply PathClass.ind; aesop
+
+@[simp] protected theorem mul_inv {u v : V} : ∀ p : u ⟶ v,
+    p ≫ p.inv = 𝟙 u := by
+  apply PathClass.ind; aesop
+
+protected theorem mul_assoc { v w u u' :  V}:
+  (p : v ⟶ w) → (q : w ⟶ u) → (r : u ⟶ u') →  
+    (p ≫ q) ≫ r = p ≫ (q ≫ r) := by
     apply Quot.ind
     intro a
     apply Quot.ind
@@ -370,53 +411,67 @@ theorem mul_assoc { v w u u' :  V}:
     intro c
     simp [append_assoc]
 
-theorem append_mul {v w u : V} (p : EdgePath G v w) (q : EdgePath G w u) : 
-    [[p ++ q]] = mul [[ p ]] [[ q]] := by rfl
+@[simp] lemma nil_eq_id (u : V) : [[Graph.EdgePath.nil (G := G) u]] = 𝟙 u := rfl
+
+@[simp] lemma reverse_class_eq_inv (p : G.EdgePath u v) : [[p.reverse]] = [[p]].inv := rfl
 
 theorem cons_natural{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
    [[cons a  b₁]] = [[cons a b₂]] := by
-  intro rel
+  intro r
   rw [show cons a b₁ = cons a (nil _) ++ b₁ by rfl, 
       show cons a b₂ = cons a (nil _) ++ b₂ by rfl,
-      append_mul, append_mul, rel]
+      ← mul_paths, ← mul_paths, r]
 
 theorem concat_natural {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgeBetween G w u) : [[a₁]] = [[a₂]] → 
    [[concat a₁ b]] = [[concat a₂ b]] := by
-  intro rel
+  intro r
   have: concat a₁  b = a₁ ++ (concat (nil _) b) := by 
     rw [append_concat, append_nil]
   rw [this]
   have: concat a₂  b = a₂ ++ (concat (nil _) b) := by 
     rw [append_concat, append_nil]
-  rw [this, append_mul, append_mul, rel]
+  rw [this, ← mul_paths, ← mul_paths, r]
 
 end PathClass
 
-open PathClass
+open PathClass CategoryTheory
 
-@[instance]
-def FundamentalGroupoid  (G: Graph V E) : CategoryTheory.Groupoid V where
-  Hom := G.PathClass
-  id := .id
-  comp := .mul (G := G)
-  id_comp := id_mul
-  comp_id := mul_id
-  assoc := mul_assoc
-  inv := inv
-  inv_comp := inv_mul
-  comp_inv := mul_inv
 
-def π₁ (G: Graph V E) (v : V) := G.PathClass v v
+set_option synthInstance.checkSynthOrder false in -- HACK
+@[instance] def FundamentalGroupoid [G : Graph V E] : Groupoid V where
+  id_comp := PathClass.id_mul
+  comp_id := PathClass.mul_id
+  assoc := PathClass.mul_assoc
+  inv := PathClass.inv
+  inv_comp := PathClass.inv_mul
+  comp_inv := PathClass.mul_inv
+
+protected lemma PathClass.inv_eq_inv (p : u ⟶ v) : p.inv = inv p := by
+  rw [← Groupoid.inv_eq_inv]; rfl
+
+abbrev π₁ (G: Graph V E) (v : V) := G.PathClass v v
 
 instance : Group (π₁ G v) where
-  mul := mul
-  mul_assoc := mul_assoc
+  mul := PathClass.mul
+  mul_assoc := PathClass.mul_assoc
   one := .id v
-  one_mul := id_mul
-  mul_one := mul_id
-  inv := inv
-  mul_left_inv := inv_mul
+  one_mul := PathClass.id_mul
+  mul_one := PathClass.mul_id
+  inv := PathClass.inv
+  mul_left_inv := PathClass.inv_mul
 
+namespace π₁
+
+variable (G : Graph V E) (base : V)
+
+protected def one_def : 𝟙 base = (1 : G.π₁ base) := rfl
+
+protected def mul_def (p q : base ⟶ base) : p ≫ q = p * q := rfl
+
+protected def inv_def (p : base ⟶ base) : (inv p) = (p : G.π₁ base)⁻¹ := by 
+  simp only [Groupoid.vertexGroup_inv, Groupoid.inv_eq_inv]
+
+end π₁
 
 def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
   ι := fun _ ↦ ()
