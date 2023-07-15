@@ -332,12 +332,19 @@ theorem homotopy_step_lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   rw [this]
 
 def homotopyLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂   : V₂}
-    {h : p.vertexMap v₁ = v₂}: PathClass G₂ v₂ w₂ → 
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) {v₂ w₂   : V₂}
+    (h : p.vertexMap v₁ = v₂): PathClass G₂ v₂ w₂ → 
     PathClassFrom G₁ v₁ := by
   apply Quot.lift (fun η₂ => (pathLift p v₁ v₂ w₂ h η₂).pathClass)
   intro η₂ η₂' red
   induction red
   apply homotopy_step_lift
+
+theorem homotopyLift_of_path {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂   : V₂}
+    {h : p.vertexMap v₁ = v₂} (e : EdgePath G₂ v₂ w₂) :
+    homotopyLift p v₁ h [[ e ]] = 
+      (pathLift p v₁ v₂ w₂ h e).pathClass := by
+    rfl
 
 end Graph
