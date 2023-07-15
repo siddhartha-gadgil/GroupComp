@@ -101,7 +101,8 @@ abbrev SpanningSubtree.inducedMap (φ : ↑(Γ.edgesᶜ) →⁻¹ H) : X.π₁ �
   show (Γ.edgeLabelExtension φ).pathClassLabel ([[_]]) = _
   simp only [GroupLabelledGraph.pathClassLabel_of_pathLabel, SpanningSubtree.contains_path, pathLabel_on_tree_path]
 
-instance [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges)] : -- TODO remove instance 
+@[instance]
+def freeFundamentalGroup [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges)] : -- TODO remove instance 
     SymmFreeGroup (X.π₁ Γ.base) ↑(Γ.edgesᶜ) where
   ι := Γ.ofOutEdge
   induced := Γ.inducedMap 
@@ -130,5 +131,17 @@ instance [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges)
       congr 1
       apply Γ.surroundEdge_cast <;> 
       simp [EdgeBetween.source, EdgeBetween.target]
+
+def wedgeCircles.spanningSubTree : SpanningSubtree (wedgeCircles S) where
+  verts := ⊤
+  edges := ⊥  
+  edges_bar := by aesop
+  edges_init := by aesop
+  spanning := by aesop
+  path := fun _ _ ↦ ⟨.nil (), by simp⟩
+  path_unique := by
+    intro _ _ p
+    cases p <;> simp
+  basePoint := ⟨(), trivial⟩
 
 end Graph
