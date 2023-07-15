@@ -32,7 +32,7 @@ def pathLabel {u v : V} : Γ.EdgePath u v → G := Graph.EdgePath.fold 𝓖.labe
 
 theorem pathLabel_reduction {u v : V} (p p' : Graph.EdgePath Γ u v) : Graph.EdgePath.Reduction p p' → 
     𝓖.pathLabel p = 𝓖.pathLabel p'
-  | .step e p p' => by simp
+  | .step _ _ e p p' => by simp
 
 @[simp] theorem pathLabel_singletonPath (e : Γ.EdgeBetween u v) : 
   𝓖.pathLabel (Γ.singletonPath e) = 𝓖.label e := by simp
