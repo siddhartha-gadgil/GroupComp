@@ -1,4 +1,5 @@
 import Mathlib.GroupTheory.IsFreeGroup
+import Mathlib.Data.Bool.Basic
 
 #check IsFreeGroup
 
@@ -36,6 +37,56 @@ instance MonoidHom.toInvHom [Group G] [Group H] (φ : G →* H) : G →⁻¹ H w
   toFun := φ.toFun
   inv_map' _ := by simp
 
+class OrientableInvolutiveInv (X : Type _) extends InvolutiveInv X where
+  pos : X → Bool
+  selection : ∀ x : X, xor (pos x) (pos x⁻¹) 
+
+namespace OrientableInvolutiveInv
+
+variable (X : Type _) [OrientableInvolutiveInv X] (x x' : X)
+
+@[simp] lemma no_fixed_points : pos x ≠ pos x⁻¹ := by
+  intro h
+  have := h ▸ selection x
+  simp_all only [Bool.xor_self]
+
+@[simp] lemma not_pos_inv_of_pos (h : pos x) : ¬(pos x⁻¹) := by
+  have := h ▸ selection x
+  simp_all only [Bool.true_xor, Bool.not_eq_true', not_false_eq_true]
+
+@[simp] lemma pos_of_not_pos_inv (h : ¬(pos x⁻¹)) : pos x := by
+  have := selection x
+  simp_all only [Bool.not_eq_true, Bool.xor_false_right]
+
+instance (priority := high) : ProperInvolutiveInv X where
+  no_fixed_points x := by 
+    apply ne_of_apply_ne pos
+    simp only [ne_eq, no_fixed_points, not_false_eq_true]
+
+def orientation := {x : X // pos x}
+
+def lift [InvolutiveInv Y] : (orientation X → Y) ≃ (X →⁻¹ Y) where
+    toFun f := {
+      toFun := fun x ↦
+        if h:pos x then
+          f ⟨x, h⟩
+        else
+          (f ⟨x⁻¹, by simp [h]⟩)⁻¹ 
+      inv_map' := by
+        intro x
+        by_cases h : pos x <;>
+        simp [h]
+    }        
+    invFun φ := fun ⟨x, _⟩ ↦ φ x
+    left_inv f := by
+      ext ⟨x, h⟩
+      simp [FunLike.coe, h]
+    right_inv φ := by
+      ext x
+      simp [FunLike.coe, φ.inv_map']
+
+end OrientableInvolutiveInv
+
 /-- The definition of a free group on a symmetric generating set. -/
 class SymmFreeGroup (G : Type _) [Group G] (X : Type _) [ProperInvolutiveInv X] where
   ι : X →⁻¹ G
@@ -65,7 +116,18 @@ def lift [SymmFreeGroup G X] : (X →⁻¹ H) ≃ (G →* H) where
     apply SymmFreeGroup.lift_unique
 
 set_option synthInstance.checkSynthOrder false in -- HACK
-instance [SymmFreeGroup G X] : IsFreeGroup G := sorry
+@[instance] def toFreeGroup {X : Type _} [OrientableInvolutiveInv X] [SymmFreeGroup G X] : IsFreeGroup G :=
+  IsFreeGroup.ofLift 
+    (OrientableInvolutiveInv.orientation X) 
+    ((OrientableInvolutiveInv.lift X).invFun SymmFreeGroup.ι) 
+    (Equiv.trans (OrientableInvolutiveInv.lift X) (SymmFreeGroup.lift)) 
+    <| by
+    intro H _ f ⟨x, h⟩
+    simp [lift]
+    let φ := (OrientableInvolutiveInv.lift X (Y := H)).toFun f
+    show (InvHom.comp ι (MonoidHom.toInvHom (induced φ))) _ = _
+    rw [induced_is_lift (G := G) φ]
+    simp [OrientableInvolutiveInv.lift, FunLike.coe, EquivLike.coe, h]
 
 instance [IsFreeGroup G] : SymmFreeGroup G (IsFreeGroup.Generators G ⊕ IsFreeGroup.Generators G) where
   ι := 
