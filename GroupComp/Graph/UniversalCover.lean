@@ -310,6 +310,14 @@ def proj : Morphism (Guniv G x₀) G where
     intro e
     rfl
       
+lemma shift_heq (τ₀ τ₁ τ₂ : V)(edge : E)(source : G.ι edge = τ₀)
+    (target₁ : G.τ edge = τ₁)(target₂ : G.τ edge = τ₂):
+    HEq (⟨edge, source, target₁⟩ : EdgeBetween G τ₀ τ₁)
+      (⟨edge, source, target₂⟩ : EdgeBetween G τ₀ τ₂) := by
+    induction target₁
+    induction target₂
+    rfl
+
 instance : CoveringMap (proj G x₀) where
   localSection := 
     fun v₁ e h ↦
@@ -342,20 +350,6 @@ instance : CoveringMap (proj G x₀) where
       · rw [← l]
       · show HEq 
           (⟨nxt.edge, nxt.source , rfl⟩  : EdgeBetween G τ₀ (G.τ nxt.edge)) nxt
-        have typEq : EdgeBetween G τ₀ (G.τ nxt.edge) =
-          EdgeBetween G τ₀ τ₁ := by
-            rw [nxt.target]
-        let ceq := cast_heq (Eq.symm typEq) nxt
-        apply HEq.symm
-        apply HEq.trans (HEq.symm ceq)
-        apply heq_of_eq
-        ext
-        simp
-        -- have cast_thm (τ₂ : V): 
-        --   (eql : EdgeBetween G τ₀ τ₁ = EdgeBetween G τ₀ τ₂) → 
-        --   (cast eql nxt).edge = nxt.edge  := 
-        --     Eq.rec (by rfl) 
-        sorry
-        -- apply cast_thm (G.τ nxt.edge)
+        apply shift_heq
       · rfl 
 end Edge
