@@ -248,6 +248,21 @@ theorem reduction_reduced {G: Graph V E} {v w : V} (p : EdgePath G v w) :
     apply reduced_redCons
     assumption
 
+theorem reduction_eq_self_of_reduced {G: Graph V E} {v w : V} (p : EdgePath G v w) (hyp : reduced p) :
+  reduction p = p := by
+  induction p with
+  | nil _ => 
+    simp [reduction_nil]
+  | cons e p ih => 
+    rw [reduction_cons]
+    have teq : reduction p = p := by
+      apply ih
+      apply tail_reduced
+      assumption
+    rw [teq]
+    apply redCons_eq_cons_of_reduced
+    assumption
+
 theorem redCons_parity_neq {G : Graph V E} {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) :
   Even ((redCons e p).toEdgeList.length) ↔ ¬ Even (p.toEdgeList.length) := by
   cases prepend_cases e p with
