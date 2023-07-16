@@ -36,6 +36,29 @@ theorem prepReduced_cons_edge_eq {G : Graph V E} {u v w : V}
     prepReduced G e (cons e' p) = p := by 
   simp [prepReduced, h]
 
+theorem prepend_cases {G : Graph V E} {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) :
+  (prepReduced G e p) = cons e p ∨ (
+    ∃ t : EdgePath G u w, p = cons e.bar t ∧  (prepReduced G e p = t)
+  ) 
+   := by
+  match p with
+  | nil _ => 
+    simp only [prepReduced_nil, false_and, exists_false, or_false]
+  | cons e' p' =>
+    rename_i w' w''
+    if c:w'' = u then
+      cases c
+      if c':e' = e.bar 
+        then
+          simp [prepReduced_cons_edge_eq p' c']
+          simp only [c', or_true]          
+        else
+          simp [prepReduced_cons_edge_neq p' c']
+    else
+      simp only [prepReduced_cons_vertex_neq e e' p' c, cons.injEq, exists_eq_right', true_or]
+      
+
+
 theorem tail_reducible_of_split {G : Graph V E} {u v w v' w': V} {e : EdgeBetween G u v} {p : EdgePath G v w}
     {ph: EdgeBetween G u v'}{pt : EdgePath G v' w'}
     {e' : EdgeBetween G w' u'}{p₂ : EdgePath G w' w} 
@@ -125,70 +148,43 @@ theorem reduced_prepReduced (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (
 
 theorem cancelling_steps_prepReduced {G : Graph V E} {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) (hyp : reduced p):
   prepReduced G e.bar (prepReduced G e p) = p := by
-  match p with
-  | nil _ => 
-    simp [prepReduced_nil, prepReduced_cons_edge_eq]
-  | cons e' p' => 
-    rename_i w' w''
-    if c:w'' = u then
-      cases c
-      if c':e' = e.bar 
-        then 
-          simp [prepReduced_cons_edge_eq p' c']
-          match p' with
-          | nil _ => 
-            simp [prepReduced_nil, prepReduced_cons_edge_eq, c']
-          | cons e'' p'' =>
-            rename_i w₁ w₂
-            if c₁: w₂ = v then
-              cases c₁
-              if c₂ : e'' = e.bar.bar then
-                simp at c₂
-                rw [c₂, c'] at hyp
-                rw [c₂, c']
-                have split :
-                  cons e.bar (cons e p'') = 
+  cases prepend_cases e p with
+  | inl h => 
+      rw [h]
+      apply prepReduced_cons_edge_eq
+      simp [bar_involution]
+  | inr h => 
+      let ⟨t, h₁, h₂⟩ := h
+      rw[h₂, h₁]
+      cases prepend_cases e.bar t with
+      | inl h' => 
+        assumption
+      | inr h' => 
+        let ⟨t', h₁', h₂'⟩ := h'
+        rw [h₂', h₁']
+        rw [h₁, h₁'] at hyp
+        simp [bar_involution] at *
+        have split :
+                  cons e.bar (cons e t') = 
                     (nil v : EdgePath G v v) ++ 
-                      cons e.bar (cons e.bar.bar p'') := by
+                      cons e.bar (cons e.bar.bar t') := by
                     simp [nil_append]
-                have :¬ reduced (cons e.bar (cons e p'')) := by
-                  apply not_reduced_of_split split
-                contradiction
-              else 
-                simp [prepReduced_cons_edge_neq p'' c₂]
-                rw [c']
-            else
-              simp [
-                prepReduced_cons_vertex_neq e.bar e'' p'' c₁]
-              rw [c']
-        else 
-          simp [prepReduced_cons_edge_neq p' c', 
-          prepReduced_cons_edge_eq]
-    else
-      simp only [prepReduced_cons_vertex_neq e e' p' c, EdgeBetween.bar_involution, prepReduced_cons_edge_eq]
+        have :¬ reduced (cons e.bar (cons e t')) := by
+          apply not_reduced_of_split split
+        contradiction
 
-theorem prepend_changes_parity {G : Graph V E} {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) (hyp : reduced p):
+theorem prepend_changes_parity {G : Graph V E} {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) :
   Even ((prepReduced G e p).toEdgeList.length) ↔ ¬ Even (p.toEdgeList.length) := by
-  match p with
-  | nil _ => 
-    simp only [prepReduced_nil, cons_edgeList, nil_edgeList, List.length_singleton, Nat.not_even_one, List.length_nil,
-      even_zero, not_true]    
-  | cons e' p' =>
-    rename_i w' w''
-    if c:w'' = u then
-      cases c
-      if c':e' = e.bar 
-        then
-          simp only [prepReduced_cons_edge_eq p' c', cons_edgeList, List.length_cons]
-          simp [Nat.even_add_one]
-        else
-          simp [prepReduced_cons_edge_neq p' c', cons_edgeList, List.length_cons]
-          apply Nat.even_add_one
-    else
-      simp only [prepReduced_cons_vertex_neq e e' p' c, cons_edgeList, List.length_cons, ne_eq]
-      simp [Nat.even_add_one]
-
-
+  cases prepend_cases e p with
+  | inl h => 
+    rw [h]
+    simp only [cons_edgeList, List.length_cons]
+    apply Nat.even_add_one
+  | inr h =>
+    let ⟨t, h₁, h₂⟩ := h
+    rw [h₂, h₁]
+    simp  [cons_edgeList, List.length_cons, Nat.even_add_one]
+  
 def reducedConcat {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: EdgeBetween G w u) : 
   EdgePath G v u := 
   reverse <| prepReduced G e.bar (reverse p)
@@ -216,10 +212,10 @@ theorem reducedConcat_cancel_pair {G : Graph V E} {v w u : V}  (p : EdgePath G v
   simp at lm
   rw [lm, reverse_reverse]
 
-theorem concat_parity {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: EdgeBetween G w u) (hyp : reduced p) :
+theorem concat_parity {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: EdgeBetween G w u)  :
   Even ((p :+ e).toEdgeList.length) ↔ ¬ Even (p.toEdgeList.length) := by
   simp  [reducedConcat, edgeList_reverse]
-  rw [prepend_changes_parity e.bar (reverse p) (reverse_reduced p hyp)]
+  rw [prepend_changes_parity e.bar (reverse p)]
   simp [edgeList_reverse]
 
 /-!
@@ -285,7 +281,7 @@ theorem bar_neq_self (e: Edge G x₀) :
      := by
       rw [← contra]
   simp [bar, Edge.p] at this
-  let h' := concat_parity e.p e.nxt e.is_reduced
+  let h' := concat_parity e.p e.nxt 
   rw [this] at h' 
   symm at h'
   let h'' := not_iff_self  h'
