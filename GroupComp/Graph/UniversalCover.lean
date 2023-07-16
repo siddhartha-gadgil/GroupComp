@@ -176,3 +176,23 @@ def rayFrom (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
       apply redCons_eq_cons_of_reduced
       assumption)⟩  
     
+theorem rayFrom_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
+  (hyp : reduced p.reverse) :
+  (rayFrom G x₀ τ p hyp).toEdgeList.map (fun e ↦ e.nxt.edge) = 
+    p.toEdgeList.reverse.map (G.bar) := by
+    induction p with
+  | nil _ => 
+    simp [rayFrom, nil_edgeList]    
+  | cons e p' ih => 
+    rename_i x₀' u u'
+    have red_cons : reduced (cons e p') := by
+      rw [← reverse_reverse (cons e p')]
+      apply reverse_reduced
+      assumption
+    have red_p' : reduced p' := by
+      apply tail_reduced e p' 
+      assumption
+    have red' : reduced p'.reverse := by
+      apply reverse_reduced
+      assumption
+    simp [rayFrom, cons_edgeList, edgeList_concat, ih red']    
