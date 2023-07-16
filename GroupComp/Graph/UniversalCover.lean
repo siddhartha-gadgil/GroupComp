@@ -350,6 +350,7 @@ def terminal (e : Edge G x₀) : Vert G x₀ :=
 def bar (e : Edge G x₀) : Edge G x₀ :=
   ⟨e.τ₁, e.τ₀, e.nxt.bar, e.p :+ e.nxt,  reducedConcat_reduced e.p e.nxt e.is_reduced⟩
 
+
 theorem bar_involution (e : Edge G x₀) : 
     bar G x₀ (bar G x₀ e) = e := by
   simp only [bar, EdgeBetween.bar_involution]
@@ -438,4 +439,42 @@ instance : CoveringMap (proj G x₀) where
           (⟨nxt.edge, nxt.source , rfl⟩  : EdgeBetween G τ₀ (G.τ nxt.edge)) nxt
         apply shift_heq
       · rfl 
+
 end Edge
+
+open Edge
+
+def basepoint : Vert G x₀  := 
+  ⟨x₀, EdgePath.nil _, reduced_nil⟩
+
+def rayFrom (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
+  (hyp : reduced p.reverse)  : 
+  EdgePath  (Guniv G x₀) (basepoint G x₀) ⟨τ, p.reverse, hyp⟩   := by
+  match p, hyp with
+  | nil _,  hyp => apply nil 
+  | cons e p', hyp' => 
+    rename_i w u
+    have red_cons : reduced (cons e p') := by
+      rw [← reverse_reverse (cons e p')]
+      apply reverse_reduced
+      assumption
+    have red_p' : reduced p' := by
+      apply tail_reduced e p' red_cons
+    have red' : reduced p'.reverse := by
+      apply reverse_reduced
+      assumption
+    have init := rayFrom G x₀ u p' red'
+    apply init.concat
+    let edge : Edge G x₀ := ⟨u, τ, e.bar, p'.reverse, red'⟩ 
+    let iv : Vert G x₀ := ⟨u, reverse p', red'⟩
+    let τv : Vert G x₀ := ⟨τ, (cons e p').reverse, hyp'⟩
+    show EdgeBetween (Guniv G x₀) iv τv
+    have source : (Guniv G x₀).ι edge = iv := rfl
+    have target : (Guniv G x₀).τ edge = τv := by 
+      show edge.terminal = ⟨τ, (cons e p').reverse, hyp'⟩
+      simp [terminal, reducedConcat]
+      congr
+      apply redCons_eq_cons_of_reduced
+      assumption
+    exact ⟨edge, source, target⟩  
+    
