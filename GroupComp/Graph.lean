@@ -193,6 +193,17 @@ theorem not_reduced_of_split {v w u u': V}{p : G.EdgePath v w}
   apply red'
   apply Reduction.step
 
+theorem tail_reduced {u v w : V} (e: EdgeBetween G u v) 
+    (p : G.EdgePath v w) : reduced (cons e p) → reduced p := by
+  intro red p' red'
+  let ⟨u, u', e', p₁, p₂, eqn⟩   := red'.existence
+  let eqn' : (cons e p₁) ++ cons e' (cons e'.bar p₂) = 
+    cons e p := by
+      simp [cons_append]
+      exact eqn
+  let h' := not_reduced_of_split (Eq.symm eqn')
+  contradiction
+
 theorem reverse_reduced {v w : V} (p : G.EdgePath v w): reduced p →   reduced p.reverse := by
   intro red rev_targ rev_red
   let ⟨u, u', e, p₁, p₂, eqn⟩   := rev_red.existence
