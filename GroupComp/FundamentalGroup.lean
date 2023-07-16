@@ -132,7 +132,7 @@ def freeFundamentalGroup [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.ed
       apply Γ.surroundEdge_cast <;> 
       simp [EdgeBetween.source, EdgeBetween.target]
 
-def wedgeCircles.spanningSubTree : SpanningSubtree (wedgeCircles S) where
+def wedgeCircles.spanningSubTree (S : Type _) : SpanningSubtree (wedgeCircles S) where
   verts := ⊤
   edges := ⊥  
   edges_bar := by aesop
@@ -143,5 +143,17 @@ def wedgeCircles.spanningSubTree : SpanningSubtree (wedgeCircles S) where
     intro _ _ p
     cases p <;> simp
   basePoint := ⟨(), trivial⟩
+
+instance [DecidableEq S] : ∀ {u v : Unit} (e : (wedgeCircles S).EdgeBetween u v), 
+  Decidable (e.edge ∈ (wedgeCircles.spanningSubTree S).edges) := 
+    fun e ↦ Decidable.isFalse <| by
+      show e.edge ∉ ∅
+      simp only [Set.mem_empty_iff_false, not_false_eq_true]  
+
+instance wedgeCircles.isSymmFreeGroup (S : Type _) [DecidableEq S] : 
+    SymmFreeGroup ((wedgeCircles S).π₁ ()) ↑(wedgeCircles.spanningSubTree S).edgesᶜ :=
+  freeFundamentalGroup (Γ := wedgeCircles.spanningSubTree S)
+
+instance wedgeCircles.isFreeGroup (S : Type _) [DecidableEq S] : IsFreeGroup ((wedgeCircles S).π₁ ()) := sorry
 
 end Graph
