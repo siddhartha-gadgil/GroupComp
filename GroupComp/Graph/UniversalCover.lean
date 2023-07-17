@@ -257,7 +257,7 @@ theorem pathLift_of_reduced {G: Graph V E}{x₀ τ: V}(p : EdgePath G x₀ τ)
 
 theorem reduced_liftTerm {G: Graph V E}{x₀ τ: V}(p : EdgePath G x₀ τ)
   (hyp : reduced p) :
-    liftTerm (proj G x₀) (basepoint G x₀) x₀ τ rfl p = 
+    liftTerm (proj G x₀) (basepoint G x₀)  rfl p = 
       ⟨τ, p, hyp⟩ := by
       simp [liftTerm, liftClass, pathLift_of_reduced p hyp, rayLift]
       rfl
@@ -267,8 +267,8 @@ theorem reduced_unique {G: Graph V E}(x₀ τ: V){p₁ p₂ : EdgePath G x₀ τ
     [[ p₁ ]] = [[ p₂ ]] → p₁ = p₂ := by
       intro hyp
       have leq :
-        liftTerm (proj G x₀) (basepoint G x₀) x₀ τ rfl p₁ =
-        liftTerm (proj G x₀) (basepoint G x₀) x₀ τ rfl p₂ := by
+        liftTerm (proj G x₀) (basepoint G x₀) rfl p₁ =
+        liftTerm (proj G x₀) (basepoint G x₀) rfl p₂ := by
         simp [liftTerm]
         apply congrArg 
         apply liftClass_eq_of_equiv
@@ -291,10 +291,10 @@ theorem homotopic_iff_reduction_eq {G: Graph V E}(x₀ τ: V)
       rw [← reduction_equiv_self p₁, ← reduction_equiv_self p₂]
       rw [hyp]  
 
-theorem homotopic_of_liftTerm_eq  {G: Graph V E}(x₀ τ: V)
+theorem homotopic_of_liftTerm_eq  {G: Graph V E}{x₀ τ: V}
   {p₁ p₂ : EdgePath G x₀ τ} : 
-  liftTerm (proj G x₀) (basepoint G x₀) x₀ τ rfl p₁ =
-        liftTerm (proj G x₀) (basepoint G x₀) x₀ τ rfl p₂ → 
+  liftTerm (proj G x₀) (basepoint G x₀) rfl p₁ =
+        liftTerm (proj G x₀) (basepoint G x₀) rfl p₂ → 
     [[ p₁ ]] = [[ p₂ ]] := by
     intro hyp
     have red₁ :  [[ reduction p₁ ]] = [[ p₁ ]] := by
@@ -302,9 +302,9 @@ theorem homotopic_of_liftTerm_eq  {G: Graph V E}(x₀ τ: V)
     have red₂ :  [[ reduction p₂ ]] = [[ p₂ ]] := by
       apply reduction_equiv_self
     let l₁ := 
-      liftTerm_eq_of_equiv (proj G x₀) (basepoint G x₀) x₀ τ rfl red₁
+      liftTerm_eq_of_equiv (proj G x₀) (basepoint G x₀)  rfl red₁
     let l₂ :=
-      liftTerm_eq_of_equiv (proj G x₀) (basepoint G x₀) x₀ τ rfl red₂
+      liftTerm_eq_of_equiv (proj G x₀) (basepoint G x₀)  rfl red₂
     rw [←l₁, ← l₂] at hyp
     rw [reduced_liftTerm (reduction p₁) (reduction_reduced p₁)] at hyp
     rw [reduced_liftTerm (reduction p₂) (reduction_reduced p₂)] at hyp
@@ -312,3 +312,10 @@ theorem homotopic_of_liftTerm_eq  {G: Graph V E}(x₀ τ: V)
     rw [homotopic_iff_reduction_eq] 
     exact hyp
 
+theorem proj_liftTerm {G: Graph V E}{x₀: V}{vert : Vert G x₀}
+      (e: EdgePath (Guniv G x₀) (basepoint G x₀) vert) :
+      liftTerm (proj G x₀) (basepoint G x₀) rfl
+        ((proj G x₀).pathMap' e) = vert := by 
+      simp [liftTerm, liftClass]
+      simp [lift_of_proj]
+      rfl

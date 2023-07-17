@@ -368,24 +368,41 @@ def liftClass {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   (pathLift p v₁ h e).pathClass
 
 theorem liftClass_eq_of_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂   : V₂}
-    {h : p.vertexMap v₁ = v₂} {e₁ e₂ : EdgePath G₂ v₂ w₂} 
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) {v₂ w₂   : V₂}
+    (h : p.vertexMap v₁ = v₂) {e₁ e₂ : EdgePath G₂ v₂ w₂} 
     (red : [[ e₁ ]] = [[ e₂ ]]) :
     liftClass p v₁ v₂ w₂ h e₁ = liftClass p v₁ v₂ w₂ h  e₂ := by
     simp [liftClass, ← homotopyLift_of_path]
     congr
 
 def liftTerm {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) {v₂ w₂ : V₂}
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) : V₁:=
   (liftClass p v₁ v₂ w₂ h e).τ
 
 theorem liftTerm_eq_of_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂   : V₂)
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) {v₂ w₂   : V₂}
     (h : p.vertexMap v₁ = v₂) {e₁ e₂ : EdgePath G₂ v₂ w₂} 
     (red : [[ e₁ ]] = [[ e₂ ]]) :
-    liftTerm p v₁ v₂ w₂ h e₁ = liftTerm p v₁ v₂ w₂ h  e₂ := by
+    liftTerm p v₁ h e₁ = liftTerm p v₁ h  e₂ := by
     simp [liftTerm]
-    rw [liftClass_eq_of_equiv red]
+    rw [liftClass_eq_of_equiv _ _ _ red]
+
+theorem lift_of_proj {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p: Morphism G₁ G₂)[CoveringMap p] {v₁ w₁: V₁} (e: G₁.EdgePath v₁ w₁):
+    pathLift p v₁ rfl (p.pathMap' e)  = ⟨w₁, e, rfl, by simp [pathMap'_toList]⟩ := by
+    apply unique_Pathlift
+
+theorem proj_injective {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p: Morphism G₁ G₂)[CoveringMap p] {v₁ w₁: V₁} 
+    (e₁ e₂: G₁.EdgePath v₁ w₁): [[ p.pathMap' e₁ ]] = [[ p.pathMap' e₂ ]] → [[ e₁ ]] = [[ e₂ ]] := by
+    intro hyp
+    let lem := 
+      liftClass_eq_of_equiv p v₁ rfl hyp
+    simp [liftClass, PathLift.pathClass] at lem
+    rw [lift_of_proj] at lem
+    rw [lift_of_proj] at lem
+    simp at lem
+    exact lem
 
 end Graph
