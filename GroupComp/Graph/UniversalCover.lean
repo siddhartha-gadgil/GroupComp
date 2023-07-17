@@ -240,18 +240,18 @@ theorem rayTo_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
 
 def rayLift (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
   (hyp : reduced p) : PathLift (proj G x₀) (basepoint G x₀)
-  x₀ τ rfl p := {
+   rfl p := {
     τ := ⟨τ, p, hyp⟩
     path := rayTo G x₀ τ p hyp
     lift_term := rfl
     list_commutes := by
-      rw [proj]
+      simp [proj]
       simp [rayTo_proj_list]
   }  
 
 theorem pathLift_of_reduced {G: Graph V E}{x₀ τ: V}(p : EdgePath G x₀ τ)
   (hyp : reduced p) : 
-    pathLift (proj G x₀) (basepoint G x₀) x₀ τ rfl p = 
+    pathLift (proj G x₀) (basepoint G x₀) rfl p = 
       rayLift G x₀ τ p hyp := by
       apply unique_Pathlift
 
