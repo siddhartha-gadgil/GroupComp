@@ -319,3 +319,17 @@ theorem proj_liftTerm {G: Graph V E}{x₀: V}{vert : Vert G x₀}
       simp [liftTerm, liftClass]
       simp [lift_of_proj]
       rfl
+
+theorem simple_connectivity_for_paths {G: Graph V E}{x₀: V}{vert : Vert G x₀}
+      (e₁ e₂: EdgePath (Guniv G x₀) (basepoint G x₀) vert) :
+      [[ e₁ ]] = [[ e₂ ]] := by
+      apply proj_injective (proj G x₀)
+      let lem : 
+        liftTerm (proj G x₀) (basepoint G x₀) rfl 
+          ((proj G x₀).pathMap' e₁) =
+        liftTerm (proj G x₀) (basepoint G x₀) rfl 
+          ((proj G x₀).pathMap' e₂) := by
+        rw [proj_liftTerm e₁, proj_liftTerm e₂]        
+      apply homotopic_of_liftTerm_eq lem
+    
+      
