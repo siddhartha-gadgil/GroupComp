@@ -197,13 +197,32 @@ theorem rayToRev_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
       assumption
     simp [rayToRev, cons_edgeList, edgeList_concat, ih red']    
 
+def shiftTarget {G: Graph V E}{v w w' : V}
+  (p : EdgePath G v w)(eql : w = w'):  EdgePath G v w' := by
+  match p, w', eql with
+  | nil _, _, rfl => 
+    exact (nil v)
+  | cons e p', w', eql => 
+    exact cons e (shiftTarget p' eql)
+
+theorem edgeList_shiftTarget {G: Graph V E}{v w w' : V}
+  (p : EdgePath G v w)(eql : w = w'):
+  (shiftTarget p eql).toEdgeList = p.toEdgeList := by
+  match p, w', eql with
+  | nil _, _, rfl =>
+    rename_i v'
+    simp [shiftTarget]
+  | cons e p', w', eql =>
+    simp [shiftTarget, cons_edgeList, edgeList_shiftTarget]
+    
+
 def rayTo (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
   (hyp : reduced p)  : 
   EdgePath  (Guniv G x₀) (basepoint G x₀) ⟨τ, p, hyp⟩ := by
     let ray := rayToRev G x₀ τ p.reverse 
       (by simp [reverse_reverse, hyp])
-    simp [reverse_reverse] at ray
-    exact ray
+    apply shiftTarget ray
+    simp [reverse_reverse]
 
 theorem edgeList_cast_init {G: Graph V E} {v v' w : V}  
     (p : EdgePath G v w)(eqn : v = v'):
@@ -221,9 +240,11 @@ theorem edgeList_cast_term {G: Graph V E} {v w w' : V}
 theorem rayTo_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
   (hyp : reduced p) :
   (rayTo G x₀ τ p hyp).toEdgeList.map (fun e ↦ e.nxt.edge) = 
-    p.toEdgeList.map (G.bar) := by    
-    simp [rayTo]
-    have rev_rev : reverse (reverse p) = p := by
-      simp [reverse_reverse]
-    
-    sorry
+    p.toEdgeList := by    
+    simp [rayTo, edgeList_shiftTarget, rayToRev_proj_list, 
+      edgeList_reverse, List.map_reverse]
+    have : G.bar ∘ G.bar = id := by
+      funext x
+      show G.bar (G.bar x) = x
+      apply G.bar_involution
+    simp [this]
