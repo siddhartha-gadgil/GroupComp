@@ -248,3 +248,50 @@ theorem rayTo_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
       show G.bar (G.bar x) = x
       apply G.bar_involution
     simp [this]
+
+def rayLift (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
+  (hyp : reduced p) : PathLift (proj G x₀) (basepoint G x₀)
+  x₀ τ rfl p := {
+    τ := ⟨τ, p, hyp⟩
+    path := rayTo G x₀ τ p hyp
+    lift_term := rfl
+    list_commutes := by
+      rw [proj]
+      simp [rayTo_proj_list]
+  }  
+
+theorem pathLift_of_reduced {G: Graph V E}{x₀ τ: V}(p : EdgePath G x₀ τ)
+  (hyp : reduced p) : 
+    pathLift (proj G x₀) (basepoint G x₀) x₀ τ rfl p = 
+      rayLift G x₀ τ p hyp := by
+      apply unique_Pathlift
+
+theorem reduced_liftTerm {G: Graph V E}{x₀ τ: V}(p : EdgePath G x₀ τ)
+  (hyp : reduced p) :
+    liftTerm (proj G x₀) (basepoint G x₀) x₀ τ rfl p = 
+      ⟨τ, p, hyp⟩ := by
+      simp [liftTerm, liftClass, pathLift_of_reduced p hyp, rayLift]
+      rfl
+
+theorem reduced_unique {G: Graph V E}(x₀ τ: V)(p₁ p₂ : EdgePath G x₀ τ)
+  (hyp₁ : reduced p₁)(hyp₂ : reduced p₂):
+    [[ p₁ ]] = [[ p₂ ]] → p₁ = p₂ := by
+      intro hyp
+      have leq :
+        liftTerm (proj G x₀) (basepoint G x₀) x₀ τ rfl p₁ =
+        liftTerm (proj G x₀) (basepoint G x₀) x₀ τ rfl p₂ := by
+        simp [liftTerm]
+        apply congrArg 
+        apply liftClass_eq_of_equiv
+        assumption
+      simp [reduced_liftTerm p₁ hyp₁, reduced_liftTerm p₂ hyp₂] at leq
+      exact leq
+
+theorem homotopic_iff_reduction_eq {G: Graph V E}(x₀ τ: V)
+  (p₁ p₂ : EdgePath G x₀ τ):
+    [[ p₁ ]] = [[ p₂ ]] ↔ reduction p₁ = reduction p₂ := by 
+    apply Iff.intro
+    · intro eql
+      sorry
+    · 
+      sorry  

@@ -363,7 +363,7 @@ theorem liftClass_eq_of_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
 
 def liftTerm {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
-    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) :=
+    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) : V₁:=
   (liftClass p v₁ v₂ w₂ h e).τ
 
 theorem liftTerm_eq_of_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
