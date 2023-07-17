@@ -263,6 +263,16 @@ theorem reduction_eq_self_of_reduced {G: Graph V E} {v w : V} (p : EdgePath G v 
     apply redCons_eq_cons_of_reduced
     assumption
 
+theorem reduction_equiv_self {G: Graph V E} {v w : V} (p : EdgePath G v w)  :
+  [[ reduction p ]] = [[ p ]] := by
+  induction p with
+  | nil _ => 
+    simp [reduction_nil]
+  | cons e p ih =>
+    simp [reduction_cons, ←cons_equiv_redCons]
+    apply cons_natural
+    assumption
+
 theorem redCons_parity_neq {G : Graph V E} {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) :
   Even ((redCons e p).toEdgeList.length) ↔ ¬ Even (p.toEdgeList.length) := by
   cases prepend_cases e p with
@@ -307,3 +317,18 @@ theorem concat_parity {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: Edge
   simp  [reducedConcat, edgeList_reverse]
   rw [redCons_parity_neq e.bar (reverse p)]
   simp [edgeList_reverse]
+
+
+-- Extras 
+
+theorem edgeList_cast_init {G: Graph V E} {v v' w : V}  
+    (p : EdgePath G v w)(eqn : v = v'):
+      p.toEdgeList = (eqn ▸ p).toEdgeList := by
+      cases eqn 
+      rfl
+
+theorem edgeList_cast_term {G: Graph V E} {v w w' : V}  
+    (p : EdgePath G v w)(eqn : w = w'):
+      p.toEdgeList = (eqn ▸ p).toEdgeList := by
+      cases eqn 
+      rfl

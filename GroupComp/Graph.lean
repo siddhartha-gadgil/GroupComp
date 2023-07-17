@@ -66,6 +66,7 @@ def EdgeBetween.ofEdge (e : E) : G.EdgeBetween (G.ι e) (G.τ e) where
 inductive EdgePath (G : Graph V E) : V → V → Type _ where
   | nil (v) : G.EdgePath v v
   | cons {v w u} : G.EdgeBetween v w → G.EdgePath w u → G.EdgePath v u
+deriving DecidableEq
 
 abbrev singletonPath (e : G.EdgeBetween u v) := EdgePath.cons e (.nil v)
 

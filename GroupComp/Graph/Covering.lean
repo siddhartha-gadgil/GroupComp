@@ -138,7 +138,7 @@ def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
 
 def Morphism.pathMap {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁)
-    (v₂ w₂ : V₂)(hv : f.vertexMap v₁ = v₂)(hw : f.vertexMap w₁ = w₂) :=
+    (v₂ w₂ : V₂)(hv : f.vertexMap v₁ = v₂)(hw : f.vertexMap w₁ = w₂) : EdgePath G₂ v₂ w₂ :=
       (pathMapAux f v₁ w₁ p v₂ w₂ hv hw).val
 
 theorem pathMap_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
@@ -147,6 +147,20 @@ theorem pathMap_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (f.pathMap v₁ w₁ p v₂ w₂ hv hw).toEdgeList = p.toEdgeList.map f.edgeMap := 
       (f.pathMapAux  v₁ w₁ p v₂ w₂ hv hw).property
 
+def Morphism.pathMap' {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁) :=
+    f.pathMap v₁ w₁ p (f.vertexMap v₁) (f.vertexMap w₁) rfl rfl
+
+theorem pathMap'_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁) :
+      (f.pathMap' v₁ w₁ p).toEdgeList = p.toEdgeList.map f.edgeMap := by
+      apply pathMap_toList
+
+def asPathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p: Morphism G₁ G₂)[CoveringMap p] (v₁ w₁: V₁) (e: G₁.EdgePath v₁ w₁) :
+    PathLift p v₁ (p.vertexMap v₁) (p.vertexMap w₁) rfl   
+      (p.pathMap' v₁ w₁ e) := 
+    ⟨w₁, e, rfl, by simp [pathMap'_toList]⟩
 
 theorem pathLift_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
@@ -367,8 +381,8 @@ def liftTerm {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   (liftClass p v₁ v₂ w₂ h e).τ
 
 theorem liftTerm_eq_of_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂   : V₂}
-    {h : p.vertexMap v₁ = v₂} {e₁ e₂ : EdgePath G₂ v₂ w₂} 
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂   : V₂)
+    (h : p.vertexMap v₁ = v₂) {e₁ e₂ : EdgePath G₂ v₂ w₂} 
     (red : [[ e₁ ]] = [[ e₂ ]]) :
     liftTerm p v₁ v₂ w₂ h e₁ = liftTerm p v₁ v₂ w₂ h  e₂ := by
     simp [liftTerm]

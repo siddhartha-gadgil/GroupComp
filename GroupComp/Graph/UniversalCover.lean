@@ -28,6 +28,7 @@ structure Vert where
   τ : V
   p : EdgePath G x₀ τ
   is_reduced : @reduced V E G x₀ τ p
+deriving DecidableEq
 
 @[ext]
 structure Edge where
@@ -224,18 +225,6 @@ def rayTo (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
     apply shiftTarget ray
     simp [reverse_reverse]
 
-theorem edgeList_cast_init {G: Graph V E} {v v' w : V}  
-    (p : EdgePath G v w)(eqn : v = v'):
-      p.toEdgeList = (eqn ▸ p).toEdgeList := by
-      cases eqn 
-      rfl
-
-theorem edgeList_cast_term {G: Graph V E} {v w w' : V}  
-    (p : EdgePath G v w)(eqn : w = w'):
-      p.toEdgeList = (eqn ▸ p).toEdgeList := by
-      cases eqn 
-      rfl
-
 
 theorem rayTo_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
   (hyp : reduced p) :
@@ -273,7 +262,7 @@ theorem reduced_liftTerm {G: Graph V E}{x₀ τ: V}(p : EdgePath G x₀ τ)
       simp [liftTerm, liftClass, pathLift_of_reduced p hyp, rayLift]
       rfl
 
-theorem reduced_unique {G: Graph V E}(x₀ τ: V)(p₁ p₂ : EdgePath G x₀ τ)
+theorem reduced_unique {G: Graph V E}(x₀ τ: V){p₁ p₂ : EdgePath G x₀ τ}
   (hyp₁ : reduced p₁)(hyp₂ : reduced p₂):
     [[ p₁ ]] = [[ p₂ ]] → p₁ = p₂ := by
       intro hyp
@@ -292,6 +281,34 @@ theorem homotopic_iff_reduction_eq {G: Graph V E}(x₀ τ: V)
     [[ p₁ ]] = [[ p₂ ]] ↔ reduction p₁ = reduction p₂ := by 
     apply Iff.intro
     · intro eql
-      sorry
-    · 
-      sorry  
+      rw [← reduction_equiv_self p₁, ← reduction_equiv_self p₂] at eql
+      have red₁ : reduced (reduction p₁) := by
+        apply reduction_reduced
+      have red₂ : reduced (reduction p₂) := by
+        apply reduction_reduced
+      exact reduced_unique x₀ τ red₁ red₂ eql
+    · intro hyp
+      rw [← reduction_equiv_self p₁, ← reduction_equiv_self p₂]
+      rw [hyp]  
+
+theorem homotopic_of_liftTerm_eq  {G: Graph V E}(x₀ τ: V)
+  {p₁ p₂ : EdgePath G x₀ τ} : 
+  liftTerm (proj G x₀) (basepoint G x₀) x₀ τ rfl p₁ =
+        liftTerm (proj G x₀) (basepoint G x₀) x₀ τ rfl p₂ → 
+    [[ p₁ ]] = [[ p₂ ]] := by
+    intro hyp
+    have red₁ :  [[ reduction p₁ ]] = [[ p₁ ]] := by
+      apply reduction_equiv_self
+    have red₂ :  [[ reduction p₂ ]] = [[ p₂ ]] := by
+      apply reduction_equiv_self
+    let l₁ := 
+      liftTerm_eq_of_equiv (proj G x₀) (basepoint G x₀) x₀ τ rfl red₁
+    let l₂ :=
+      liftTerm_eq_of_equiv (proj G x₀) (basepoint G x₀) x₀ τ rfl red₂
+    rw [←l₁, ← l₂] at hyp
+    rw [reduced_liftTerm (reduction p₁) (reduction_reduced p₁)] at hyp
+    rw [reduced_liftTerm (reduction p₂) (reduction_reduced p₂)] at hyp
+    simp at hyp
+    rw [homotopic_iff_reduction_eq] 
+    exact hyp
+
