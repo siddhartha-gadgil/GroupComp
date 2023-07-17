@@ -147,7 +147,7 @@ open Edge
 def basepoint : Vert G x₀  := 
   ⟨x₀, EdgePath.nil _, reduced_nil⟩
 
-def rayFrom (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
+def rayToRev (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
   (hyp : reduced p.reverse)  : 
   EdgePath  (Guniv G x₀) (basepoint G x₀) ⟨τ, p.reverse, hyp⟩   := by
   match p, hyp with
@@ -163,7 +163,7 @@ def rayFrom (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
     have red' : reduced p'.reverse := by
       apply reverse_reduced
       assumption
-    have init := rayFrom G x₀ u p' red'
+    have init := rayToRev G x₀ u p' red'
     apply init.concat
     let edge : Edge G x₀ := ⟨u, τ, e.bar, p'.reverse, red'⟩ 
     let iv : Vert G x₀ := ⟨u, reverse p', red'⟩
@@ -176,13 +176,13 @@ def rayFrom (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
       apply redCons_eq_cons_of_reduced
       assumption)⟩  
     
-theorem rayFrom_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
+theorem rayToRev_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
   (hyp : reduced p.reverse) :
-  (rayFrom G x₀ τ p hyp).toEdgeList.map (fun e ↦ e.nxt.edge) = 
+  (rayToRev G x₀ τ p hyp).toEdgeList.map (fun e ↦ e.nxt.edge) = 
     p.toEdgeList.reverse.map (G.bar) := by
     induction p with
   | nil _ => 
-    simp [rayFrom, nil_edgeList]    
+    simp [rayToRev, nil_edgeList]    
   | cons e p' ih => 
     rename_i x₀' u u'
     have red_cons : reduced (cons e p') := by
@@ -195,4 +195,35 @@ theorem rayFrom_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
     have red' : reduced p'.reverse := by
       apply reverse_reduced
       assumption
-    simp [rayFrom, cons_edgeList, edgeList_concat, ih red']    
+    simp [rayToRev, cons_edgeList, edgeList_concat, ih red']    
+
+def rayTo (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
+  (hyp : reduced p)  : 
+  EdgePath  (Guniv G x₀) (basepoint G x₀) ⟨τ, p, hyp⟩ := by
+    let ray := rayToRev G x₀ τ p.reverse 
+      (by simp [reverse_reverse, hyp])
+    simp [reverse_reverse] at ray
+    exact ray
+
+theorem edgeList_cast_init {G: Graph V E} {v v' w : V}  
+    (p : EdgePath G v w)(eqn : v = v'):
+      p.toEdgeList = (eqn ▸ p).toEdgeList := by
+      cases eqn 
+      rfl
+
+theorem edgeList_cast_term {G: Graph V E} {v w w' : V}  
+    (p : EdgePath G v w)(eqn : w = w'):
+      p.toEdgeList = (eqn ▸ p).toEdgeList := by
+      cases eqn 
+      rfl
+
+
+theorem rayTo_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
+  (hyp : reduced p) :
+  (rayTo G x₀ τ p hyp).toEdgeList.map (fun e ↦ e.nxt.edge) = 
+    p.toEdgeList.map (G.bar) := by    
+    simp [rayTo]
+    have rev_rev : reverse (reverse p) = p := by
+      simp [reverse_reverse]
+    
+    sorry

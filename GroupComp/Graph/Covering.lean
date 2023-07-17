@@ -347,4 +347,31 @@ theorem homotopyLift_of_path {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (pathLift p v₁ v₂ w₂ h e).pathClass := by
     rfl
 
+def liftClass {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
+    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂): 
+    PathClassFrom G₁ v₁ :=
+  (pathLift p v₁ v₂ w₂ h e).pathClass
+
+theorem liftClass_eq_of_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂   : V₂}
+    {h : p.vertexMap v₁ = v₂} {e₁ e₂ : EdgePath G₂ v₂ w₂} 
+    (red : [[ e₁ ]] = [[ e₂ ]]) :
+    liftClass p v₁ v₂ w₂ h e₁ = liftClass p v₁ v₂ w₂ h  e₂ := by
+    simp [liftClass, ← homotopyLift_of_path]
+    congr
+
+def liftTerm {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
+    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) :=
+  (liftClass p v₁ v₂ w₂ h e).τ
+
+theorem liftTerm_eq_of_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂   : V₂}
+    {h : p.vertexMap v₁ = v₂} {e₁ e₂ : EdgePath G₂ v₂ w₂} 
+    (red : [[ e₁ ]] = [[ e₂ ]]) :
+    liftTerm p v₁ v₂ w₂ h e₁ = liftTerm p v₁ v₂ w₂ h  e₂ := by
+    simp [liftTerm]
+    rw [liftClass_eq_of_equiv red]
+
 end Graph
