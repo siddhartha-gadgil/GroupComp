@@ -65,7 +65,7 @@ theorem tail_reducible_of_split {G : Graph V E} {u v w v' w': V} {e : EdgeBetwee
     (hyp : cons e p = (cons ph pt) ++ (cons e' (cons e'.bar p₂))) :
     ¬ reduced p := by
   rw [cons_append] at hyp
-  let lhyp := congrArg EdgePath.toEdgeList hyp
+  let lhyp := congrArg EdgePath.toList hyp
   simp only [cons_edgeList, edgeList_append, EdgeBetween.bar_def, List.cons.injEq] at lhyp 
   have : v' = v := by
     rw [← e.target, ←ph.target]
@@ -84,11 +84,11 @@ theorem reduced_singleton {G : Graph V E} {u v : V} (e : EdgeBetween G u v) : re
     cases p₁ with
     | nil _ => 
       rw [nil_append] at eqn
-      let leqn := congrArg EdgePath.toEdgeList eqn
+      let leqn := congrArg EdgePath.toList eqn
       simp [cons_edgeList, nil_edgeList] at leqn      
     | cons h t => 
       rw [cons_append] at eqn
-      let leqn := congrArg EdgePath.toEdgeList eqn
+      let leqn := congrArg EdgePath.toList eqn
       simp [cons_edgeList, nil_edgeList, edgeList_append] at leqn 
 
 theorem reduced_nil {G : Graph V E} {v : V} : 
@@ -98,11 +98,11 @@ theorem reduced_nil {G : Graph V E} {v : V} :
     cases p₁ with
     | nil _ => 
       rw [nil_append] at eqn
-      let leqn := congrArg EdgePath.toEdgeList eqn
+      let leqn := congrArg EdgePath.toList eqn
       simp [cons_edgeList, nil_edgeList] at leqn      
     | cons h t => 
       rw [cons_append] at eqn
-      let leqn := congrArg EdgePath.toEdgeList eqn
+      let leqn := congrArg EdgePath.toList eqn
       simp [cons_edgeList, nil_edgeList, edgeList_append] at leqn 
 
 
@@ -132,7 +132,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
           match p₁ with
           | nil _ => 
             rw [nil_append] at eqn
-            let leqn := congrArg EdgePath.toEdgeList eqn
+            let leqn := congrArg EdgePath.toList eqn
             simp [cons_edgeList, nil_edgeList, edgeList_append] at leqn
             rename_i e''
             have : e' = e''.bar := by
@@ -152,7 +152,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
       match p₁ with
           | nil _ => 
             rw [nil_append] at eqn
-            let leqn := congrArg EdgePath.toEdgeList eqn
+            let leqn := congrArg EdgePath.toList eqn
             simp [cons_edgeList, nil_edgeList, edgeList_append] at leqn
             rename_i u'' e''
             apply c
@@ -274,7 +274,7 @@ theorem reduction_equiv_self {G: Graph V E} {v w : V} (p : EdgePath G v w)  :
     assumption
 
 theorem redCons_parity_neq {G : Graph V E} {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) :
-  Even ((redCons e p).toEdgeList.length) ↔ ¬ Even (p.toEdgeList.length) := by
+  Even ((redCons e p).toList.length) ↔ ¬ Even (p.toList.length) := by
   cases prepend_cases e p with
   | inl h => 
     rw [h]
@@ -313,7 +313,7 @@ theorem reducedConcat_cancel_pair {G : Graph V E} {v w u : V}  (p : EdgePath G v
   rw [lm, reverse_reverse]
 
 theorem concat_parity {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: EdgeBetween G w u)  :
-  Even ((p :+ e).toEdgeList.length) ↔ ¬ Even (p.toEdgeList.length) := by
+  Even ((p :+ e).toList.length) ↔ ¬ Even (p.toList.length) := by
   simp  [reducedConcat, edgeList_reverse]
   rw [redCons_parity_neq e.bar (reverse p)]
   simp [edgeList_reverse]
@@ -323,12 +323,12 @@ theorem concat_parity {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: Edge
 
 theorem edgeList_cast_init {G: Graph V E} {v v' w : V}  
     (p : EdgePath G v w)(eqn : v = v'):
-      p.toEdgeList = (eqn ▸ p).toEdgeList := by
+      p.toList = (eqn ▸ p).toList := by
       cases eqn 
       rfl
 
 theorem edgeList_cast_term {G: Graph V E} {v w w' : V}  
     (p : EdgePath G v w)(eqn : w = w'):
-      p.toEdgeList = (eqn ▸ p).toEdgeList := by
+      p.toList = (eqn ▸ p).toList := by
       cases eqn 
       rfl

@@ -360,18 +360,18 @@ def pathLift' (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂)
       exact ⟨⟨w₁, EdgePath.cons edge₁ tail⟩, pf⟩
 
 
-def EdgePath.toEdgeList {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
+def EdgePath.toList {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
   List E := 
   match p with
   | nil _ => []
-  | cons e p' =>  e.edge :: p'.toEdgeList
+  | cons e p' =>  e.edge :: p'.toList
 
 theorem nil_edgeList {G : Graph V E} {v : V}  : 
-  (nil v : EdgePath G v v).toEdgeList = [] := rfl
+  (nil v : EdgePath G v v).toList = [] := rfl
 
 theorem cons_edgeList {G: Graph V E} {v w u: V} (e : EdgeBetween G v w) 
     (p : EdgePath G w u) : 
-  (cons e p).toEdgeList = e.edge :: p.toEdgeList := rfl
+  (cons e p).toList = e.edge :: p.toList := rfl
 
 
 theorem cons_eq {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w) 
@@ -396,18 +396,18 @@ theorem cons_eq' {G: Graph V E} {v w w' u: V} (e : EdgeBetween G v w)
 
 theorem edgeList_cast_init {G: Graph V E} {v v' w : V}  
     (p : EdgePath G v w)(eqn : v = v'):
-      p.toEdgeList = (eqn ▸ p).toEdgeList := by
+      p.toList = (eqn ▸ p).toList := by
       match p, eqn with
       | p, rfl => rfl
 
 theorem edgeList_cast_term {G: Graph V E} {v w w' : V}  
     (p : EdgePath G v w)(eqn : w = w'):
-      p.toEdgeList = (eqn ▸ p).toEdgeList := by
+      p.toList = (eqn ▸ p).toList := by
       match p, eqn with
       | p, rfl => rfl
 
 @[ext] theorem eq_of_edgeList_eq {G: Graph V E}{v w: V}
-  (p₁ p₂ : EdgePath G v w) : p₁.toEdgeList = p₂.toEdgeList → p₁ = p₂ := by
+  (p₁ p₂ : EdgePath G v w) : p₁.toList = p₂.toList → p₁ = p₂ := by
   induction p₁ with
   | nil v =>
     match p₂ with
@@ -442,7 +442,7 @@ theorem edgeList_cast_term {G: Graph V E} {v w w' : V}
           assumption
         
 theorem term_eq_of_edgeList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
-  (p₁ : EdgePath G v₁ w₁) (p₂ : EdgePath G v₂ w₂) : p₁.toEdgeList = p₂.toEdgeList → (v₁ = v₂) → (w₁ = w₂)  := by 
+  (p₁ : EdgePath G v₁ w₁) (p₂ : EdgePath G v₂ w₂) : p₁.toList = p₂.toList → (v₁ = v₂) → (w₁ = w₂)  := by 
   induction p₁ with
   | nil v₁' =>
     match p₂ with
@@ -471,14 +471,14 @@ structure PathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   w₁ : V₁ 
   path: EdgePath G₁ v₁ w₁
   h' : p.vertexMap w₁ = w₂
-  list_commutes : path.toEdgeList.map p.edgeMap = e.toEdgeList
+  list_commutes : path.toList.map p.edgeMap = e.toList
 
 def pathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂):
     PathLift p v₁ v₂ w₂ h e := by
     match e with
-    | nil _ => exact ⟨v₁, nil _, h, (by simp [toEdgeList])⟩
+    | nil _ => exact ⟨v₁, nil _, h, (by simp [toList])⟩
     | cons e₂ b₂ =>
       rename_i w₂' w₂''
       let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.source]) 
@@ -500,7 +500,7 @@ def pathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
 def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁)
     (v₂ w₂ : V₂)(hv : f.vertexMap v₁ = v₂)(hw : f.vertexMap w₁ = w₂) : 
-      {path : G₂.EdgePath v₂ w₂ // path.toEdgeList = p.toEdgeList.map f.edgeMap} := by 
+      {path : G₂.EdgePath v₂ w₂ // path.toList = p.toList.map f.edgeMap} := by 
       match p with
       | nil _ =>
         rw [←hw, hv]
@@ -525,7 +525,7 @@ def Morphism.pathMap {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
 theorem pathMap_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁)
     (v₂ w₂ : V₂)(hv : f.vertexMap v₁ = v₂)(hw : f.vertexMap w₁ = w₂) :
-      (f.pathMap v₁ w₁ p v₂ w₂ hv hw).toEdgeList = p.toEdgeList.map f.edgeMap := 
+      (f.pathMap v₁ w₁ p v₂ w₂ hv hw).toList = p.toList.map f.edgeMap := 
       (f.pathMapAux  v₁ w₁ p v₂ w₂ hv hw).property
 
 

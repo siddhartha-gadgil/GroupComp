@@ -64,12 +64,12 @@ theorem bar_involution (e : Edge G x₀) :
     exact e.is_reduced
 
 def edgeList (e : Edge G x₀) : List E := 
-  e.p.toEdgeList
+  e.p.toList
 
 theorem bar_neq_self (e: Edge G x₀) :
   e ≠ bar G x₀ e := by
   intro contra
-  have : e.p.toEdgeList.length =  (bar G x₀ e).p.toEdgeList.length 
+  have : e.p.toList.length =  (bar G x₀ e).p.toList.length 
      := by
       rw [← contra]
   simp [bar, Edge.p] at this
@@ -179,8 +179,8 @@ def rayToRev (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
     
 theorem rayToRev_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
   (hyp : reduced p.reverse) :
-  (rayToRev G x₀ τ p hyp).toEdgeList.map (fun e ↦ e.nxt.edge) = 
-    p.toEdgeList.reverse.map (G.bar) := by
+  (rayToRev G x₀ τ p hyp).toList.map (fun e ↦ e.nxt.edge) = 
+    p.toList.reverse.map (G.bar) := by
     induction p with
   | nil _ => 
     simp [rayToRev, nil_edgeList]    
@@ -208,7 +208,7 @@ def shiftTarget {G: Graph V E}{v w w' : V}
 
 theorem edgeList_shiftTarget {G: Graph V E}{v w w' : V}
   (p : EdgePath G v w)(eql : w = w'):
-  (shiftTarget p eql).toEdgeList = p.toEdgeList := by
+  (shiftTarget p eql).toList = p.toList := by
   match p, w', eql with
   | nil _, _, rfl =>
     rename_i v'
@@ -228,8 +228,8 @@ def rayTo (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
 
 theorem rayTo_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
   (hyp : reduced p) :
-  (rayTo G x₀ τ p hyp).toEdgeList.map (fun e ↦ e.nxt.edge) = 
-    p.toEdgeList := by    
+  (rayTo G x₀ τ p hyp).toList.map (fun e ↦ e.nxt.edge) = 
+    p.toList := by    
     simp [rayTo, edgeList_shiftTarget, rayToRev_proj_list, 
       edgeList_reverse, List.map_reverse]
     have : G.bar ∘ G.bar = id := by
@@ -315,7 +315,7 @@ theorem homotopic_of_liftTerm_eq  {G: Graph V E}{x₀ τ: V}
 theorem proj_liftTerm {G: Graph V E}{x₀: V}{vert : Vert G x₀}
       (e: EdgePath (Guniv G x₀) (basepoint G x₀) vert) :
       liftTerm (proj G x₀) (basepoint G x₀) rfl
-        ((proj G x₀).pathMap' e) = vert := by 
+        (e.map (proj G x₀)) = vert := by 
       simp [liftTerm, liftClass]
       simp [lift_of_proj]
       rfl
@@ -326,10 +326,8 @@ theorem simple_connectivity_for_paths {G: Graph V E}{x₀: V}{vert : Vert G x₀
       apply proj_injective (proj G x₀)
       let lem : 
         liftTerm (proj G x₀) (basepoint G x₀) rfl 
-          ((proj G x₀).pathMap' e₁) =
+          (e₁.map (proj G x₀)) =
         liftTerm (proj G x₀) (basepoint G x₀) rfl 
-          ((proj G x₀).pathMap' e₂) := by
+          (e₂.map (proj G x₀)) := by
         rw [proj_liftTerm e₁, proj_liftTerm e₂]        
       apply homotopic_of_liftTerm_eq lem
-    
-      
