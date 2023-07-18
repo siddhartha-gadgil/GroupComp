@@ -172,7 +172,7 @@ inductive Reduction {v w : V}:
 def reduced  {v w : V} (p : G.EdgePath v w) : Prop := 
   ∀ p', ¬ Reduction p p'
 
-theorem Reduction.existence {v w : V} {p' : G.EdgePath v w}(p : G.EdgePath v w) : 
+theorem Reduction.property {v w : V} {p' : G.EdgePath v w}(p : G.EdgePath v w) : 
   Reduction p p' →
   ∃ u u': V, ∃ e : G.EdgeBetween u u', 
     ∃ p₁ : G.EdgePath v u,
@@ -197,7 +197,7 @@ theorem not_reduced_of_split {v w u u': V}{p : G.EdgePath v w}
 theorem tail_reduced {u v w : V} (e: EdgeBetween G u v) 
     (p : G.EdgePath v w) : reduced (cons e p) → reduced p := by
   intro red p' red'
-  let ⟨u, u', e', p₁, p₂, eqn⟩   := red'.existence
+  let ⟨u, u', e', p₁, p₂, eqn⟩   := red'.property
   let eqn' : (cons e p₁) ++ cons e' (cons e'.bar p₂) = 
     cons e p := by
       simp [cons_append]
@@ -207,7 +207,7 @@ theorem tail_reduced {u v w : V} (e: EdgeBetween G u v)
 
 theorem reverse_reduced {v w : V} (p : G.EdgePath v w): reduced p →   reduced p.reverse := by
   intro red rev_targ rev_red
-  let ⟨u, u', e, p₁, p₂, eqn⟩   := rev_red.existence
+  let ⟨u, u', e, p₁, p₂, eqn⟩   := rev_red.property
   apply red (reverse p₂ ++ reverse p₁)
   let eqn' := congrArg reverse eqn
   simp [reverse_reverse] at eqn'
@@ -274,7 +274,8 @@ theorem reverse_step {v w : V} (a₁ a₂ : G.EdgePath v w) (rel : Reduction a�
   have := reverse_left_inverse p.reverse
   aesop
 
-def EdgePath.toList {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
+namespace EdgePath
+def toList {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
   List E := 
   match p with
   | nil _ => []
@@ -374,6 +375,9 @@ theorem terminal_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
       apply terminal_eq_of_toList_eq p₁' p₂' h.right
       rw [←e₂.target, ←e.target, h.left]
 
+
+
+end EdgePath
 namespace PathClass
 
 @[aesop norm unfold]

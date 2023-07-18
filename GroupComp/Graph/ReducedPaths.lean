@@ -80,7 +80,7 @@ theorem tail_reducible_of_split {G : Graph V E} {u v w v' w': V} {e : EdgeBetwee
 
 theorem reduced_singleton {G : Graph V E} {u v : V} (e : EdgeBetween G u v) : reduced (cons e (nil v)) := by
     intro p' red'  
-    let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
+    let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.property
     cases p₁ with
     | nil _ => 
       rw [nil_append] at eqn
@@ -94,7 +94,7 @@ theorem reduced_singleton {G : Graph V E} {u v : V} (e : EdgeBetween G u v) : re
 theorem reduced_nil {G : Graph V E} {v : V} : 
   reduced (nil v : EdgePath G v v) := by
     intro p' red'  
-    let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
+    let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.property
     cases p₁ with
     | nil _ => 
       rw [nil_append] at eqn
@@ -120,7 +120,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
         then 
           simp [redCons_cons_edge_eq p' c']
           intro p'' red'
-          let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
+          let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.property
           rw [←eqn, ← cons_append] at hyp
           let red := hyp <| cons e' p₁ ++ p₂
           apply red
@@ -128,7 +128,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
         else 
           simp [redCons_cons_edge_neq p' c']
           intro p'' red'
-          let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
+          let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.property
           match p₁ with
           | nil _ => 
             rw [nil_append] at eqn
@@ -148,7 +148,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
     else
       simp [redCons_cons_vertex_neq e e' p' c]
       intro p'' red'
-      let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
+      let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.property
       match p₁ with
           | nil _ => 
             rw [nil_append] at eqn
