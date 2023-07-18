@@ -79,13 +79,14 @@ theorem bar_neq_self (e: Edge G x₀) :
   let h'' := not_iff_self  h'
   assumption
 
-def Guniv : Graph (Vert G x₀) (Edge G x₀) where
+
+def _root_.Graph.univ : Graph (Vert G x₀) (Edge G x₀) where
   ι := initial G x₀
   bar := bar G x₀
   bar_involution := bar_involution G x₀
   bar_no_fp := bar_neq_self G x₀
 
-def proj : Morphism (Guniv G x₀) G where
+def proj : Morphism (G.univ x₀) G where
   vertexMap := Vert.τ
   edgeMap := fun e ↦ e.nxt.edge 
   commutes := by
@@ -150,7 +151,7 @@ def basepoint : Vert G x₀  :=
 
 def rayToRev (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
   (hyp : reduced p.reverse)  : 
-  EdgePath  (Guniv G x₀) (basepoint G x₀) ⟨τ, p.reverse, hyp⟩   := by
+  EdgePath  (G.univ x₀) (basepoint G x₀) ⟨τ, p.reverse, hyp⟩   := by
   match p, hyp with
   | nil _,  hyp => apply nil 
   | cons e p', hyp' => 
@@ -169,7 +170,7 @@ def rayToRev (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
     let edge : Edge G x₀ := ⟨u, τ, e.bar, p'.reverse, red'⟩ 
     let iv : Vert G x₀ := ⟨u, reverse p', red'⟩
     let τv : Vert G x₀ := ⟨τ, (cons e p').reverse, hyp'⟩
-    show EdgeBetween (Guniv G x₀) iv τv
+    show EdgeBetween (G.univ x₀) iv τv
     exact ⟨edge, rfl, (by 
       show edge.terminal = ⟨τ, (cons e p').reverse, hyp'⟩
       simp [terminal, reducedConcat]
@@ -219,7 +220,7 @@ theorem toList_shiftTarget {G: Graph V E}{v w w' : V}
 
 def rayTo (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
   (hyp : reduced p)  : 
-  EdgePath  (Guniv G x₀) (basepoint G x₀) ⟨τ, p, hyp⟩ := by
+  EdgePath  (G.univ x₀) (basepoint G x₀) ⟨τ, p, hyp⟩ := by
     let ray := rayToRev G x₀ τ p.reverse 
       (by simp [reverse_reverse, hyp])
     apply shiftTarget ray
@@ -313,7 +314,7 @@ theorem homotopic_of_liftTerminal_eq  {G: Graph V E}{x₀ τ: V}
     exact hyp
 
 theorem proj_liftTerminal {G: Graph V E}{x₀: V}{vert : Vert G x₀}
-      (e: EdgePath (Guniv G x₀) (basepoint G x₀) vert) :
+      (e: EdgePath (G.univ x₀) (basepoint G x₀) vert) :
       liftTerminal (proj G x₀) (basepoint G x₀) rfl
         (e.map (proj G x₀)) = vert := by 
       simp [liftTerminal, liftClass]
@@ -321,7 +322,7 @@ theorem proj_liftTerminal {G: Graph V E}{x₀: V}{vert : Vert G x₀}
       rfl
 
 theorem simple_connectivity_for_paths {G: Graph V E}{x₀: V}{vert : Vert G x₀}
-      (e₁ e₂: EdgePath (Guniv G x₀) (basepoint G x₀) vert) :
+      (e₁ e₂: EdgePath (G.univ x₀) (basepoint G x₀) vert) :
       [[ e₁ ]] = [[ e₂ ]] := by
       apply proj_injective (proj G x₀)
       let lem : 
