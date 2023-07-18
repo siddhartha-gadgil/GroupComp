@@ -25,7 +25,7 @@ theorem morphism_bar_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   intro e
   exact f.bar_commutes e
 
-theorem morphism_term_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+theorem morphism_terminal_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     (f: Morphism G₁ G₂) : 
       ∀ (e : E₁), G₂.τ (f.edgeMap e) = f.vertexMap (G₁.τ e) := by
   intro e
@@ -83,7 +83,7 @@ structure PathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) where
   τ : V₁ 
   path: EdgePath G₁ v₁ τ
-  lift_term : p.vertexMap τ = w₂
+  lift_terminal : p.vertexMap τ = w₂
   list_commutes : path.toList.map p.edgeMap = e.toList
 
 
@@ -107,14 +107,14 @@ def EdgePath.lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}{v₂ w₂ : 
       have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init
       have term_vert : p.vertexMap (G₁.τ e₁) = w₂'' := by
         rw [← e₂.target]
-        rw [←morphism_term_commutes ]
+        rw [←morphism_terminal_commutes ]
         congr
         apply p.left_inverse
       let ⟨w₁, tail, pf₁, pf₂⟩ := lift b₂  p v₁' term_vert 
       let edge₁ : EdgeBetween G₁ v₁ v₁' :=
         ⟨e₁, init_vert, rfl⟩
       exact ⟨w₁, cons edge₁ tail, pf₁, by 
-        simp [cons_edgeList, pf₂]
+        simp [cons_toList, pf₂]
         apply p.left_inverse⟩
 
 @[deprecated EdgePath.lift]
@@ -132,14 +132,14 @@ def pathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init
       have term_vert : p.vertexMap (G₁.τ e₁) = w₂'' := by
         rw [← e₂.target]
-        rw [←morphism_term_commutes ]
+        rw [←morphism_terminal_commutes ]
         congr
         apply p.left_inverse
       let ⟨w₁, tail, pf₁, pf₂⟩ := pathLift  p v₁' term_vert b₂
       let edge₁ : EdgeBetween G₁ v₁ v₁' :=
         ⟨e₁, init_vert, rfl⟩
       exact ⟨w₁, cons edge₁ tail, pf₁, by 
-        simp [cons_edgeList, pf₂]
+        simp [cons_toList, pf₂]
         apply p.left_inverse⟩
 
 
@@ -151,18 +151,18 @@ def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       match p with
       | nil _ =>
         rw [←hw, hv]
-        exact ⟨nil _, by simp [nil_edgeList]⟩
+        exact ⟨nil _, by simp [nil_toList]⟩
       | cons e p' => 
         rename_i  w₁'' u'
         let e₁ := f.edgeMap e.edge
         let init_vert : G₂.ι e₁ = v₂ := by
           rw [←hv, ←e.source, ←morphism_init_commutes] 
         let term_vert : G₂.τ e₁ = f.vertexMap u' := by
-          rw [morphism_term_commutes, e.target]
+          rw [morphism_terminal_commutes, e.target]
         let edge₂ : EdgeBetween G₂ v₂ (f.vertexMap u') :=
           ⟨e₁, init_vert, term_vert⟩
         let ⟨tail, ih⟩ := pathMapAux f u' w₁ p' (f.vertexMap u') w₂ rfl hw
-        exact ⟨cons edge₂ tail, by simp [cons_edgeList, ih]⟩ 
+        exact ⟨cons edge₂ tail, by simp [cons_toList, ih]⟩ 
 
 section Extras
 
@@ -181,8 +181,8 @@ theorem pathLift_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) 
     (lift : PathLift p v₁ h e) :
-    p.pathMap v₁ lift.τ lift.path v₂ w₂ h lift.lift_term = e := by
-      apply eq_of_edgeList_eq
+    p.pathMap v₁ lift.τ lift.path v₂ w₂ h lift.lift_terminal = e := by
+      apply eq_of_toList_eq
       rw [toList_map, lift.list_commutes]      
 
 end Extras
@@ -211,8 +211,8 @@ theorem lifts_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     intro hyp
     match e₁ with
     | nil v => 
-      simp [nil_edgeList] at hyp
-      simp [nil_edgeList]
+      simp [nil_toList] at hyp
+      simp [nil_toList]
       symm at hyp
       rw [List.map_eq_nil] at hyp
       symm
@@ -220,9 +220,9 @@ theorem lifts_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     | cons edg₁ p₁' => 
       match e₂, hv with
       | nil v, _ => 
-        simp [nil_edgeList] at hyp
+        simp [nil_toList] at hyp
       | cons edg₂ p₂', rfl => 
-        simp [cons_edgeList] at *
+        simp [cons_toList] at *
         let ⟨h₁, h₂⟩ := hyp
         have edg_eq : edg₁.edge = edg₂.edge := by 
           let eq₁ := p.right_inverse v₁ edg₁.edge (Eq.symm edg₁.source)
@@ -247,13 +247,13 @@ theorem unique_Pathlift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       apply lifts_equiv p p₁.path p₂.path rfl
       apply eq_edgepath_aux
     have term_eq : p₁.τ = p₂.τ := 
-      term_eq_of_edgeList_eq p₁.path p₂.path eq_edgepath rfl
+      term_eq_of_toList_eq p₁.path p₂.path eq_edgepath rfl
     match p₁, p₂ with
     | ⟨τ₁, path₁, h₁, lc₁⟩, ⟨τ₂, path₂, h₂, lc₂⟩ => 
     have teq : τ₁ = τ₂ := term_eq
     cases teq
     have peq : path₁ = path₂ := by 
-      apply eq_of_edgeList_eq
+      apply eq_of_toList_eq
       assumption
     cases peq
     rfl
@@ -263,13 +263,13 @@ def PathLift.append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂ u₂ : V₂}
     {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂}{e': EdgePath G₂ w₂ u₂}
     (lift : PathLift p v₁ h e) 
-    (lift' : PathLift p lift.τ  lift.lift_term e') : 
+    (lift' : PathLift p lift.τ  lift.lift_terminal e') : 
       PathLift p v₁  h (e ++ e') := 
       {τ := lift'.τ, 
         path := lift.path ++ lift'.path, 
-        lift_term := lift'.lift_term, 
+        lift_terminal := lift'.lift_terminal, 
         list_commutes := by 
-          simp [edgeList_append]
+          simp [toList_append]
           rw [lift.list_commutes, lift'.list_commutes]}
           
 theorem EdgePath.lift_append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
@@ -278,7 +278,7 @@ theorem EdgePath.lift_append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (e ++ e').lift p v₁ h  =
         (e.lift p v₁ h).append 
           (e'.lift p (e.lift p v₁ h).τ  
-            (e.lift p v₁ h).lift_term) := by
+            (e.lift p v₁ h).lift_terminal) := by
         apply unique_Pathlift 
 
 theorem EdgePath.lift_append_tail {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
@@ -287,7 +287,7 @@ theorem EdgePath.lift_append_tail {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E�
       ((e ++ e').lift p v₁ h).τ  =
         ((e.lift p v₁ h).append 
           (e'.lift p (e.lift p v₁ h).τ  
-            (e.lift p v₁ h).lift_term)).τ := by
+            (e.lift p v₁ h).lift_terminal)).τ := by
         simp [lift_append]
         
 
@@ -295,12 +295,12 @@ def PathLift.reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ : V₂}
     {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂} 
     (lift : PathLift p v₁ h e) : 
-      PathLift p lift.τ  lift.lift_term e.reverse := 
+      PathLift p lift.τ  lift.lift_terminal e.reverse := 
       {τ := v₁, 
         path := lift.path.reverse, 
-        lift_term := h, 
+        lift_terminal := h, 
         list_commutes := by 
-          simp [edgeList_reverse]
+          simp [toList_reverse]
           rw [← lift.list_commutes]
           simp [List.map_reverse]
           congr
@@ -312,7 +312,7 @@ theorem EdgePath.lift_reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ : V₂}
     {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂}: 
       (e.reverse).lift p (e.lift p v₁ h).τ  
-        (e.lift p v₁ h).lift_term  = 
+        (e.lift p v₁ h).lift_terminal  = 
         (e.lift p v₁ h).reverse := by
         apply unique_Pathlift
 
@@ -326,9 +326,9 @@ def PathLift.cons_bar_cons {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
           
       {τ := lift'.τ, 
         path := cons edgeBetween (cons edgeBetween.bar lift'.path), 
-        lift_term := lift'.lift_term, 
+        lift_terminal := lift'.lift_terminal, 
         list_commutes := by 
-          simp [cons_edgeList, p.left_inverse, EdgeBetween.bar]
+          simp [cons_toList, p.left_inverse, EdgeBetween.bar]
           apply And.intro
           · rw [p.bar_commutes, p.left_inverse]
           · rw [lift'.list_commutes]}
@@ -341,7 +341,7 @@ theorem homotopy_step_lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     ((η₁ ++ η₂).lift p v₁  h).pathClass := by
   let θ₁ := η₁.lift p v₁ h
   let w₁ := θ₁.τ
-  let hw : p.vertexMap w₁ = w₂ := θ₁.lift_term
+  let hw : p.vertexMap w₁ = w₂ := θ₁.lift_terminal
   let edgeLift := p.localSection w₁ e.edge (by rw [hw, e.source])
   let e' : EdgeBetween G₁ w₁ (G₁.τ edgeLift) := 
           ⟨edgeLift, p.section_init _ _ _, rfl⟩ 
@@ -349,9 +349,9 @@ theorem homotopy_step_lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   let liftTailCanc : PathLift p w₁ hw (cons e (cons e.bar η₂)) :=
     {τ := θ₂.τ, 
         path := cons e' (cons e'.bar θ₂.path), 
-        lift_term := θ₂.lift_term, 
+        lift_terminal := θ₂.lift_terminal, 
         list_commutes := by 
-          simp [cons_edgeList, p.left_inverse, EdgeBetween.bar]
+          simp [cons_toList, p.left_inverse, EdgeBetween.bar]
           apply And.intro
           · rw [p.bar_commutes, p.left_inverse]
           · rw [θ₂.list_commutes]}
@@ -408,17 +408,17 @@ theorem liftClass_eq_of_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     simp [liftClass, ← homotopyLift_of_path]
     congr
 
-def liftTerm {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+def liftTerminal {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) {v₂ w₂ : V₂}
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) : V₁:=
   (liftClass p v₁ v₂ w₂ h e).τ
 
-theorem liftTerm_eq_of_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem liftTerminal_eq_of_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) {v₂ w₂   : V₂}
     (h : p.vertexMap v₁ = v₂) {e₁ e₂ : EdgePath G₂ v₂ w₂} 
     (red : [[ e₁ ]] = [[ e₂ ]]) :
-    liftTerm p v₁ h e₁ = liftTerm p v₁ h  e₂ := by
-    simp [liftTerm]
+    liftTerminal p v₁ h e₁ = liftTerminal p v₁ h  e₂ := by
+    simp [liftTerminal]
     rw [liftClass_eq_of_equiv _ _ _ red]
 
 theorem lift_of_proj {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
