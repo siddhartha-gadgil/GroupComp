@@ -33,6 +33,7 @@ theorem morphism_terminal_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E
 
 
 
+
 class CoveringMap {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
       (p: Morphism G₁ G₂)  where
   localSection : (v₁ : V₁) → (e :E₂) → 
@@ -195,6 +196,69 @@ theorem EdgePath.map_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) {v₁ w₁: V₁} (p: G₁.EdgePath v₁ w₁) :
       (p.map f).toList = p.toList.map f.edgeMap := 
       (f.pathMapAux v₁ w₁ p (f.vertexMap v₁) (f.vertexMap w₁) rfl rfl).property
+
+def EdgeBetween.map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
+      G₂.EdgeBetween (f.vertexMap v₁) (f.vertexMap w₁) :=
+      ⟨f.edgeMap e.edge, by 
+        simp [← f.commutes]
+        congr
+        exact e.source
+        , by 
+        rw [morphism_terminal_commutes]
+        congr
+        exact e.target⟩
+
+theorem EdgeBetween.map_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
+      (e.map f).edge = f.edgeMap e.edge := by
+        simp [EdgeBetween.map, toList]
+
+theorem EdgeBetween.bar_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
+      (e.map f).bar = e.bar.map f := by
+        ext
+        simp [f.bar_commutes, EdgeBetween.map]
+
+namespace Morphism
+
+variable {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} (f: Morphism G₁ G₂)
+
+theorem append_map {u v w : V₁}(η : EdgePath G₁ u v)(η' : EdgePath G₁ v w):
+   (η ++ η').map f = (η.map f) ++ (η'.map f) := by
+      apply eq_of_toList_eq
+      simp [map_toList, append_toList]
+      
+theorem cons_map {u v w : V₁}(e : G₁.EdgeBetween u v)(η : EdgePath G₁ v w):
+  (cons e η).map f = cons (e.map f) (η.map f) := by
+      apply eq_of_toList_eq
+      simp [map_toList, EdgeBetween.map_toList, cons_toList]
+
+theorem reverse_map {u v : V₁}(η : EdgePath G₁ u v):
+  η.reverse.map f = (η.map f).reverse := by
+      apply eq_of_toList_eq
+      simp [map_toList, reverse_toList, List.map_reverse]
+      congr
+      funext e
+      show f.edgeMap (G₁.bar e) = G₂.bar (f.edgeMap e) 
+      rw [f.bar_commutes]
+
+theorem map_reduction {v w : V₁} (η₁ η₂ : EdgePath G₁ v w):
+  Reduction η₁ η₂ → Reduction (η₁.map f) (η₂.map f) 
+  | Reduction.step u u' e p₁ p₂ => by 
+    simp [append_map, cons_map]
+    rw [← EdgeBetween.bar_commutes]
+    apply Reduction.step
+
+def inducedMap {v w : V₁}:
+  PathClass G₁ v w → PathClass G₂ (f.vertexMap v) (f.vertexMap w) := by
+    apply Quot.lift (fun η => [[η.map f ]]) 
+    intro η₁ η₂ step
+    apply Quot.sound
+    apply map_reduction f η₁ η₂ step
+
+end Morphism
+
 
 def asPathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p: Morphism G₁ G₂)[CoveringMap p] {v₁ w₁: V₁} (e: G₁.EdgePath v₁ w₁) :
