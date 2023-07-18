@@ -441,7 +441,7 @@ theorem toList_cast_terminal {G: Graph V E} {v w w' : V}
         · simp
           assumption
         
-theorem term_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
+theorem terminal_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
   (p₁ : EdgePath G v₁ w₁) (p₂ : EdgePath G v₂ w₂) : p₁.toList = p₂.toList → (v₁ = v₂) → (w₁ = w₂)  := by 
   induction p₁ with
   | nil v₁' =>
@@ -460,7 +460,7 @@ theorem term_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
       simp [cons_toList, nil_toList] at h
     | EdgePath.cons e₂ p₂' =>
       simp [cons_toList] at h
-      apply term_eq_of_toList_eq p₁' p₂' h.right
+      apply terminal_eq_of_toList_eq p₁' p₂' h.right
       rw [←e₂.target, ←e.target, h.left]
 
 
