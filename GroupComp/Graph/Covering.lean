@@ -92,30 +92,6 @@ def PathLift.pathClass {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂} (l : PathLift p v₁ h e) : PathClassFrom G₁ v₁  := 
       ⟨ l.τ , [[ l.path ]]⟩
 
-def pathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) {v₂ w₂ : V₂}
-    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂):
-    PathLift p v₁ h e := by
-    match e with
-    | nil _ => exact ⟨v₁, nil _, h, (by simp [toList])⟩
-    | cons e₂ b₂ =>
-      rename_i w₂' w₂''
-      let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.source]) 
-        -- lift of the edge
-      let v₁' := G₁.τ e₁ -- the final vertex of the lift
-      have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init
-      have term_vert : p.vertexMap (G₁.τ e₁) = w₂'' := by
-        rw [← e₂.target]
-        rw [←morphism_term_commutes ]
-        congr
-        apply p.left_inverse
-      let ⟨w₁, tail, pf₁, pf₂⟩ := pathLift  p v₁' term_vert b₂
-      let edge₁ : EdgeBetween G₁ v₁ v₁' :=
-        ⟨e₁, init_vert, rfl⟩
-      exact ⟨w₁, cons edge₁ tail, pf₁, by 
-        simp [cons_edgeList, pf₂]
-        apply p.left_inverse⟩
-
 def EdgePath.lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}{v₂ w₂ : V₂}
     (e: EdgePath G₂ v₂ w₂)
     (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) 
@@ -141,6 +117,32 @@ def EdgePath.lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}{v₂ w₂ : 
         simp [cons_edgeList, pf₂]
         apply p.left_inverse⟩
 
+@[deprecated EdgePath.lift]
+def pathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) {v₂ w₂ : V₂}
+    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂):
+    PathLift p v₁ h e := by
+    match e with
+    | nil _ => exact ⟨v₁, nil _, h, (by simp [toList])⟩
+    | cons e₂ b₂ =>
+      rename_i w₂' w₂''
+      let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.source]) 
+        -- lift of the edge
+      let v₁' := G₁.τ e₁ -- the final vertex of the lift
+      have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init
+      have term_vert : p.vertexMap (G₁.τ e₁) = w₂'' := by
+        rw [← e₂.target]
+        rw [←morphism_term_commutes ]
+        congr
+        apply p.left_inverse
+      let ⟨w₁, tail, pf₁, pf₂⟩ := pathLift  p v₁' term_vert b₂
+      let edge₁ : EdgeBetween G₁ v₁ v₁' :=
+        ⟨e₁, init_vert, rfl⟩
+      exact ⟨w₁, cons edge₁ tail, pf₁, by 
+        simp [cons_edgeList, pf₂]
+        apply p.left_inverse⟩
+
+
 
 def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁)
@@ -162,22 +164,34 @@ def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         let ⟨tail, ih⟩ := pathMapAux f u' w₁ p' (f.vertexMap u') w₂ rfl hw
         exact ⟨cons edge₂ tail, by simp [cons_edgeList, ih]⟩ 
 
+section Extras
+
 def Morphism.pathMap {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁)
     (v₂ w₂ : V₂)(hv : f.vertexMap v₁ = v₂)(hw : f.vertexMap w₁ = w₂) : EdgePath G₂ v₂ w₂ :=
       (pathMapAux f v₁ w₁ p v₂ w₂ hv hw).val
 
-theorem pathMap_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem EdgePath.toList_map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁)
     (v₂ w₂ : V₂)(hv : f.vertexMap v₁ = v₂)(hw : f.vertexMap w₁ = w₂) :
       (f.pathMap v₁ w₁ p v₂ w₂ hv hw).toList = p.toList.map f.edgeMap := 
       (f.pathMapAux  v₁ w₁ p v₂ w₂ hv hw).property
 
+theorem pathLift_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
+    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) 
+    (lift : PathLift p v₁ h e) :
+    p.pathMap v₁ lift.τ lift.path v₂ w₂ h lift.lift_term = e := by
+      apply eq_of_edgeList_eq
+      rw [toList_map, lift.list_commutes]      
+
+end Extras
+
 def EdgePath.map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}{v₁ w₁: V₁} 
     (p: G₁.EdgePath v₁ w₁)(f: Morphism G₁ G₂)  :=
     (f.pathMapAux v₁ w₁ p (f.vertexMap v₁) (f.vertexMap w₁) rfl rfl).val
 
-theorem map_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem EdgePath.map_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) {v₁ w₁: V₁} (p: G₁.EdgePath v₁ w₁) :
       (p.map f).toList = p.toList.map f.edgeMap := 
       (f.pathMapAux v₁ w₁ p (f.vertexMap v₁) (f.vertexMap w₁) rfl rfl).property
@@ -187,14 +201,6 @@ def asPathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     PathLift p v₁ rfl   
       (e.map p) := 
     ⟨w₁, e, rfl, by simp [map_toList]⟩
-
-theorem pathLift_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
-    (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂) 
-    (lift : PathLift p v₁ h e) :
-    p.pathMap v₁ lift.τ lift.path v₂ w₂ h lift.lift_term = e := by
-      apply eq_of_edgeList_eq
-      rw [pathMap_toList, lift.list_commutes]      
 
 theorem lifts_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     {v₁ w₁ v₂ w₂ : V₁}
@@ -266,23 +272,24 @@ def PathLift.append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
           simp [edgeList_append]
           rw [lift.list_commutes, lift'.list_commutes]}
           
-theorem pathLift_append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem EdgePath.lift_append {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ u₂ : V₂}
     {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂}{e': EdgePath G₂ w₂ u₂}: 
-      pathLift p v₁ h (e ++ e') =
-        (pathLift p v₁ h e).append 
-          (pathLift p (pathLift p v₁ h e).τ  
-            (pathLift p v₁ h e).lift_term e') := by
+      (e ++ e').lift p v₁ h  =
+        (e.lift p v₁ h).append 
+          (e'.lift p (e.lift p v₁ h).τ  
+            (e.lift p v₁ h).lift_term) := by
         apply unique_Pathlift 
 
-theorem pathLift_append_tail {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem EdgePath.lift_append_tail {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ u₂ : V₂}
     {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂}{e': EdgePath G₂ w₂ u₂}: 
-      (pathLift p v₁ h (e ++ e')).τ = 
-        (pathLift p (pathLift p v₁  h e).τ  
-            (pathLift p v₁ h e).lift_term e').τ := by
-        simp [pathLift_append]
-        rfl
+      ((e ++ e').lift p v₁ h).τ  =
+        ((e.lift p v₁ h).append 
+          (e'.lift p (e.lift p v₁ h).τ  
+            (e.lift p v₁ h).lift_term)).τ := by
+        simp [lift_append]
+        
 
 def PathLift.reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ : V₂}
@@ -301,12 +308,12 @@ def PathLift.reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
           show p.edgeMap (G₁.bar edge) = G₂.bar (p.edgeMap edge)
           rw [morphism_bar_commutes]}
 
-theorem pathLift_reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem EdgePath.lift_reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ : V₂}
     {h : p.vertexMap v₁ = v₂}{e: EdgePath G₂ v₂ w₂}: 
-      pathLift p (pathLift p v₁ h e).τ  
-        (pathLift p v₁ h e).lift_term (e.reverse) = 
-        (pathLift p v₁ h e).reverse := by
+      (e.reverse).lift p (e.lift p v₁ h).τ  
+        (e.lift p v₁ h).lift_term  = 
+        (e.lift p v₁ h).reverse := by
         apply unique_Pathlift
 
 def PathLift.cons_bar_cons {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
@@ -330,15 +337,15 @@ def PathLift.cons_bar_cons {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
 theorem homotopy_step_lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂ w₂' u₂  : V₂}
     {h : p.vertexMap v₁ = v₂}{η₁: EdgePath G₂ v₂ w₂}{e: EdgeBetween G₂ w₂ w₂'}{η₂: EdgePath G₂ w₂ u₂}:
-    (pathLift p v₁  h (η₁ ++ (cons e (cons e.bar η₂)))).pathClass = 
-    (pathLift p v₁  h (η₁ ++ η₂)).pathClass := by
-  let θ₁ := pathLift p v₁ h η₁
+    ((η₁ ++ (cons e (cons e.bar η₂))).lift p v₁  h ).pathClass = 
+    ((η₁ ++ η₂).lift p v₁  h).pathClass := by
+  let θ₁ := η₁.lift p v₁ h
   let w₁ := θ₁.τ
   let hw : p.vertexMap w₁ = w₂ := θ₁.lift_term
   let edgeLift := p.localSection w₁ e.edge (by rw [hw, e.source])
   let e' : EdgeBetween G₁ w₁ (G₁.τ edgeLift) := 
           ⟨edgeLift, p.section_init _ _ _, rfl⟩ 
-  let θ₂ := pathLift p w₁ hw η₂
+  let θ₂ := η₂.lift p w₁ hw 
   let liftTailCanc : PathLift p w₁ hw (cons e (cons e.bar η₂)) :=
     {τ := θ₂.τ, 
         path := cons e' (cons e'.bar θ₂.path), 
@@ -351,12 +358,12 @@ theorem homotopy_step_lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   let liftCanc :=
     θ₁.append liftTailCanc
   have splitLift :
-    pathLift p v₁ h (η₁ ++ (cons e (cons e.bar η₂))) =
+    (η₁ ++ (cons e (cons e.bar η₂))).lift p v₁ h  =
       liftCanc := by
         apply unique_Pathlift
   rw [splitLift]
   have splitLift' :
-    pathLift p v₁ h (η₁ ++ η₂) =
+    (η₁ ++ η₂).lift p v₁ h =
       θ₁.append θ₂ := by
         apply unique_Pathlift
   rw [splitLift']
@@ -375,7 +382,7 @@ def homotopyLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) {v₂ w₂   : V₂}
     (h : p.vertexMap v₁ = v₂): PathClass G₂ v₂ w₂ → 
     PathClassFrom G₁ v₁ := by
-  apply Quot.lift (fun η₂ => (pathLift p v₁ h η₂).pathClass)
+  apply Quot.lift (fun (η₂: EdgePath G₂ v₂ w₂) => (η₂.lift p v₁ h).pathClass)
   intro η₂ η₂' red
   induction red
   apply homotopy_step_lift
@@ -384,14 +391,14 @@ theorem homotopyLift_of_path {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂   : V₂}
     {h : p.vertexMap v₁ = v₂} (e : EdgePath G₂ v₂ w₂) :
     homotopyLift p v₁ h [[ e ]] = 
-      (pathLift p v₁ h e).pathClass := by
+      (e.lift p v₁ h).pathClass := by
     rfl
 
 def liftClass {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.vertexMap v₁ = v₂)(e: EdgePath G₂ v₂ w₂): 
     PathClassFrom G₁ v₁ :=
-  (pathLift p v₁ h e).pathClass
+  (e.lift p v₁ h).pathClass
 
 theorem liftClass_eq_of_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) {v₂ w₂   : V₂}
@@ -416,7 +423,7 @@ theorem liftTerm_eq_of_equiv {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
 
 theorem lift_of_proj {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p: Morphism G₁ G₂)[CoveringMap p] {v₁ w₁: V₁} (e: G₁.EdgePath v₁ w₁):
-    pathLift p v₁ rfl (e.map p)  = ⟨w₁, e, rfl, by simp [map_toList]⟩ := by
+    (e.map p).lift p v₁ rfl   = ⟨w₁, e, rfl, by simp [map_toList]⟩ := by
     apply unique_Pathlift
 
 theorem proj_injective {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}

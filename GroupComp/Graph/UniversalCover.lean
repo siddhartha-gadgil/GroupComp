@@ -251,7 +251,7 @@ def rayLift (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
 
 theorem pathLift_of_reduced {G: Graph V E}{x₀ τ: V}(p : EdgePath G x₀ τ)
   (hyp : reduced p) : 
-    pathLift (proj G x₀) (basepoint G x₀) rfl p = 
+    p.lift (proj G x₀) (basepoint G x₀) rfl = 
       rayLift G x₀ τ p hyp := by
       apply unique_Pathlift
 
