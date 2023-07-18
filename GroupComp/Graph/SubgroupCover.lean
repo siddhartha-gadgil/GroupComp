@@ -30,25 +30,25 @@ scoped instance vertSetoid : Setoid (Vert G x₀) where
   iseqv := by
     apply Equivalence.mk
     · intro ⟨τ₁, v₁, _⟩
-      simp
+      simp only [reverse_right_inverse, nil_eq_id, dite_eq_ite, ite_true]
       apply one_mem
     · intro ⟨τ₁, v₁, _⟩ ⟨τ₂, v₂, _⟩
       if c:τ₁=τ₂ then
       cases c
-      simp
+      simp only [dite_eq_ite, ite_true]
       intro h
       let h': [[v₁ ++ EdgePath.reverse v₂]].reverse ∈ H := inv_mem h
       rw [PathClass.reverse_commutes, EdgePath.reverse_append, reverse_reverse] at h'
       exact h'
     else
-      simp [c]
+      simp only [c, dite_false, IsEmpty.forall_iff]
     · intro ⟨τ₁, v₁, _⟩ ⟨τ₂, v₂, _⟩ ⟨τ₃, v₃, _⟩
       if c₁:τ₁=τ₂ then
         cases c₁
         simp
         if c₂:τ₁=τ₃ then
           cases c₂
-          simp
+          simp only [dite_eq_ite, ite_true]
           intro h₁ h₂
           let h₃ : 
             [[v₁ ++ EdgePath.reverse v₂]] ++ [[v₂ ++ EdgePath.reverse v₃]] ∈ H := mul_mem h₁ h₂
@@ -57,7 +57,7 @@ scoped instance vertSetoid : Setoid (Vert G x₀) where
             ← append_commutes] at h₃
           simp only [reverse_left_inverse] at h₃ 
           rw [append_commutes] at h₃
-          simp [EdgePath.append] at h₃
+          simp only [nil_append, reverse_class_eq_inv] at h₃ 
           rw [← append_commutes, ← reverse_commutes] 
           exact h₃
         else
