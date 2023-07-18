@@ -250,14 +250,78 @@ theorem map_reduction {v w : V₁} (η₁ η₂ : EdgePath G₁ v w):
     rw [← EdgeBetween.bar_commutes]
     apply Reduction.step
 
-def inducedMap {v w : V₁}:
+
+end Morphism
+
+namespace PathClass
+
+variable {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} (f: Morphism G₁ G₂)
+
+def map  {v w : V₁}:
   PathClass G₁ v w → PathClass G₂ (f.vertexMap v) (f.vertexMap w) := by
     apply Quot.lift (fun η => [[η.map f ]]) 
     intro η₁ η₂ step
     apply Quot.sound
-    apply map_reduction f η₁ η₂ step
+    apply Morphism.map_reduction f η₁ η₂ step
 
-end Morphism
+theorem map_commutes  {v w : V₁}
+  (η : EdgePath G₁ v w) : [[ η ]].map f = [[ η.map f ]] := by
+    rfl
+
+def append {v w u : V₁}: PathClass G₁ v w → PathClass G₁ w u →  
+    PathClass G₁ v u := by
+  apply Quot.lift₂ 
+    (fun (η₁ : EdgePath G₁ v w)(η₂ : EdgePath G₁ w u) => [[ η₁ ++ η₂ ]])
+  · intro a b₁ b₂ step
+    apply left_append_step
+    exact step
+  · intro a₁ a₂ b step
+    apply right_append_step
+    exact step
+
+
+instance  G.EdgePath {v w u : V} {G : Graph V E} : 
+  HAppend (G.PathClass v w) (G.PathClass w u) (G.PathClass v u) := 
+    ⟨append⟩
+
+theorem append_commutes {v w u : V₁} (η₁ : EdgePath G₁ v w) (η₂ : EdgePath G₁ w u) :
+  [[ η₁ ]] ++ [[ η₂ ]] = [[ η₁ ++ η₂ ]] := by
+    rfl
+
+def reverse {v w : V₁}: PathClass G₁ v w → PathClass G₁ w v := by
+  apply Quot.lift (fun (η : EdgePath G₁ v w) => [[ η.reverse ]])
+  intro a b step
+  apply reverse_step
+  exact step
+
+theorem reverse_commutes {v w : V₁} (η : EdgePath G₁ v w):  
+  [[ η ]].reverse = [[ η.reverse ]] := by
+    rfl
+
+
+theorem append_assoc {v w u t : V₁} : (η₁ : PathClass G₁ v w) →  (η₂ : PathClass G₁ w u) →  (η₃ : PathClass G₁ u t) → 
+  η₁ ++ η₂ ++ η₃ = η₁ ++ (η₂ ++ η₃)  := by
+    apply Quot.ind
+    intro η₁
+    apply Quot.ind
+    intro η₂
+    apply Quot.ind
+    intro η₃
+    repeat (rw [append_commutes])
+    simp [EdgePath.append_assoc]
+
+theorem reverse_append {v w u : V₁} : (η₁ : PathClass G₁ v w) →  (η₂ : PathClass G₁ w u) → 
+  (η₁  ++  η₂).reverse = η₂.reverse ++ η₁.reverse  := by
+    apply Quot.ind
+    intro η₁
+    apply Quot.ind
+    intro η₂
+    rw [append_commutes, reverse_commutes, 
+      EdgePath.reverse_append, ←append_commutes]
+    rw [reverse_commutes η₁, reverse_commutes η₂]
+    
+
+end PathClass
 
 
 def asPathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
