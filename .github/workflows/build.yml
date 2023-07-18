@@ -1,6 +1,12 @@
 on:
   push:
+    branches:
+      - main
   pull_request:
+    branches:
+      - main
+    types:
+      - opened
 
 name: ci
 
@@ -11,6 +17,7 @@ jobs:
     steps:
       - name: install elan
         run: |
+          if: github.event.pull_request.draft == false
           set -o pipefail
           curl -sSfL https://github.com/leanprover/elan/releases/download/v1.4.6/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
           ./elan-init -y --default-toolchain none
@@ -21,5 +28,6 @@ jobs:
 
       - name: build GroupComp
         run: |
+          if: github.event.pull_request.draft == false
           lake exe cache get
           lake build
