@@ -253,7 +253,7 @@ theorem homotopy_lifting_endpoints(start: List (α × Bool))(a : α)(b: Bool):
 /--
 The next vertex of the lift starting at a reduced word is equivalent to the word with the next vertex added.
 -/
-theorem nextVertex_equiv_concat
+theorem nextVertex_homotopic_concat
     (start: List (α × Bool))(letter: (α × Bool)):
     start.concat letter ∼  start :+ letter  := by
   if nilP: start = [] then
@@ -297,7 +297,7 @@ theorem finalVertex_reduced (start word : List (α × Bool)) :
 /--
 If words are equivalent then the results of appending a word to them are equivalent.
 -/
-theorem append_equiv {L₁ L₂ : List (α × Bool)}(L₃ : List (α × Bool)) :
+theorem append_homotopic {L₁ L₂ : List (α × Bool)}(L₃ : List (α × Bool)) :
     L₁ ∼ L₂ → L₁ ++ L₃ ∼ L₂ ++ L₃ := by
   intro eqn
   show mk (L₁ ++ L₃) = mk (L₂ ++ L₃)
@@ -307,18 +307,18 @@ theorem append_equiv {L₁ L₂ : List (α × Bool)}(L₃ : List (α × Bool)) :
 /--
 The final vertex of a lift starting at a reduced word is equivalent to the result of appending the word to the initial word.
 -/
-theorem finalVertex_equiv_append (start word : List (α × Bool)) :
+theorem finalVertex_homotopic_append (start word : List (α × Bool)) :
     start ++ word ∼ finalVertex start word  := by
   match word with
   | [] => simp [finalVertex]
   | head ::tail => 
     simp [finalVertex, List.foldl_cons]
-    let ih := finalVertex_equiv_append (start :+ head) tail
+    let ih := finalVertex_homotopic_append (start :+ head) tail
     simp [finalVertex, List.foldl_cons] at ih
-    let eqn := nextVertex_equiv_concat start head
+    let eqn := nextVertex_homotopic_concat start head
     show mk (start ++ head :: tail) = mk (List.foldl nextVertex (start :+ head) tail)
     rw [←ih]
-    let eqn' := append_equiv tail eqn
+    let eqn' := append_homotopic tail eqn
     simp [← eqn']
       
 /--
@@ -359,8 +359,8 @@ theorem reducedWord_inverse
     (g : FreeGroup α) : mk (reducedWord g) = g := by
   apply Quot.ind (β := fun g ↦ mk (reducedWord g) = g )
   intro word
-  simp [finalVertex_equiv_append [], ←finalVertexOnFreeGroup_natural]
-  simp [←finalVertex_equiv_append]
+  simp [finalVertex_homotopic_append [], ←finalVertexOnFreeGroup_natural]
+  simp [←finalVertex_homotopic_append]
 
 /--
 Decidability of the word problem for free groups.

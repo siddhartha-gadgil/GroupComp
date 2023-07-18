@@ -196,7 +196,7 @@ theorem rayToRev_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
     have red' : reduced p'.reverse := by
       apply reverse_reduced
       assumption
-    simp [rayToRev, cons_toList, toList_concat, ih red']    
+    simp [rayToRev, cons_toList, concat_toList, ih red']    
 
 def shiftTarget {G: Graph V E}{v w w' : V}
   (p : EdgePath G v w)(eql : w = w'):  EdgePath G v w' := by
@@ -231,7 +231,7 @@ theorem rayTo_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
   (rayTo G x₀ τ p hyp).toList.map (fun e ↦ e.nxt.edge) = 
     p.toList := by    
     simp [rayTo, toList_shiftTarget, rayToRev_proj_list, 
-      toList_reverse, List.map_reverse]
+      reverse_toList, List.map_reverse]
     have : G.bar ∘ G.bar = id := by
       funext x
       show G.bar (G.bar x) = x
@@ -271,7 +271,7 @@ theorem reduced_unique {G: Graph V E}(x₀ τ: V){p₁ p₂ : EdgePath G x₀ τ
         liftTerminal (proj G x₀) (basepoint G x₀) rfl p₂ := by
         simp [liftTerminal]
         apply congrArg 
-        apply liftClass_eq_of_equiv
+        apply liftClass_eq_of_homotopic
         assumption
       simp [reduced_liftTerminal p₁ hyp₁, reduced_liftTerminal p₂ hyp₂] at leq
       exact leq
@@ -281,14 +281,14 @@ theorem homotopic_iff_reduction_eq {G: Graph V E}(x₀ τ: V)
     [[ p₁ ]] = [[ p₂ ]] ↔ reduction p₁ = reduction p₂ := by 
     apply Iff.intro
     · intro eql
-      rw [← reduction_equiv_self p₁, ← reduction_equiv_self p₂] at eql
+      rw [← reduction_homotopic_self p₁, ← reduction_homotopic_self p₂] at eql
       have red₁ : reduced (reduction p₁) := by
         apply reduction_reduced
       have red₂ : reduced (reduction p₂) := by
         apply reduction_reduced
       exact reduced_unique x₀ τ red₁ red₂ eql
     · intro hyp
-      rw [← reduction_equiv_self p₁, ← reduction_equiv_self p₂]
+      rw [← reduction_homotopic_self p₁, ← reduction_homotopic_self p₂]
       rw [hyp]  
 
 theorem homotopic_of_liftTerminal_eq  {G: Graph V E}{x₀ τ: V}
@@ -298,13 +298,13 @@ theorem homotopic_of_liftTerminal_eq  {G: Graph V E}{x₀ τ: V}
     [[ p₁ ]] = [[ p₂ ]] := by
     intro hyp
     have red₁ :  [[ reduction p₁ ]] = [[ p₁ ]] := by
-      apply reduction_equiv_self
+      apply reduction_homotopic_self
     have red₂ :  [[ reduction p₂ ]] = [[ p₂ ]] := by
-      apply reduction_equiv_self
+      apply reduction_homotopic_self
     let l₁ := 
-      liftTerminal_eq_of_equiv (proj G x₀) (basepoint G x₀)  rfl red₁
+      liftTerminal_eq_of_homotopic (proj G x₀) (basepoint G x₀)  rfl red₁
     let l₂ :=
-      liftTerminal_eq_of_equiv (proj G x₀) (basepoint G x₀)  rfl red₂
+      liftTerminal_eq_of_homotopic (proj G x₀) (basepoint G x₀)  rfl red₂
     rw [←l₁, ← l₂] at hyp
     rw [reduced_liftTerminal (reduction p₁) (reduction_reduced p₁)] at hyp
     rw [reduced_liftTerminal (reduction p₂) (reduction_reduced p₂)] at hyp
