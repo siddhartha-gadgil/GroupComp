@@ -40,7 +40,7 @@ We assume that at any point we have a __Context__. In Lean this means that we ha
 
 In any context, we have __Rules__ to 
 
-* form _expressions_ from _terms_ and _expressions_, with a well-formed expression representing a term.
+* form _expressions_ from _terminals_ and _expressions_, with a well-formed expression representing a term.
 * make two kinds of __judgements__:
   * `e : t` means that `e` is an expression of type `t`.
   * `e = e'` means that `e` and `e'` are equal expressions.

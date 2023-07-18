@@ -15,7 +15,7 @@ variable {V E : Type _} {G : Graph V E} (H : Subgraph G)
 
 attribute [aesop safe apply] edges_bar edges_init
 
-theorem edges_term : ∀ e ∈ H.edges, G.τ e ∈ H.verts := by
+theorem edges_terminal : ∀ e ∈ H.edges, G.τ e ∈ H.verts := by
   intro e he 
   rw [← G.ι_bar e]
   apply H.edges_init
@@ -89,7 +89,7 @@ namespace Graph.hom
 
 variable {V E V' E' : Type _} (G : Graph V E) (G' : Graph V' E') (φ : Graph.hom G G')
 
-theorem preserve_term (e : E) : φ.vertexMap (G.τ e) = G'.τ (φ.edgeMap e) := by
+theorem preserve_terminal (e : E) : φ.vertexMap (G.τ e) = G'.τ (φ.edgeMap e) := by
   rw [← G.ι_bar, ← G'.ι_bar, preserve_init, preserve_bar]
 
 def edgeBetweenMap {u v : V} (e : G.EdgeBetween u v) : G'.EdgeBetween (φ.vertexMap u) (φ.vertexMap v) where
@@ -100,7 +100,7 @@ def edgeBetweenMap {u v : V} (e : G.EdgeBetween u v) : G'.EdgeBetween (φ.vertex
     symm
     assumption
   target := by
-    have := φ.preserve_term e.edge
+    have := φ.preserve_terminal e.edge
     rw [e.target] at this
     symm
     assumption

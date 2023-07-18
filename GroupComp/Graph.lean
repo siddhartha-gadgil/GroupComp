@@ -66,6 +66,7 @@ def EdgeBetween.ofEdge (e : E) : G.EdgeBetween (G.ι e) (G.τ e) where
 inductive EdgePath (G : Graph V E) : V → V → Type _ where
   | nil (v) : G.EdgePath v v
   | cons {v w u} : G.EdgeBetween v w → G.EdgePath w u → G.EdgePath v u
+deriving DecidableEq
 
 abbrev singletonPath (e : G.EdgeBetween u v) := EdgePath.cons e (.nil v)
 
@@ -273,73 +274,73 @@ theorem reverse_step {v w : V} (a₁ a₂ : G.EdgePath v w) (rel : Reduction a�
   have := reverse_left_inverse p.reverse
   aesop
 
-def EdgePath.toEdgeList {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
+def EdgePath.toList {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
   List E := 
   match p with
   | nil _ => []
-  | cons e p' =>  e.edge :: p'.toEdgeList
+  | cons e p' =>  e.edge :: p'.toList
 
-theorem nil_edgeList {G : Graph V E} {v : V}  : 
-  (nil v : EdgePath G v v).toEdgeList = [] := rfl
+theorem nil_toList {G : Graph V E} {v : V}  : 
+  (nil v : EdgePath G v v).toList = [] := rfl
 
-theorem cons_edgeList {G: Graph V E} {v w u: V} (e : EdgeBetween G v w) 
+theorem cons_toList {G: Graph V E} {v w u: V} (e : EdgeBetween G v w) 
     (p : EdgePath G w u) : 
-  (cons e p).toEdgeList = e.edge :: p.toEdgeList := rfl
+  (cons e p).toList = e.edge :: p.toList := rfl
 
-theorem edgeList_append {G : Graph V E}{v w u : V} (p₁ : EdgePath G v w) (p₂ : EdgePath G w u) :
-    (p₁ ++ p₂).toEdgeList = p₁.toEdgeList ++ p₂.toEdgeList := by
+theorem toList_append {G : Graph V E}{v w u : V} (p₁ : EdgePath G v w) (p₂ : EdgePath G w u) :
+    (p₁ ++ p₂).toList = p₁.toList ++ p₂.toList := by
     induction p₁ with
     | nil v => 
-      simp [nil_edgeList]
+      simp [nil_toList]
     | cons e p' ih =>
-      simp [cons_edgeList]
+      simp [cons_toList]
       apply ih
 
-theorem edgeList_concat {G : Graph V E}{v w u : V} (p : EdgePath G v w) (e : EdgeBetween G w u) :
-    (concat p e).toEdgeList = List.concat p.toEdgeList e.edge := by
+theorem toList_concat {G : Graph V E}{v w u : V} (p : EdgePath G v w) (e : EdgeBetween G w u) :
+    (concat p e).toList = List.concat p.toList e.edge := by
     induction p with
     | nil v => 
-      simp [nil_edgeList]
-      rw [concat, cons_edgeList, nil_edgeList]
+      simp [nil_toList]
+      rw [concat, cons_toList, nil_toList]
     | cons e p' ih =>
-      simp [cons_edgeList, ih]
+      simp [cons_toList, ih]
 
-theorem edgeList_reverse {G : Graph V E}{v w : V} (p : EdgePath G v w):
-  p.reverse.toEdgeList  = p.toEdgeList.reverse.map (G.bar) := by
+theorem toList_reverse {G : Graph V E}{v w : V} (p : EdgePath G v w):
+  p.reverse.toList  = p.toList.reverse.map (G.bar) := by
   induction p with
   | nil _ => 
-    simp [nil_edgeList]
+    simp [nil_toList]
   | cons e p' ih =>
-    simp [cons_edgeList, reverse_cons, edgeList_concat]
+    simp [cons_toList, reverse_cons, toList_concat]
     simp [ih, EdgeBetween.bar]
 
-theorem edgeList_reverse' {G : Graph V E}{v w : V} (p : EdgePath G v w):
-  p.toEdgeList.reverse = p.reverse.toEdgeList.map (G.bar) := by
+theorem toList_reverse' {G : Graph V E}{v w : V} (p : EdgePath G v w):
+  p.toList.reverse = p.reverse.toList.map (G.bar) := by
   induction p with
   | nil _ => 
-    simp [nil_edgeList]
+    simp [nil_toList]
   | cons e p' ih =>
-    simp [cons_edgeList, reverse_cons, edgeList_concat]
+    simp [cons_toList, reverse_cons, toList_concat]
     simp [ih, EdgeBetween.bar]
 
-@[ext] theorem eq_of_edgeList_eq {G: Graph V E}{v w: V}
-  (p₁ p₂ : EdgePath G v w) : p₁.toEdgeList = p₂.toEdgeList → p₁ = p₂ := by
+@[ext] theorem eq_of_toList_eq {G: Graph V E}{v w: V}
+  (p₁ p₂ : EdgePath G v w) : p₁.toList = p₂.toList → p₁ = p₂ := by
   induction p₁ with
   | nil v =>
     match p₂ with
     | EdgePath.nil v => 
       intro h
-      rw [nil_edgeList] at h      
+      rw [nil_toList] at h      
     | EdgePath.cons e₂ p₂  =>
       intro h
-      simp [cons_edgeList, nil_edgeList] at h
+      simp [cons_toList, nil_toList] at h
   | cons e₁ p₁' ih =>
     intro h
     induction p₂ with
     | nil w =>
-      simp [cons_edgeList, nil_edgeList] at h
+      simp [cons_toList, nil_toList] at h
     | cons e₂ p₂'  =>
-      simp [cons_edgeList] at h
+      simp [cons_toList] at h
       have e1t := e₁.target
       have e2t := e₂.target
       rw [h.1] at e1t
@@ -351,26 +352,26 @@ theorem edgeList_reverse' {G : Graph V E}{v w : V} (p : EdgePath G v w):
       · apply ih
         exact h.2  
         
-theorem term_eq_of_edgeList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
-  (p₁ : EdgePath G v₁ w₁) (p₂ : EdgePath G v₂ w₂) : p₁.toEdgeList = p₂.toEdgeList → (v₁ = v₂) → (w₁ = w₂)  := by 
+theorem term_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
+  (p₁ : EdgePath G v₁ w₁) (p₂ : EdgePath G v₂ w₂) : p₁.toList = p₂.toList → (v₁ = v₂) → (w₁ = w₂)  := by 
   induction p₁ with
   | nil v₁' =>
     match p₂ with
     | EdgePath.nil v => 
       intro h heq
-      rw [nil_edgeList] at h      
+      rw [nil_toList] at h      
       exact heq
     | EdgePath.cons e₂ p₂  =>
       intro h
-      simp [cons_edgeList, nil_edgeList] at h
+      simp [cons_toList, nil_toList] at h
   | cons e p₁' ih =>    
     intro h heq
     match p₂ with
     | EdgePath.nil w =>
-      simp [cons_edgeList, nil_edgeList] at h
+      simp [cons_toList, nil_toList] at h
     | EdgePath.cons e₂ p₂' =>
-      simp [cons_edgeList] at h
-      apply term_eq_of_edgeList_eq p₁' p₂' h.right
+      simp [cons_toList] at h
+      apply term_eq_of_toList_eq p₁' p₂' h.right
       rw [←e₂.target, ←e.target, h.left]
 
 namespace PathClass

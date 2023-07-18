@@ -28,6 +28,7 @@ structure Vert where
   τ : V
   p : EdgePath G x₀ τ
   is_reduced : @reduced V E G x₀ τ p
+deriving DecidableEq
 
 @[ext]
 structure Edge where
@@ -62,13 +63,13 @@ theorem bar_involution (e : Edge G x₀) :
     apply reducedConcat_cancel_pair
     exact e.is_reduced
 
-def edgeList (e : Edge G x₀) : List E := 
-  e.p.toEdgeList
+def toList (e : Edge G x₀) : List E := 
+  e.p.toList
 
 theorem bar_neq_self (e: Edge G x₀) :
   e ≠ bar G x₀ e := by
   intro contra
-  have : e.p.toEdgeList.length =  (bar G x₀ e).p.toEdgeList.length 
+  have : e.p.toList.length =  (bar G x₀ e).p.toList.length 
      := by
       rw [← contra]
   simp [bar, Edge.p] at this
@@ -147,7 +148,7 @@ open Edge
 def basepoint : Vert G x₀  := 
   ⟨x₀, EdgePath.nil _, reduced_nil⟩
 
-def rayFrom (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
+def rayToRev (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
   (hyp : reduced p.reverse)  : 
   EdgePath  (Guniv G x₀) (basepoint G x₀) ⟨τ, p.reverse, hyp⟩   := by
   match p, hyp with
@@ -163,7 +164,7 @@ def rayFrom (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
     have red' : reduced p'.reverse := by
       apply reverse_reduced
       assumption
-    have init := rayFrom G x₀ u p' red'
+    have init := rayToRev G x₀ u p' red'
     apply init.concat
     let edge : Edge G x₀ := ⟨u, τ, e.bar, p'.reverse, red'⟩ 
     let iv : Vert G x₀ := ⟨u, reverse p', red'⟩
@@ -176,13 +177,13 @@ def rayFrom (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
       apply redCons_eq_cons_of_reduced
       assumption)⟩  
     
-theorem rayFrom_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
+theorem rayToRev_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
   (hyp : reduced p.reverse) :
-  (rayFrom G x₀ τ p hyp).toEdgeList.map (fun e ↦ e.nxt.edge) = 
-    p.toEdgeList.reverse.map (G.bar) := by
+  (rayToRev G x₀ τ p hyp).toList.map (fun e ↦ e.nxt.edge) = 
+    p.toList.reverse.map (G.bar) := by
     induction p with
   | nil _ => 
-    simp [rayFrom, nil_edgeList]    
+    simp [rayToRev, nil_toList]    
   | cons e p' ih => 
     rename_i x₀' u u'
     have red_cons : reduced (cons e p') := by
@@ -195,4 +196,138 @@ theorem rayFrom_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
     have red' : reduced p'.reverse := by
       apply reverse_reduced
       assumption
-    simp [rayFrom, cons_edgeList, edgeList_concat, ih red']    
+    simp [rayToRev, cons_toList, toList_concat, ih red']    
+
+def shiftTarget {G: Graph V E}{v w w' : V}
+  (p : EdgePath G v w)(eql : w = w'):  EdgePath G v w' := by
+  match p, w', eql with
+  | nil _, _, rfl => 
+    exact (nil v)
+  | cons e p', w', eql => 
+    exact cons e (shiftTarget p' eql)
+
+theorem toList_shiftTarget {G: Graph V E}{v w w' : V}
+  (p : EdgePath G v w)(eql : w = w'):
+  (shiftTarget p eql).toList = p.toList := by
+  match p, w', eql with
+  | nil _, _, rfl =>
+    rename_i v'
+    simp [shiftTarget]
+  | cons e p', w', eql =>
+    simp [shiftTarget, cons_toList, toList_shiftTarget]
+    
+
+def rayTo (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
+  (hyp : reduced p)  : 
+  EdgePath  (Guniv G x₀) (basepoint G x₀) ⟨τ, p, hyp⟩ := by
+    let ray := rayToRev G x₀ τ p.reverse 
+      (by simp [reverse_reverse, hyp])
+    apply shiftTarget ray
+    simp [reverse_reverse]
+
+
+theorem rayTo_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
+  (hyp : reduced p) :
+  (rayTo G x₀ τ p hyp).toList.map (fun e ↦ e.nxt.edge) = 
+    p.toList := by    
+    simp [rayTo, toList_shiftTarget, rayToRev_proj_list, 
+      toList_reverse, List.map_reverse]
+    have : G.bar ∘ G.bar = id := by
+      funext x
+      show G.bar (G.bar x) = x
+      apply G.bar_involution
+    simp [this]
+
+def rayLift (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
+  (hyp : reduced p) : PathLift (proj G x₀) (basepoint G x₀)
+   rfl p := {
+    τ := ⟨τ, p, hyp⟩
+    path := rayTo G x₀ τ p hyp
+    lift_terminal := rfl
+    list_commutes := by
+      simp [proj]
+      simp [rayTo_proj_list]
+  }  
+
+theorem lift_of_reduced {G: Graph V E}{x₀ τ: V}(p : EdgePath G x₀ τ)
+  (hyp : reduced p) : 
+    p.lift (proj G x₀) (basepoint G x₀) rfl = 
+      rayLift G x₀ τ p hyp := by
+      apply unique_Pathlift
+
+theorem reduced_liftTerminal {G: Graph V E}{x₀ τ: V}(p : EdgePath G x₀ τ)
+  (hyp : reduced p) :
+    liftTerminal (proj G x₀) (basepoint G x₀)  rfl p = 
+      ⟨τ, p, hyp⟩ := by
+      simp [liftTerminal, liftClass, lift_of_reduced p hyp, rayLift]
+      rfl
+
+theorem reduced_unique {G: Graph V E}(x₀ τ: V){p₁ p₂ : EdgePath G x₀ τ}
+  (hyp₁ : reduced p₁)(hyp₂ : reduced p₂):
+    [[ p₁ ]] = [[ p₂ ]] → p₁ = p₂ := by
+      intro hyp
+      have leq :
+        liftTerminal (proj G x₀) (basepoint G x₀) rfl p₁ =
+        liftTerminal (proj G x₀) (basepoint G x₀) rfl p₂ := by
+        simp [liftTerminal]
+        apply congrArg 
+        apply liftClass_eq_of_equiv
+        assumption
+      simp [reduced_liftTerminal p₁ hyp₁, reduced_liftTerminal p₂ hyp₂] at leq
+      exact leq
+
+theorem homotopic_iff_reduction_eq {G: Graph V E}(x₀ τ: V)
+  (p₁ p₂ : EdgePath G x₀ τ):
+    [[ p₁ ]] = [[ p₂ ]] ↔ reduction p₁ = reduction p₂ := by 
+    apply Iff.intro
+    · intro eql
+      rw [← reduction_equiv_self p₁, ← reduction_equiv_self p₂] at eql
+      have red₁ : reduced (reduction p₁) := by
+        apply reduction_reduced
+      have red₂ : reduced (reduction p₂) := by
+        apply reduction_reduced
+      exact reduced_unique x₀ τ red₁ red₂ eql
+    · intro hyp
+      rw [← reduction_equiv_self p₁, ← reduction_equiv_self p₂]
+      rw [hyp]  
+
+theorem homotopic_of_liftTerminal_eq  {G: Graph V E}{x₀ τ: V}
+  {p₁ p₂ : EdgePath G x₀ τ} : 
+  liftTerminal (proj G x₀) (basepoint G x₀) rfl p₁ =
+        liftTerminal (proj G x₀) (basepoint G x₀) rfl p₂ → 
+    [[ p₁ ]] = [[ p₂ ]] := by
+    intro hyp
+    have red₁ :  [[ reduction p₁ ]] = [[ p₁ ]] := by
+      apply reduction_equiv_self
+    have red₂ :  [[ reduction p₂ ]] = [[ p₂ ]] := by
+      apply reduction_equiv_self
+    let l₁ := 
+      liftTerminal_eq_of_equiv (proj G x₀) (basepoint G x₀)  rfl red₁
+    let l₂ :=
+      liftTerminal_eq_of_equiv (proj G x₀) (basepoint G x₀)  rfl red₂
+    rw [←l₁, ← l₂] at hyp
+    rw [reduced_liftTerminal (reduction p₁) (reduction_reduced p₁)] at hyp
+    rw [reduced_liftTerminal (reduction p₂) (reduction_reduced p₂)] at hyp
+    simp at hyp
+    rw [homotopic_iff_reduction_eq] 
+    exact hyp
+
+theorem proj_liftTerminal {G: Graph V E}{x₀: V}{vert : Vert G x₀}
+      (e: EdgePath (Guniv G x₀) (basepoint G x₀) vert) :
+      liftTerminal (proj G x₀) (basepoint G x₀) rfl
+        (e.map (proj G x₀)) = vert := by 
+      simp [liftTerminal, liftClass]
+      simp [lift_of_proj]
+      rfl
+
+theorem simple_connectivity_for_paths {G: Graph V E}{x₀: V}{vert : Vert G x₀}
+      (e₁ e₂: EdgePath (Guniv G x₀) (basepoint G x₀) vert) :
+      [[ e₁ ]] = [[ e₂ ]] := by
+      apply proj_injective (proj G x₀)
+      let lem : 
+        liftTerminal (proj G x₀) (basepoint G x₀) rfl 
+          (e₁.map (proj G x₀)) =
+        liftTerminal (proj G x₀) (basepoint G x₀) rfl 
+          (e₂.map (proj G x₀)) := by
+        rw [proj_liftTerminal e₁, proj_liftTerminal e₂]        
+      apply homotopic_of_liftTerminal_eq lem
