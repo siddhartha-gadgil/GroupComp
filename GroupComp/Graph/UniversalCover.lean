@@ -146,6 +146,21 @@ end Edge
 
 open Edge
 
+theorem bar_defn (τ₀ τ₁ : V)
+  (nxt: EdgeBetween G τ₀ τ₁)
+  (p : EdgePath G x₀ τ₀)
+  (is_reduced : reduced p) : 
+  (univ G x₀).bar ⟨τ₀, τ₁,  nxt, p, is_reduced⟩ = 
+    ⟨τ₁, τ₀, nxt.bar, p :+ nxt, reducedConcat_reduced p nxt is_reduced⟩ := rfl
+
+theorem init_defn (τ₀ τ₁ : V)
+  (nxt: EdgeBetween G τ₀ τ₁)
+  (p : EdgePath G x₀ τ₀)
+  (is_reduced : reduced p) : 
+  (univ G x₀).ι ⟨τ₀, τ₁,  nxt, p, is_reduced⟩  = 
+    ⟨τ₀, p, is_reduced⟩ := rfl
+
+
 def basepoint : Vert G x₀  := 
   ⟨x₀, EdgePath.nil _, reduced_nil⟩
 

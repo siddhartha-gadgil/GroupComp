@@ -165,21 +165,34 @@ def QuotVert.ι : Quotient (edgeSetoid H) → Quotient (vertSetoid H) := by
   intro ⟨τ₀, τ₁, e, p, pf⟩ ⟨τ₀', τ₁', e', p', pf'⟩ h
   let lem₀ := terminal₁_eq_of_r H h
   let lem₁ := terminal₀_eq_of_r H h
-  simp at lem₁
-  simp at lem₀
+  simp only at lem₁
+  simp only at lem₀
   cases lem₀
   cases lem₁
-  have : 
-    Graph.ι (univ G x₀) { τ₀ := τ₀, τ₁ := τ₁, nxt := e, p := p, is_reduced := pf } =
-    ⟨τ₀, p, pf⟩ := rfl
-  rw [this]
-  have : 
-    Graph.ι (univ G x₀) { τ₀ := τ₀, τ₁ := τ₁, nxt := e', p := p', is_reduced := pf' } =
-    ⟨τ₀, p', pf'⟩ := rfl
-  rw [this]
+  simp [init_defn]
   apply Quotient.sound
-  simp [path_eq_iff_r H]
-  sorry
+  simp only
+  simp [HasEquiv.Equiv]
+  rw [path_eq_iff_r]
+  simp [HasEquiv.Equiv, Setoid.r, relH] at h
+  exact h.1
   
-
-#check Quotient
+def QuotVert.bar : Quotient (edgeSetoid H) → Quotient (edgeSetoid H) := by
+  apply Quotient.lift (⟦ (G.univ x₀).bar ·⟧)
+  intro ⟨τ₀, τ₁, e, p, pf⟩ ⟨τ₀', τ₁', e', p', pf'⟩ h
+  let lem₀ := terminal₁_eq_of_r H h
+  let lem₁ := terminal₀_eq_of_r H h
+  simp only at lem₁
+  simp only at lem₀
+  cases lem₀
+  cases lem₁
+  simp [bar_defn]
+  have h': edgeSetoid H |>.r ⟨τ₀, τ₁, e, p, pf⟩ ⟨τ₀, τ₁, e', p', pf'⟩ := h
+  simp [Setoid.r, relH] at h'
+  apply Quotient.sound
+  simp [HasEquiv.Equiv, Setoid.r, relH]
+  apply And.intro
+  · exact h'.2
+  · simp [reducedConcat_cancel_pair p e pf, 
+      reducedConcat_cancel_pair p' e' pf']
+    exact h'.1
