@@ -195,9 +195,17 @@ def bar : Quotient (edgeSetoid H) → Quotient (edgeSetoid H) := by
   apply And.intro
   · rw [← h'.2]
     rw [← append_commutes]
-    simp [reducedConcat, ← cons_homotopic_redCons, cons_natural]
-    
-    sorry
+    simp [reducedConcat, ← cons_homotopic_redCons, cons_natural, PathClass]
+    show 
+      ([[cons (EdgeBetween.bar e) (EdgePath.reverse p)]]).reverse ++ 
+      [[cons (EdgeBetween.bar e) (EdgePath.reverse p')]] ∈ H
+    rw [reverse_commutes, append_commutes, reverse_cons, reverse_reverse, EdgeBetween.bar_involution,
+    concat_append]
+    have : [[p ++ cons e (cons (EdgeBetween.bar e) (EdgePath.reverse p'))]] = [[ p ++ p'.reverse ]] := by
+      apply Quot.sound
+      apply Reduction.step
+    rw [this]
+    exact h'.1
   · simp [reducedConcat_cancel_pair p e pf, 
       reducedConcat_cancel_pair p' e' pf']
     rw [h'.2]
