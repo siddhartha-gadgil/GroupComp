@@ -160,7 +160,9 @@ theorem terminal₀_eq_of_r {e₁ e₂ : Edge G x₀ } :
 def QuotVert  := Quotient (vertSetoid H)
 def QuotEdge  := Quotient (edgeSetoid H)
 
-def QuotVert.ι : Quotient (edgeSetoid H) → Quotient (vertSetoid H) := by
+namespace QuotVert
+
+def ι : Quotient (edgeSetoid H) → Quotient (vertSetoid H) := by
   apply Quotient.lift (⟦ (G.univ x₀).ι ·⟧)
   intro ⟨τ₀, τ₁, e, p, pf⟩ ⟨τ₀', τ₁', e', p', pf'⟩ h
   let lem₀ := terminal₁_eq_of_r H h
@@ -171,13 +173,12 @@ def QuotVert.ι : Quotient (edgeSetoid H) → Quotient (vertSetoid H) := by
   cases lem₁
   simp [init_defn]
   apply Quotient.sound
-  simp only
-  simp [HasEquiv.Equiv]
+  simp only [HasEquiv.Equiv]
   rw [path_eq_iff_r]
   simp [HasEquiv.Equiv, Setoid.r, relH] at h
   exact h.1
   
-def QuotVert.bar : Quotient (edgeSetoid H) → Quotient (edgeSetoid H) := by
+def bar : Quotient (edgeSetoid H) → Quotient (edgeSetoid H) := by
   apply Quotient.lift (⟦ (G.univ x₀).bar ·⟧)
   intro ⟨τ₀, τ₁, e, p, pf⟩ ⟨τ₀', τ₁', e', p', pf'⟩ h
   let lem₀ := terminal₁_eq_of_r H h
@@ -196,3 +197,30 @@ def QuotVert.bar : Quotient (edgeSetoid H) → Quotient (edgeSetoid H) := by
   · simp [reducedConcat_cancel_pair p e pf, 
       reducedConcat_cancel_pair p' e' pf']
     exact h'.1
+
+theorem initial_defn (e: Edge G x₀):
+  ι H ⟦ e ⟧ = ⟦ (G.univ x₀).ι e ⟧ := rfl
+
+theorem bar_defn (e : Edge G x₀):
+  bar H ⟦ e ⟧ = ⟦ (G.univ x₀).bar e ⟧ := rfl
+
+theorem bar_involution :(ebar : Quotient (edgeSetoid H)) → 
+  bar H (bar H ebar) = ebar := by
+  apply Quotient.ind
+  intro e
+  simp [bar_defn]
+
+theorem bar_no_fp : (ebar : Quotient (edgeSetoid H)) →
+  bar H ebar ≠ ebar := by
+  apply Quotient.ind
+  intro ⟨τ₀, τ₁, e, p, pf⟩
+  simp [bar_defn, Edge.bar_defn]
+  intro contra
+  rw [@Quotient.eq _ (edgeSetoid H)] at contra
+  let lem := terminal₀_eq_of_r H contra
+  simp only at lem
+  cases lem
+  simp [HasEquiv.Equiv, Setoid.r, relH] at contra
+  sorry
+
+end QuotVert
