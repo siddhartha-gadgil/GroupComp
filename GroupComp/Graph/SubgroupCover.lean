@@ -4,7 +4,7 @@ namespace Graph
 
 namespace SubgroupCover
 
-open EdgePath PathClass UniversalCover
+open EdgePath PathClass UniversalCover Edge
 
 variable {V : Type u} {E : Type v} [DecidableEq V] [DecidableEq E]
 
