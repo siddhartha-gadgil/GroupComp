@@ -105,7 +105,7 @@ scoped instance edgeSetoid : Setoid (Edge G x₀) where
     if c:τ₀=τ₀' ∧ τ₁ = τ₁' then
       cases c.left
       cases c.right
-      exact (relH H p p') ∧ (relH H (p :+ e) (p' :+ e')) 
+      exact (relH H p p') ∧ (e = e')
     else
       exact False
   iseqv := by
@@ -120,7 +120,7 @@ scoped instance edgeSetoid : Setoid (Edge G x₀) where
       intro hyp
       apply And.intro
       · apply relH_symm H hyp.1
-      · apply relH_symm H hyp.2
+      · rw [hyp.2]
     else
       simp only [c, dite_false, IsEmpty.forall_iff]
     · intro ⟨τ₀, τ₁, e, p, _⟩ ⟨τ₀', τ₁', e', p', _⟩ ⟨τ₀'', τ₁'', e'', p'', _⟩ 
@@ -135,7 +135,7 @@ scoped instance edgeSetoid : Setoid (Edge G x₀) where
           intro hyp₁ hyp₂ hyp₃ hyp₄
           apply And.intro
           · apply relH_trans H hyp₁ hyp₃
-          · apply relH_trans H hyp₂ hyp₄
+          · rw [hyp₂, hyp₄]
         else
           simp [c₂]
       else
@@ -193,10 +193,14 @@ def bar : Quotient (edgeSetoid H) → Quotient (edgeSetoid H) := by
   apply Quotient.sound
   simp [HasEquiv.Equiv, Setoid.r, relH]
   apply And.intro
-  · exact h'.2
+  · rw [← h'.2]
+    rw [← append_commutes]
+    simp [reducedConcat, ← cons_homotopic_redCons, cons_natural]
+    
+    sorry
   · simp [reducedConcat_cancel_pair p e pf, 
       reducedConcat_cancel_pair p' e' pf']
-    exact h'.1
+    rw [h'.2]
 
 theorem initial_defn (e: Edge G x₀):
   ι H ⟦ e ⟧ = ⟦ (G.univ x₀).ι e ⟧ := rfl
@@ -221,6 +225,10 @@ theorem bar_no_fp : (ebar : Quotient (edgeSetoid H)) →
   simp only at lem
   cases lem
   simp [HasEquiv.Equiv, Setoid.r, relH] at contra
-  sorry
+  let c := contra.2
+  have : e.bar.edge = e.edge := by rw [c]
+  simp at this
+  let nfp := G.bar_no_fp e.edge
+  simp [this] at nfp
 
 end QuotVert
