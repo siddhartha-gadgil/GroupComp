@@ -169,6 +169,16 @@ def QuotVert.ι : Quotient (edgeSetoid H) → Quotient (vertSetoid H) := by
   simp at lem₀
   cases lem₀
   cases lem₁
+  have : 
+    Graph.ι (univ G x₀) { τ₀ := τ₀, τ₁ := τ₁, nxt := e, p := p, is_reduced := pf } =
+    ⟨τ₀, p, pf⟩ := rfl
+  rw [this]
+  have : 
+    Graph.ι (univ G x₀) { τ₀ := τ₀, τ₁ := τ₁, nxt := e', p := p', is_reduced := pf' } =
+    ⟨τ₀, p', pf'⟩ := rfl
+  rw [this]
+  apply Quotient.sound
+  simp [path_eq_iff_r H]
   sorry
   
 
