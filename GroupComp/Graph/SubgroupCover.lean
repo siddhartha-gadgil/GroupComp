@@ -157,6 +157,20 @@ theorem terminal₀_eq_of_r {e₁ e₂ : Edge G x₀ } :
     by_cases c:(e₁.τ₀=e₂.τ₀) <;> simp [c] at h 
     simp [c]
 
+theorem edge_eq_of_r :{e₁ e₂ : Edge G x₀ } →  
+  edgeSetoid H |>.r e₁ e₂ → e₁.nxt.edge = e₂.nxt.edge := 
+  by
+    intro ⟨τ₀, τ₁, e, p, _⟩ ⟨τ₀', τ₁', e', p', _⟩
+    if c:τ₀=τ₀' ∧ τ₁ = τ₁' then
+      cases c.left
+      cases c.right
+      simp [Setoid.r, relH]
+      intro _ h
+      rw [h]
+    else
+      simp [Setoid.r, relH, c]
+      
+
 def QuotVert  := Quotient (vertSetoid H)
 def QuotEdge  := Quotient (edgeSetoid H)
 
@@ -177,7 +191,7 @@ def ι : Quotient (edgeSetoid H) → Quotient (vertSetoid H) := by
   rw [path_eq_iff_r]
   simp [HasEquiv.Equiv, Setoid.r, relH] at h
   exact h.1
-  
+
 def bar : Quotient (edgeSetoid H) → Quotient (edgeSetoid H) := by
   apply Quotient.lift (⟦ (G.univ x₀).bar ·⟧)
   intro ⟨τ₀, τ₁, e, p, pf⟩ ⟨τ₀', τ₁', e', p', pf'⟩ h
@@ -244,4 +258,54 @@ def groupCover :
   bar := Quot.bar H
   bar_involution := Quot.bar_involution H
   bar_no_fp := Quot.bar_no_fp H
+
+namespace Quot
+
+def vertexMap : Quotient (vertSetoid H) → V := by
+  apply Quotient.lift (fun v : Vert G x₀ ↦ v.τ)
+  simp [HasEquiv.Equiv]
+  intro v₁ v₂
+  apply terminal_eq_of_r H
+  
+theorem vertexMap_defn (v : Vert G x₀):
+  vertexMap H ⟦ v ⟧ = v.τ := rfl
+
+def edgeMap : Quotient (edgeSetoid H) → E := by
+  apply Quotient.lift (fun e : Edge G x₀ ↦ e.nxt.edge)
+  simp [HasEquiv.Equiv]
+  intro e₁ e₂
+  apply edge_eq_of_r H
+
+theorem edgeMap_defn (e : Edge G x₀):
+  edgeMap H ⟦ e ⟧ = e.nxt.edge := rfl
+
+theorem initial (e : Edge G x₀):
+  (groupCover H).ι ⟦ e ⟧ = ⟦ (G.univ x₀).ι e⟧ := rfl
+
+theorem bar_defn' (e : Edge G x₀):
+  (groupCover H).bar ⟦ e ⟧ = ⟦ (G.univ x₀).bar e ⟧ := rfl
+
+theorem commutes : (ebar : Quotient (edgeSetoid H)) → 
+  vertexMap H ((groupCover H).ι ebar) = 
+   G.ι (edgeMap H ebar) := by
+  apply Quotient.ind
+  intro e
+  rw [initial]
+  rw [vertexMap_defn, edgeMap_defn]
+  apply (proj G x₀).commutes
+
+theorem bar_commutes : (ebar : Quotient (edgeSetoid H)) → 
+  edgeMap H ((groupCover H).bar ebar) = G.bar (edgeMap H ebar) := by
+  apply Quotient.ind
+  intro e
+  rw [edgeMap_defn, bar_defn']
+  apply (proj G x₀).bar_commutes
+
+end Quot
+
+def groupCoverProj : Morphism (groupCover H) G where
+  vertexMap := Quot.vertexMap H
+  edgeMap := Quot.edgeMap H
+  commutes := Quot.commutes H
+  bar_commutes := Quot.bar_commutes H
 
