@@ -287,6 +287,7 @@ theorem append_commutes {v w u : V₁} (η₁ : EdgePath G₁ v w) (η₂ : Edge
   [[ η₁ ]] ++ [[ η₂ ]] = [[ η₁ ++ η₂ ]] := by
     rfl
 
+@[deprecated Graph.PathClass.inv]
 def reverse {v w : V₁}: PathClass G₁ v w → PathClass G₁ w v := by
   apply Quot.lift (fun (η : EdgePath G₁ v w) => [[ η.reverse ]])
   intro a b step
@@ -297,6 +298,9 @@ theorem reverse_commutes {v w : V₁} (η : EdgePath G₁ v w):
   [[ η ]].reverse = [[ η.reverse ]] := by
     rfl
 
+theorem inv_commutes {v w : V₁} (η : EdgePath G₁ v w):  
+  [[ η ]].inv = [[ η.reverse ]] := by
+    rfl
 
 theorem append_assoc {v w u t : V₁} : (η₁ : PathClass G₁ v w) →  (η₂ : PathClass G₁ w u) →  (η₃ : PathClass G₁ u t) → 
   η₁ ++ η₂ ++ η₃ = η₁ ++ (η₂ ++ η₃)  := by
@@ -318,7 +322,18 @@ theorem reverse_append {v w u : V₁} : (η₁ : PathClass G₁ v w) →  (η₂
     rw [append_commutes, reverse_commutes, 
       EdgePath.reverse_append, ←append_commutes]
     rw [reverse_commutes η₁, reverse_commutes η₂]
-    
+
+theorem inv_append {v w u : V₁} : (η₁ : PathClass G₁ v w) →  (η₂ : PathClass G₁ w u) → 
+  (η₁  ++  η₂).inv = η₂.inv ++ η₁.inv  := by
+    apply Quot.ind
+    intro η₁
+    apply Quot.ind
+    intro η₂
+    rw [append_commutes, inv_commutes, 
+      EdgePath.reverse_append, ←append_commutes]
+    rw [inv_commutes η₁, inv_commutes η₂]
+
+
 
 end PathClass
 

@@ -35,8 +35,8 @@ theorem relH_symm {τ : V} {v₁ v₂ : EdgePath G x₀ τ} :
   by
     simp [relH]
     intro h
-    let h': [[v₁ ++ EdgePath.reverse v₂]].reverse ∈ H := inv_mem h
-    rw [PathClass.reverse_commutes, 
+    let h': [[v₁ ++ EdgePath.reverse v₂]].inv ∈ H := inv_mem h
+    rw [PathClass.inv_commutes, 
       EdgePath.reverse_append,  reverse_reverse] at h'
     exact h'
 
@@ -160,7 +160,7 @@ theorem terminal₀_eq_of_r {e₁ e₂ : Edge G x₀ } :
 def QuotVert  := Quotient (vertSetoid H)
 def QuotEdge  := Quotient (edgeSetoid H)
 
-namespace QuotVert
+namespace Quot
 
 def ι : Quotient (edgeSetoid H) → Quotient (vertSetoid H) := by
   apply Quotient.lift (⟦ (G.univ x₀).ι ·⟧)
@@ -196,10 +196,7 @@ def bar : Quotient (edgeSetoid H) → Quotient (edgeSetoid H) := by
   · rw [← h'.2]
     rw [← append_commutes]
     simp [reducedConcat, ← cons_homotopic_redCons, cons_natural, PathClass]
-    show 
-      ([[cons (EdgeBetween.bar e) (EdgePath.reverse p)]]).reverse ++ 
-      [[cons (EdgeBetween.bar e) (EdgePath.reverse p')]] ∈ H
-    rw [reverse_commutes, append_commutes, reverse_cons, reverse_reverse, EdgeBetween.bar_involution,
+    rw [inv_commutes, append_commutes, reverse_cons, reverse_reverse, EdgeBetween.bar_involution,
     concat_append]
     have : [[p ++ cons e (cons (EdgeBetween.bar e) (EdgePath.reverse p'))]] = [[ p ++ p'.reverse ]] := by
       apply Quot.sound
@@ -223,7 +220,7 @@ theorem bar_involution :(ebar : Quotient (edgeSetoid H)) →
   simp [bar_defn]
 
 theorem bar_no_fp : (ebar : Quotient (edgeSetoid H)) →
-  bar H ebar ≠ ebar := by
+  ebar ≠ bar H ebar := by
   apply Quotient.ind
   intro ⟨τ₀, τ₁, e, p, pf⟩
   simp [bar_defn, Edge.bar_defn]
@@ -234,9 +231,17 @@ theorem bar_no_fp : (ebar : Quotient (edgeSetoid H)) →
   cases lem
   simp [HasEquiv.Equiv, Setoid.r, relH] at contra
   let c := contra.2
-  have : e.bar.edge = e.edge := by rw [c]
+  have : e.bar.edge = e.edge := by rw [← c]
   simp at this
   let nfp := G.bar_no_fp e.edge
   simp [this] at nfp
 
-end QuotVert
+end Quot
+
+def groupCover : 
+  Graph (Quotient (vertSetoid H)) (Quotient (edgeSetoid H)) where
+  ι := Quot.ι H
+  bar := Quot.bar H
+  bar_involution := Quot.bar_involution H
+  bar_no_fp := Quot.bar_no_fp H
+
