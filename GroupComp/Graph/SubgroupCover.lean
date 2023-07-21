@@ -338,17 +338,41 @@ def localSection : (v₁ : Quotient (vertSetoid H)) → (e : E) →
 
 theorem localSection_defn (τ : V) (p : EdgePath G x₀ τ)
   (is_reduced : reduced p) 
-  (e: E) (h: Morphism.vertexMap (groupCoverProj H) ⟦ ⟨τ, p, is_reduced⟩ ⟧ = G.ι e):
+  (e: E) (h: τ = G.ι e):
   localSection H ⟦ ⟨τ, p, is_reduced⟩ ⟧ e h = 
     ⟦ ⟨τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧ := rfl
 
 theorem localSection_composition (τ₀ : V) (p : EdgePath G x₀ τ₀)
   (is_reduced : reduced p) 
-  (e: Edge G x₀) (h: (groupCoverProj H).vertexMap ( ⟦⟨τ₀,p , is_reduced⟩⟧) =
-    G.ι ((groupCoverProj H).edgeMap ⟦ e⟧)) :
+  (e: Edge G x₀) (h: τ₀ = G.ι e.nxt.edge) :
   localSection H ⟦ ⟨τ₀, p, is_reduced⟩ ⟧ ((groupCoverProj H).edgeMap ⟦ e⟧) h = 
-    ⟦ ⟨τ₀, G.τ ((groupCoverProj H).edgeMap ⟦ e ⟧), 
-    ⟨((groupCoverProj H).edgeMap ⟦ e⟧), Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧ := rfl
+    ⟦ ⟨τ₀, G.τ (e.nxt.edge), 
+    ⟨e.nxt.edge, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧ := rfl
+
+-- set_option maxHeartbeats 200000
+
+theorem localSection_composition' (τ₀ : V) (p : EdgePath G x₀ τ₀)
+  (is_reduced : reduced p) 
+  (e: Edge G x₀) (h: τ₀ = G.ι e.nxt.edge) :
+  localSection H ⟦ ⟨τ₀, p, is_reduced⟩ ⟧ ((groupCoverProj H).edgeMap ⟦ e⟧) h = 
+    ⟦ ⟨τ₀, e.τ₁, 
+    ⟨e.nxt.edge, Eq.symm h, e.nxt.target⟩, p, is_reduced⟩ ⟧ := by
+  rw [localSection_composition]
+  apply Quotient.sound  
+  simp [e.nxt.target]
+  have : (⟨τ₀, G.τ (e.nxt.edge), 
+    ⟨e.nxt.edge, Eq.symm h, rfl⟩, p, is_reduced⟩ : Edge G x₀) =
+    ⟨τ₀, e.τ₁,
+    ⟨e.nxt.edge, Eq.symm h, e.nxt.target⟩, p, is_reduced⟩ := by
+    simp [e.nxt.target, eq_of_edge_eq]
+    congr
+    rw [e.nxt.target]
+    
+    sorry
+    
+  rw [this]
+  apply @Setoid.refl _ (edgeSetoid H)
+  
 
 
 theorem edge_from (e : Edge G x₀)(τ₀ : V): τ₀ = e.τ₀  → 
@@ -390,8 +414,8 @@ instance : CoveringMap (groupCoverProj H)  where
     intro ⟨τ₀, p, is_reduced⟩ 
     apply Quotient.ind
     intro ⟨τ₀', τ₁, nxt, p', red⟩   h
-    rw [Quot.localSection_composition]
-    
+    rw [Quot.localSection_composition']
+    simp
     rw [Quot.initial, init_defn] at h
     let rel:= Quotient.exact h
     let lem := Quot.edgeMap_defn' H τ₀' τ₁ nxt p' red
