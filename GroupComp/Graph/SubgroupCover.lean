@@ -314,27 +314,32 @@ namespace Quot
 theorem vertexMap_defn' (v : Vert G x₀):
   (groupCoverProj H).vertexMap ⟦ v ⟧ = v.τ := rfl
 
+theorem edgeMap_defn' (e : Edge G x₀):
+  (groupCoverProj H).edgeMap ⟦ e ⟧ = e.nxt.edge := rfl
+
 def localSection : (v₁ : Quotient (vertSetoid H)) → (e : E) →
   ((groupCoverProj H).vertexMap v₁) = G.ι e → 
   Quotient (edgeSetoid H) := by
-  let fn :
-    (v₁ : Vert G x₀) → (e : E) → 
-    Morphism.vertexMap (groupCoverProj H) ⟦ v₁ ⟧ = Graph.ι G e → Quotient (edgeSetoid H) := 
-      fun ⟨τ, p, is_reduced⟩ e h ↦ 
-        ⟦ ⟨τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧
-  apply Quotient.rec 
+  intro v₁
+  apply Quotient.hrecOn v₁ 
     (motive:= fun v₁ ↦ (e : E) → Morphism.vertexMap (groupCoverProj H) v₁ = Graph.ι G e → Quotient (edgeSetoid H)) 
     (fun ⟨τ, p, is_reduced⟩ e h ↦ 
         ⟦ ⟨τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧)
   intro ⟨τ, p, is_reduced⟩ ⟨τ', p', is_reduced'⟩ rel
-  simp
   have : τ = τ' := terminal_eq_of_r H rel
   cases this
-  simp [HasEquiv.Equiv] at rel
+  simp
+  simp [HasEquiv.Equiv, Setoid.r, relH] at rel
   funext e h
-  
-  sorry
+  apply Quotient.sound
+  simp [HasEquiv.Equiv, Setoid.r, relH]
+  exact rel
 
+theorem localSection_defn (τ : V) (p : EdgePath G x₀ τ)
+  (is_reduced : reduced p) 
+  (e: E) (h: Morphism.vertexMap (groupCoverProj H) ⟦ ⟨τ, p, is_reduced⟩ ⟧ = G.ι e):
+  localSection H ⟦ ⟨τ, p, is_reduced⟩ ⟧ e h = 
+    ⟦ ⟨τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧ := rfl
 
 end Quot 
 
@@ -342,12 +347,30 @@ instance : CoveringMap (groupCoverProj H)  where
   localSection := Quot.localSection H
     
   section_init := by
-    sorry
+    apply Quotient.ind
+    intro ⟨τ, p, is_reduced⟩ e h
+    simp [Quot.localSection_defn]
+    rw [Quot.initial, init_defn]
 
   left_inverse := by
-    sorry
+    apply Quotient.ind
+    intro ⟨τ, p, is_reduced⟩ e h
+    simp [Quot.localSection_defn]
+    rw [Quot.edgeMap_defn']
   
   right_inverse := by
+    apply Quotient.ind
+    intro ⟨τ, p, is_reduced⟩ 
+    apply Quotient.ind
+    intro e  h
+    rw [Quot.initial, init_defn] at h
+    let rel:= Quotient.exact h
+    have h₁ : τ = e.τ₀ := terminal_eq_of_r H rel
+    let ⟨τ₀, τ₁, nxt, p', red⟩ := e    
+    let lem := Quot.edgeMap_defn' H ⟨τ₀, τ₁, nxt, p', red⟩
+    simp [Quot.localSection_defn]
+    apply Quotient.sound
+
     sorry
 
 end SubgroupCover
