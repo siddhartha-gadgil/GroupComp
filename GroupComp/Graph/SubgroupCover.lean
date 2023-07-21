@@ -309,3 +309,47 @@ def groupCoverProj : Morphism (groupCover H) G where
   commutes := Quot.commutes H
   bar_commutes := Quot.bar_commutes H
 
+namespace Quot
+
+theorem vertexMap_defn' (v : Vert G x₀):
+  (groupCoverProj H).vertexMap ⟦ v ⟧ = v.τ := rfl
+
+def localSection : (v₁ : Quotient (vertSetoid H)) → (e : E) →
+  ((groupCoverProj H).vertexMap v₁) = G.ι e → 
+  Quotient (edgeSetoid H) := by
+  let fn :
+    (v₁ : Vert G x₀) → (e : E) → 
+    Morphism.vertexMap (groupCoverProj H) ⟦ v₁ ⟧ = Graph.ι G e → Quotient (edgeSetoid H) := 
+      fun ⟨τ, p, is_reduced⟩ e h ↦ 
+        ⟦ ⟨τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧
+  apply Quotient.rec 
+    (motive:= fun v₁ ↦ (e : E) → Morphism.vertexMap (groupCoverProj H) v₁ = Graph.ι G e → Quotient (edgeSetoid H)) 
+    (fun ⟨τ, p, is_reduced⟩ e h ↦ 
+        ⟦ ⟨τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧)
+  intro ⟨τ, p, is_reduced⟩ ⟨τ', p', is_reduced'⟩ rel
+  simp
+  have : τ = τ' := terminal_eq_of_r H rel
+  cases this
+  simp [HasEquiv.Equiv] at rel
+  funext e h
+  
+  sorry
+
+
+end Quot 
+
+instance : CoveringMap (groupCoverProj H)  where
+  localSection := Quot.localSection H
+    
+  section_init := by
+    sorry
+
+  left_inverse := by
+    sorry
+  
+  right_inverse := by
+    sorry
+
+end SubgroupCover
+
+end Graph
