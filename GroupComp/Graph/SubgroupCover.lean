@@ -341,6 +341,15 @@ theorem localSection_defn (τ : V) (p : EdgePath G x₀ τ)
   localSection H ⟦ ⟨τ, p, is_reduced⟩ ⟧ e h = 
     ⟦ ⟨τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧ := rfl
 
+theorem edge_from (e : Edge G x₀)(τ₀ : V): τ₀ = e.τ₀  → 
+  ∃ τ₁: V, ∃ nxt: EdgeBetween G τ₀ τ₁, 
+  ∃ p': EdgePath G x₀ τ₀, ∃ red: reduced p',
+  e = ⟨τ₀, τ₁, nxt, p', red⟩ := by
+  intro h
+  cases h
+  use e.τ₁, e.nxt, e.p, e.is_reduced
+
+
 end Quot 
 
 instance : CoveringMap (groupCoverProj H)  where
@@ -360,17 +369,27 @@ instance : CoveringMap (groupCoverProj H)  where
   
   right_inverse := by
     apply Quotient.ind
-    intro ⟨τ, p, is_reduced⟩ 
+    intro ⟨τ₀, p, is_reduced⟩ 
     apply Quotient.ind
     intro e  h
     rw [Quot.initial, init_defn] at h
     let rel:= Quotient.exact h
-    have h₁ : τ = e.τ₀ := terminal_eq_of_r H rel
-    let ⟨τ₀, τ₁, nxt, p', red⟩ := e    
+    have h₁ : τ₀ = e.τ₀ := terminal_eq_of_r H rel
+    
+    let ⟨τ₁, nxt, p', red, eqn⟩ := Quot.edge_from e τ₀ h₁  
+    cases eqn
     let lem := Quot.edgeMap_defn' H ⟨τ₀, τ₁, nxt, p', red⟩
     simp [Quot.localSection_defn]
     apply Quotient.sound
-
+    have tlem : G.τ
+        (Morphism.edgeMap (groupCoverProj H)
+          (Quotient.mk (edgeSetoid H) { τ₀ := τ₀, τ₁ := τ₁, nxt := nxt, p := p', is_reduced := red })) = τ₁ := by 
+        simp [lem, nxt.target]
+        
+    simp [HasEquiv.Equiv, Setoid.r, relH] at rel
+    simp [HasEquiv.Equiv, Setoid.r, relH, tlem, rel]
+    simp [lem]
+    
     sorry
 
 end SubgroupCover
