@@ -351,6 +351,8 @@ theorem localSection_composition (τ₀ : V) (p : EdgePath G x₀ τ₀)
 
 -- set_option maxHeartbeats 200000
 
+#check HEq
+
 theorem localSection_composition' (τ₀ : V) (p : EdgePath G x₀ τ₀)
   (is_reduced : reduced p) 
   (e: Edge G x₀) (h: τ₀ = G.ι e.nxt.edge) :
@@ -367,9 +369,13 @@ theorem localSection_composition' (τ₀ : V) (p : EdgePath G x₀ τ₀)
     simp [e.nxt.target, eq_of_edge_eq]
     congr
     rw [e.nxt.target]
-    
-    sorry
-    
+    have : (τ G e.nxt.edge = τ G e.nxt.edge) = 
+      (τ G e.nxt.edge = e.τ₁) := by rw [e.nxt.target]
+    have l {τ : V}(pf: G.τ e.nxt.edge = τ) :
+      HEq (rfl: G.τ e.nxt.edge  = G.τ e.nxt.edge ) pf   := by
+      cases pf
+      simp
+    apply l e.nxt.target     
   rw [this]
   apply @Setoid.refl _ (edgeSetoid H)
   
