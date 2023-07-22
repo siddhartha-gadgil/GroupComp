@@ -353,29 +353,29 @@ theorem localSection_composition (τ₀ : V) (p : EdgePath G x₀ τ₀)
 
 #check HEq
 
-theorem localSection_composition' (τ₀ : V) (p : EdgePath G x₀ τ₀)
-  (is_reduced : reduced p) 
-  (e: Edge G x₀) (h: τ₀ = G.ι e.nxt.edge) :
-  localSection H ⟦ ⟨τ₀, p, is_reduced⟩ ⟧ ((groupCoverProj H).edgeMap ⟦ e⟧) h = 
-    ⟦ ⟨τ₀, e.τ₁, 
-    ⟨e.nxt.edge, Eq.symm h, e.nxt.target⟩, p, is_reduced⟩ ⟧ := by
+theorem localSection_composition' (τ : V) (p : EdgePath G x₀ τ)
+  (is_reduced : reduced p)(τ₀ τ₁ : V) (nxt: EdgeBetween G τ₀ τ₁) (p' : EdgePath G x₀ τ₀)
+  (is_reduced' : reduced p')
+  (h: τ = G.ι nxt.edge) :
+  localSection H ⟦ ⟨τ, p, is_reduced⟩ ⟧ 
+  ((groupCoverProj H).edgeMap ⟦ (⟨τ₀, τ₁, nxt, p', is_reduced'⟩ : Edge G x₀)⟧) h = 
+    ⟦ ⟨τ, τ₁, 
+    ⟨nxt.edge, Eq.symm h, nxt.target⟩, p, is_reduced⟩ ⟧ := by
   rw [localSection_composition]
   apply Quotient.sound  
-  simp [e.nxt.target]
-  have : (⟨τ₀, G.τ (e.nxt.edge), 
-    ⟨e.nxt.edge, Eq.symm h, rfl⟩, p, is_reduced⟩ : Edge G x₀) =
-    ⟨τ₀, e.τ₁,
-    ⟨e.nxt.edge, Eq.symm h, e.nxt.target⟩, p, is_reduced⟩ := by
-    simp [e.nxt.target, eq_of_edge_eq]
+  simp [nxt.target]
+  have : (⟨τ, G.τ (nxt.edge), 
+    ⟨nxt.edge, Eq.symm h, rfl⟩, p, is_reduced⟩ : Edge G x₀) =
+    ⟨τ, τ₁,
+    ⟨nxt.edge, Eq.symm h, nxt.target⟩, p, is_reduced⟩ := by
+    simp [nxt.target, eq_of_edge_eq]
     congr
-    rw [e.nxt.target]
-    have : (τ G e.nxt.edge = τ G e.nxt.edge) = 
-      (τ G e.nxt.edge = e.τ₁) := by rw [e.nxt.target]
-    have l {τ : V}(pf: G.τ e.nxt.edge = τ) :
-      HEq (rfl: G.τ e.nxt.edge  = G.τ e.nxt.edge ) pf   := by
+    rw [nxt.target]
+    have l {τ : V}(pf: G.τ nxt.edge = τ) :
+      HEq (rfl: G.τ nxt.edge  = G.τ nxt.edge ) pf   := by
       cases pf
       simp
-    apply l e.nxt.target     
+    apply l nxt.target     
   rw [this]
   apply @Setoid.refl _ (edgeSetoid H)
   
@@ -417,27 +417,18 @@ instance : CoveringMap (groupCoverProj H)  where
   
   right_inverse := by
     apply Quotient.ind
-    intro ⟨τ₀, p, is_reduced⟩ 
+    intro ⟨τ, p, is_reduced⟩ 
     apply Quotient.ind
-    intro ⟨τ₀', τ₁, nxt, p', red⟩   h
-    rw [Quot.localSection_composition']
-    simp
+    intro ⟨τ₀, τ₁, nxt, p', red⟩   h
+    simp [Quot.localSection_composition']
     rw [Quot.initial, init_defn] at h
     let rel:= Quotient.exact h
-    let lem := Quot.edgeMap_defn' H τ₀' τ₁ nxt p' red
-    simp [Quot.localSection_defn]
+    let teq :τ = τ₀ := terminal_eq_of_r H rel
     apply Quotient.sound
-    have tlem : G.τ
-        (Morphism.edgeMap (groupCoverProj H)
-          (Quotient.mk (edgeSetoid H) { τ₀ := τ₀', τ₁ := τ₁, nxt := nxt, p := p', is_reduced := red })) = τ₁ := by 
-        simp [lem, nxt.target]
-    
-    simp [tlem]    
+    cases teq
+    simp [HasEquiv.Equiv, Setoid.r, relH] 
     simp [HasEquiv.Equiv, Setoid.r, relH] at rel
-    simp [HasEquiv.Equiv]
-    simp [lem]
-    -- let ⟨τ₁, nxt, p', red, eqn⟩ := Quot.edge_to e τ₀ h₁
-    sorry
+    exact rel
 
 end SubgroupCover
 
