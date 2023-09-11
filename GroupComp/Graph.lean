@@ -351,7 +351,13 @@ theorem reverse_toList' {G : Graph V E}{v w : V} (p : EdgePath G v w):
       · ext
         exact h.1
       · apply ih
-        exact h.2  
+        exact h.2
+
+theorem eq_of_edge_eq {G: Graph V E}{v w: V}
+  (e₁ e₂ : EdgeBetween G v w) : e₁.edge = e₂.edge → e₁ = e₂ := by
+      intro h
+      ext
+      exact h      
         
 theorem terminal_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
   (p₁ : EdgePath G v₁ w₁) (p₂ : EdgePath G v₂ w₂) : p₁.toList = p₂.toList → (v₁ = v₂) → (w₁ = w₂)  := by 
