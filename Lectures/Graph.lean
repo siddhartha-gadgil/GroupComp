@@ -438,8 +438,7 @@ theorem toList_cast_terminal {G: Graph V E} {v w w' : V}
           apply step
           exact toList_cast_init p₂' (Eq.symm e2t)
         rw [this]
-        · simp
-          assumption
+        · assumption
         
 theorem terminal_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
   (p₁ : EdgePath G v₁ w₁) (p₂ : EdgePath G v₂ w₂) : p₁.toList = p₂.toList → (v₁ = v₂) → (w₁ = w₂)  := by 

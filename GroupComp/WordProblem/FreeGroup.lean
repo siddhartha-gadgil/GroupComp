@@ -126,7 +126,7 @@ theorem exists_of_step {L L': List (α × Bool)} :
     L = (L₁ ++ (x, b) :: (x, !b) :: L₂) ∧ L' = L₁ ++ L₂  := by
   intro step
   induction step with
-  | @not L₁ L₂ x b =>  use x, b, L₁, L₂; simp
+  | @not L₁ L₂ x b =>  use x, b, L₁, L₂
 
 /--
 If we lift an edge starting at a reduced word, the result is reduced.
@@ -238,7 +238,6 @@ theorem homotopy_lifting_endpoints(start: List (α × Bool))(a : α)(b: Bool):
           simp [inv_def] at sp 
           simp [sp]
     else
-      simp [cancP, nonnil_nextVertex_extend]
       have eqn : start :+ (a, b) = start.concat (a, b) := by 
         simp [nonnil_nextVertex_extend, cancP, nilP]
       have nn : start :+ (a, b) ≠ [] := by 

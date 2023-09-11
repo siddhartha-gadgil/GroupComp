@@ -123,8 +123,7 @@ instance [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges)
     ext u v e
     dsimp [SpanningSubtree.edgeLabelExtension]
     split
-    · simp
-      rw [SpanningSubtree.surround_tree_edge, ← map_one ψ]
+    · rw [SpanningSubtree.surround_tree_edge, ← map_one ψ]
       rfl; assumption
     · show ψ.toFun (Γ.surroundEdge _) = ψ.toFun (Γ.surroundEdge _)
       congr 1
