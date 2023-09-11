@@ -325,9 +325,9 @@ theorem homotopic_of_liftTerminal_eq  {G: Graph V E}{x₀ τ: V}
       apply reduction_homotopic_self
     let l₁ := 
       liftTerminal_eq_of_homotopic (proj G x₀) (basepoint G x₀)  rfl red₁
-    let l₂ :=
+    let _l₂ :=
       liftTerminal_eq_of_homotopic (proj G x₀) (basepoint G x₀)  rfl red₂
-    rw [←l₁, ← l₂] at hyp
+    rw [←l₁, ←_l₂] at hyp
     rw [reduced_liftTerminal (reduction p₁) (reduction_reduced p₁)] at hyp
     rw [reduced_liftTerminal (reduction p₂) (reduction_reduced p₂)] at hyp
     simp at hyp
