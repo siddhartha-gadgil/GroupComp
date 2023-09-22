@@ -473,7 +473,7 @@ open PathClass CategoryTheory
 
 
 set_option synthInstance.checkSynthOrder false in -- HACK
-@[instance] def FundamentalGroupoid [G : Graph V E] : Groupoid V where
+@[instance] def FundamentalGroupoid [Graph V E] : Groupoid V where
   id_comp := PathClass.id_mul
   comp_id := PathClass.mul_id
   assoc := PathClass.mul_assoc

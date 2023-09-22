@@ -64,7 +64,6 @@ noncomputable def irrationalPairWithRationalPower :
       let ⟨a, b, h⟩ :=
         exists_irrationals_pow_rational
       use (a, b)
-      assumption
 
 #check irrationalPairWithRationalPower.val -- ℝ × ℝ
 
