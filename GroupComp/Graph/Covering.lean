@@ -56,7 +56,7 @@ def localSection {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (h : p.vertexMap v₁ = G₂.ι e₂) : E₁ := 
         CoveringMap.localSection v₁ e₂ h
 
-def section_init {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem section_init {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (p: Morphism G₁ G₂) [CoveringMap p] (v₁ : V₁) (e₂ : E₂) 
       (h : p.vertexMap v₁ = G₂.ι e₂) : 
       G₁.ι (localSection p v₁ e₂ h) = v₁ := 
