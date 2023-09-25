@@ -283,29 +283,29 @@ theorem initial (e : Edge G x₀):
 theorem bar_eq_barn' (e : Edge G x₀):
   (groupCover H).bar ⟦ e ⟧ = ⟦ (G.univ x₀).bar e ⟧ := rfl
 
-theorem commutes : (ebar : Quotient (edgeSetoid H)) → 
+theorem mapV_init : (ebar : Quotient (edgeSetoid H)) → 
   mapV H ((groupCover H).ι ebar) = 
    G.ι (mapE H ebar) := by
   apply Quotient.ind
   intro e
   rw [initial]
   rw [mapV_defn, mapE_defn]
-  apply (proj G x₀).commutes
+  apply (proj G x₀).mapV_init
 
-theorem bar_commutes : (ebar : Quotient (edgeSetoid H)) → 
+theorem mapE_bar : (ebar : Quotient (edgeSetoid H)) → 
   mapE H ((groupCover H).bar ebar) = G.bar (mapE H ebar) := by
   apply Quotient.ind
   intro e
   rw [mapE_defn, bar_eq_barn']
-  apply (proj G x₀).bar_commutes
+  apply (proj G x₀).mapE_bar
 
 end Quot
 
 def groupCoverProj : Morphism (groupCover H) G where
   mapV := Quot.mapV H
   mapE := Quot.mapE H
-  commutes := Quot.commutes H
-  bar_commutes := Quot.bar_commutes H
+  mapV_init := Quot.mapV_init H
+  mapE_bar := Quot.mapE_bar H
 
 namespace Quot
 

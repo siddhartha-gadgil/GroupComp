@@ -10,20 +10,20 @@ variable {V : Type u} {E : Type v}
 @[ext] structure Morphism (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) where
   mapV : V₁ → V₂
   mapE : E₁ → E₂
-  commutes : ∀ (e : E₁),  mapV (G₁.ι e) = G₂.ι (mapE e) 
-  bar_commutes : ∀ (e : E₁), mapE (G₁.bar e) = G₂.bar (mapE e)
+  mapV_init : ∀ (e : E₁),  mapV (G₁.ι e) = G₂.ι (mapE e) 
+  mapE_bar : ∀ (e : E₁), mapE (G₁.bar e) = G₂.bar (mapE e)
 
 theorem morphism_init_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     (f: Morphism G₁ G₂) : 
       ∀ (e : E₁), f.mapV (G₁.ι e) = G₂.ι (f.mapE e)  := by
   intro e
-  exact f.commutes e
+  exact f.mapV_init e
 
 theorem morphism_bar_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     (f: Morphism G₁ G₂) : 
       ∀ (e : E₁), f.mapE (G₁.bar e) = G₂.bar (f.mapE e) := by
   intro e
-  exact f.bar_commutes e
+  exact f.mapE_bar e
 
 theorem morphism_terminal_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     (f: Morphism G₁ G₂) : 
@@ -46,7 +46,7 @@ class CoveringMap {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     p.mapE (localSection v₁ e₂ h) = e₂
   right_inverse : (v₁ : V₁) → (e₁ : E₁) →
     (h : v₁ = G₁.ι e₁) →  
-    localSection v₁ (p.mapE e₁) (by rw [← p.commutes, h]) = 
+    localSection v₁ (p.mapE e₁) (by rw [← p.mapV_init, h]) = 
       e₁ 
 
 namespace Morphism
@@ -72,7 +72,7 @@ theorem left_inverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
 theorem right_inverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (p: Morphism G₁ G₂) [CoveringMap p] (v₁ : V₁) (e₁ : E₁) 
       (h : v₁ = G₁.ι e₁) : 
-      localSection p v₁ (p.mapE e₁) (by rw [← p.commutes, h]) = 
+      localSection p v₁ (p.mapE e₁) (by rw [← p.mapV_init, h]) = 
         e₁ := 
           CoveringMap.right_inverse v₁ e₁ h
 
@@ -201,7 +201,7 @@ def EdgeBetween.map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
       G₂.EdgeBetween (f.mapV v₁) (f.mapV w₁) :=
       ⟨f.mapE e.edge, by 
-        simp [← f.commutes]
+        simp [← f.mapV_init]
         congr
         exact e.source
         , by 
@@ -214,11 +214,11 @@ theorem EdgeBetween.map_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (e.map f).edge = f.mapE e.edge := by
         simp [EdgeBetween.map, toList]
 
-theorem EdgeBetween.bar_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem EdgeBetween.mapE_bar {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
       (e.map f).bar = e.bar.map f := by
         ext
-        simp [f.bar_commutes, EdgeBetween.map]
+        simp [f.mapE_bar, EdgeBetween.map]
 
 namespace Morphism
 
@@ -240,13 +240,13 @@ theorem reverse_map {u v : V₁}(η : EdgePath G₁ u v):
       simp [map_toList, reverse_toList, List.map_reverse]
       congr
       funext e
-      simp only [Function.comp, f.bar_commutes]
+      simp only [Function.comp, f.mapE_bar]
 
 theorem map_reduction {v w : V₁} (η₁ η₂ : EdgePath G₁ v w):
   Reduction η₁ η₂ → Reduction (η₁.map f) (η₂.map f) 
   | Reduction.step u u' e p₁ p₂ => by 
     simp [append_map, cons_map]
-    rw [← EdgeBetween.bar_commutes]
+    rw [← EdgeBetween.mapE_bar]
     apply Reduction.step
 
 
@@ -471,7 +471,7 @@ def PathLift.cons_bar_cons {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         list_commutes := by 
           simp [cons_toList, p.left_inverse, EdgeBetween.bar]
           apply And.intro
-          · rw [p.bar_commutes, p.left_inverse]
+          · rw [p.mapE_bar, p.left_inverse]
           · rw [lift'.list_commutes]}
 
 
@@ -494,7 +494,7 @@ theorem homotopy_step_lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         list_commutes := by 
           simp [cons_toList, p.left_inverse, EdgeBetween.bar]
           apply And.intro
-          · rw [p.bar_commutes, p.left_inverse]
+          · rw [p.mapE_bar, p.left_inverse]
           · rw [θ₂.list_commutes]}
   let liftCanc :=
     θ₁.append liftTailCanc

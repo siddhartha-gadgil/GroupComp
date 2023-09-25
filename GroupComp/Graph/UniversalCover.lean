@@ -117,12 +117,12 @@ theorem nxt_defn (τ₀ τ₁ : V)
 def proj : Morphism (G.univ x₀) G where
   mapV := Vert.τ
   mapE := fun e ↦ e.nxt.edge 
-  commutes := by
+  mapV_init := by
     intro e
     match e with
     | ⟨τ₀, τ₁, nxt, _, _⟩ => 
       simp only [init_defn, nxt.source]
-  bar_commutes := by
+  mapE_bar := by
     intro e
     rfl
       

@@ -296,20 +296,20 @@ def getPath (G: Graph V E) [ConnectedGraph G] (v w: V) : G.EdgePath v w :=
 @[ext] structure Morphism (G₁ : Graph V₁ E₁) (G₂ : Graph V₂ E₂) where
   mapV : V₁ → V₂
   mapE : E₁ → E₂
-  commutes : ∀ (e : E₁), G₂.ι (mapE e) = mapV (G₁.ι e)
-  bar_commutes : ∀ (e : E₁), mapE (G₁.bar e) = G₂.bar (mapE e)
+  mapV_init : ∀ (e : E₁), G₂.ι (mapE e) = mapV (G₁.ι e)
+  mapE_bar : ∀ (e : E₁), mapE (G₁.bar e) = G₂.bar (mapE e)
 
 theorem morphism_init_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     (f: Morphism G₁ G₂) : 
       ∀ (e : E₁), G₂.ι (f.mapE e) = f.mapV (G₁.ι e) := by
   intro e
-  exact f.commutes e
+  exact f.mapV_init e
 
 theorem morphism_bar_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     (f: Morphism G₁ G₂) : 
       ∀ (e : E₁), f.mapE (G₁.bar e) = G₂.bar (f.mapE e) := by
   intro e
-  exact f.bar_commutes e
+  exact f.mapE_bar e
 
 theorem morphism_terminal_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     (f: Morphism G₁ G₂) : 
@@ -528,7 +528,7 @@ theorem pathMap_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (f.pathMapAux  v₁ w₁ p v₂ w₂ hv hw).property
 
 
-theorem PathLift.commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem PathLift.mapV_init {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : CoveringMap G₁ G₂) (v₁: V₁) (v₂ w₂ : V₂)
     (h : p.mapV v₁ = v₂)(e: EdgePath G₂ v₂ w₂) 
     (lift : PathLift p v₁ v₂ w₂ h e) :
