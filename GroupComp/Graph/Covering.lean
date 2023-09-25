@@ -13,23 +13,23 @@ variable {V : Type u} {E : Type v}
   mapV_init : ∀ (e : E₁),  mapV (G₁.ι e) = G₂.ι (mapE e) 
   mapE_bar : ∀ (e : E₁), mapE (G₁.bar e) = G₂.bar (mapE e)
 
-theorem morphism_init_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+theorem mapV_init {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     (f: Morphism G₁ G₂) : 
       ∀ (e : E₁), f.mapV (G₁.ι e) = G₂.ι (f.mapE e)  := by
   intro e
   exact f.mapV_init e
 
-theorem morphism_bar_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+theorem mapE_bar {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     (f: Morphism G₁ G₂) : 
       ∀ (e : E₁), f.mapE (G₁.bar e) = G₂.bar (f.mapE e) := by
   intro e
   exact f.mapE_bar e
 
-theorem morphism_terminal_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+theorem mapV_term {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
     (f: Morphism G₁ G₂) : 
-      ∀ (e : E₁), G₂.τ (f.mapE e) = f.mapV (G₁.τ e) := by
+      ∀ (e : E₁), f.mapV (G₁.τ e)=  G₂.τ (f.mapE e)  := by
   intro e
-  rw [Graph.τ, Graph.τ, ←morphism_bar_commutes, ←morphism_init_commutes]
+  rw [Graph.τ, Graph.τ, ←mapE_bar, ←mapV_init]
 
 
 
@@ -38,13 +38,13 @@ class CoveringMap {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (p: Morphism G₁ G₂)  where
   localSection : (v₁ : V₁) → (e :E₂) → 
       p.mapV v₁ = G₂.ι e   → E₁
-  section_init : (v₁ : V₁) → (e₂ : E₂) → 
+  init_localSection : (v₁ : V₁) → (e₂ : E₂) → 
     (h : p.mapV v₁ = G₂.ι e₂) → 
     G₁.ι (localSection v₁ e₂ h) = v₁ 
-  left_inverse : (v₁ : V₁) → (e₂ :E₂) → 
+  mapE_localSection : (v₁ : V₁) → (e₂ :E₂) → 
     (h : p.mapV v₁ = G₂.ι e₂) → 
     p.mapE (localSection v₁ e₂ h) = e₂
-  right_inverse : (v₁ : V₁) → (e₁ : E₁) →
+  localSection_mapE : (v₁ : V₁) → (e₁ : E₁) →
     (h : v₁ = G₁.ι e₁) →  
     localSection v₁ (p.mapE e₁) (by rw [← p.mapV_init, h]) = 
       e₁ 
@@ -56,25 +56,25 @@ def localSection {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (h : p.mapV v₁ = G₂.ι e₂) : E₁ := 
         CoveringMap.localSection v₁ e₂ h
 
-theorem section_init {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem init_localSection {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (p: Morphism G₁ G₂) [CoveringMap p] (v₁ : V₁) (e₂ : E₂) 
       (h : p.mapV v₁ = G₂.ι e₂) : 
       G₁.ι (localSection p v₁ e₂ h) = v₁ := 
-        CoveringMap.section_init v₁ e₂ h
+        CoveringMap.init_localSection v₁ e₂ h
 
-theorem left_inverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem mapE_localSection {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (p: Morphism G₁ G₂) [CoveringMap p] (v₁ : V₁) (e₂ : E₂) 
       (h : p.mapV v₁ = G₂.ι e₂) : 
       p.mapE (localSection p v₁ e₂ h) = e₂ := 
-        CoveringMap.left_inverse v₁ e₂ h
+        CoveringMap.mapE_localSection v₁ e₂ h
 
 
-theorem right_inverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem localSection_mapE {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (p: Morphism G₁ G₂) [CoveringMap p] (v₁ : V₁) (e₁ : E₁) 
       (h : v₁ = G₁.ι e₁) : 
       localSection p v₁ (p.mapE e₁) (by rw [← p.mapV_init, h]) = 
         e₁ := 
-          CoveringMap.right_inverse v₁ e₁ h
+          CoveringMap.localSection_mapE v₁ e₁ h
 
 end Morphism
 
@@ -105,44 +105,18 @@ def EdgePath.lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}{v₂ w₂ : 
       let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.source]) 
         -- lift of the edge
       let v₁' := G₁.τ e₁ -- the final vertex of the lift
-      have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init
+      have init_vert : G₁.ι e₁ = v₁ := by apply p.init_localSection
       have term_vert : p.mapV (G₁.τ e₁) = w₂'' := by
         rw [← e₂.target]
-        rw [←morphism_terminal_commutes ]
+        rw [mapV_term ]
         congr
-        apply p.left_inverse
+        apply p.mapE_localSection
       let ⟨w₁, tail, pf₁, pf₂⟩ := lift b₂  p v₁' term_vert 
       let edge₁ : EdgeBetween G₁ v₁ v₁' :=
         ⟨e₁, init_vert, rfl⟩
       exact ⟨w₁, cons edge₁ tail, pf₁, by 
         simp [cons_toList, pf₂]
-        apply p.left_inverse⟩
-
-@[deprecated EdgePath.lift]
-def pathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) {v₂ w₂ : V₂}
-    (h : p.mapV v₁ = v₂)(e: EdgePath G₂ v₂ w₂):
-    PathLift p v₁ h e := by
-    match e with
-    | nil _ => exact ⟨v₁, nil _, h, (by simp [toList])⟩
-    | cons e₂ b₂ =>
-      rename_i w₂' w₂''
-      let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.source]) 
-        -- lift of the edge
-      let v₁' := G₁.τ e₁ -- the final vertex of the lift
-      have init_vert : G₁.ι e₁ = v₁ := by apply p.section_init
-      have term_vert : p.mapV (G₁.τ e₁) = w₂'' := by
-        rw [← e₂.target]
-        rw [←morphism_terminal_commutes ]
-        congr
-        apply p.left_inverse
-      let ⟨w₁, tail, pf₁, pf₂⟩ := pathLift  p v₁' term_vert b₂
-      let edge₁ : EdgeBetween G₁ v₁ v₁' :=
-        ⟨e₁, init_vert, rfl⟩
-      exact ⟨w₁, cons edge₁ tail, pf₁, by 
-        simp [cons_toList, pf₂]
-        apply p.left_inverse⟩
-
+        apply p.mapE_localSection⟩
 
 
 def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
@@ -157,15 +131,15 @@ def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         rename_i  w₁'' u'
         let e₁ := f.mapE e.edge
         let init_vert : G₂.ι e₁ = v₂ := by
-          rw [←hv, ←e.source, ←morphism_init_commutes] 
+          rw [←hv, ←e.source, ←mapV_init] 
         let term_vert : G₂.τ e₁ = f.mapV u' := by
-          rw [morphism_terminal_commutes, e.target]
+          rw [← mapV_term, e.target]
         let edge₂ : EdgeBetween G₂ v₂ (f.mapV u') :=
           ⟨e₁, init_vert, term_vert⟩
         let ⟨tail, ih⟩ := pathMapAux f u' w₁ p' (f.mapV u') w₂ rfl hw
         exact ⟨cons edge₂ tail, by simp [cons_toList, ih]⟩ 
 
-section Extras
+section Extras 
 
 def Morphism.pathMap {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁)
@@ -205,7 +179,7 @@ def EdgeBetween.map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         congr
         exact e.source
         , by 
-        rw [morphism_terminal_commutes]
+        rw [← mapV_term]
         congr
         exact e.target⟩
 
@@ -367,8 +341,8 @@ theorem lifts_homotopic {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         simp [cons_toList] at *
         let ⟨h₁, h₂⟩ := hyp
         have edg_eq : edg₁.edge = edg₂.edge := by 
-          let eq₁ := p.right_inverse v₁ edg₁.edge (Eq.symm edg₁.source)
-          let eq₂ := p.right_inverse v₁ edg₂.edge (Eq.symm edg₂.source)
+          let eq₁ := p.localSection_mapE v₁ edg₁.edge (Eq.symm edg₁.source)
+          let eq₂ := p.localSection_mapE v₁ edg₂.edge (Eq.symm edg₂.source)
           rw [← eq₁, ← eq₂]
           congr
         simp [edg_eq] 
@@ -447,7 +421,7 @@ def PathLift.reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
           simp [List.map_reverse]
           congr
           funext edge
-          simp only [Function.comp, morphism_bar_commutes]}
+          simp only [Function.comp, mapE_bar]}
 
 theorem EdgePath.lift_reverse {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p : Morphism G₁ G₂)[CoveringMap p] {v₁: V₁} {v₂ w₂ : V₂}
@@ -463,15 +437,15 @@ def PathLift.cons_bar_cons {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       PathLift p v₁ h (cons e (cons e.bar e')) := 
       let edgeLift := p.localSection v₁ e.edge (by rw [h, e.source])
       let edgeBetween : EdgeBetween G₁ v₁ (G₁.τ edgeLift) := 
-          ⟨edgeLift, p.section_init _ _ _, rfl⟩ 
+          ⟨edgeLift, p.init_localSection _ _ _, rfl⟩ 
           
       {τ := lift'.τ, 
         path := cons edgeBetween (cons edgeBetween.bar lift'.path), 
         lift_terminal := lift'.lift_terminal, 
         list_commutes := by 
-          simp [cons_toList, p.left_inverse, EdgeBetween.bar]
+          simp [cons_toList, p.mapE_localSection, EdgeBetween.bar]
           apply And.intro
-          · rw [p.mapE_bar, p.left_inverse]
+          · rw [p.mapE_bar, p.mapE_localSection]
           · rw [lift'.list_commutes]}
 
 
@@ -485,16 +459,16 @@ theorem homotopy_step_lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   let hw : p.mapV w₁ = w₂ := θ₁.lift_terminal
   let edgeLift := p.localSection w₁ e.edge (by rw [hw, e.source])
   let e' : EdgeBetween G₁ w₁ (G₁.τ edgeLift) := 
-          ⟨edgeLift, p.section_init _ _ _, rfl⟩ 
+          ⟨edgeLift, p.init_localSection _ _ _, rfl⟩ 
   let θ₂ := η₂.lift p w₁ hw 
   let liftTailCanc : PathLift p w₁ hw (cons e (cons e.bar η₂)) :=
     {τ := θ₂.τ, 
         path := cons e' (cons e'.bar θ₂.path), 
         lift_terminal := θ₂.lift_terminal, 
         list_commutes := by 
-          simp [cons_toList, p.left_inverse, EdgeBetween.bar]
+          simp [cons_toList, p.mapE_localSection, EdgeBetween.bar]
           apply And.intro
-          · rw [p.mapE_bar, p.left_inverse]
+          · rw [p.mapE_bar, p.mapE_localSection]
           · rw [θ₂.list_commutes]}
   let liftCanc :=
     θ₁.append liftTailCanc

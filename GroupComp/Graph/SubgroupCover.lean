@@ -401,19 +401,19 @@ end Quot
 instance : CoveringMap (groupCoverProj H)  where
   localSection := Quot.localSection H
     
-  section_init := by
+  init_localSection := by
     apply Quotient.ind
     intro ⟨τ, p, is_reduced⟩ e h
     simp [Quot.localSection_defn]
     rw [Quot.initial, init_defn]
 
-  left_inverse := by
+  mapE_localSection := by
     apply Quotient.ind
     intro ⟨τ, p, is_reduced⟩ e h
     simp [Quot.localSection_defn]
     rw [Quot.mapE_defn']
   
-  right_inverse := by
+  localSection_mapE := by
     apply Quotient.ind
     intro ⟨τ, p, is_reduced⟩ 
     apply Quotient.ind

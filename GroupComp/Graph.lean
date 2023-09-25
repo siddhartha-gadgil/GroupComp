@@ -398,10 +398,14 @@ protected def mul {v w u : V} :
 protected def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
   Quot.lift ([[·.reverse]]) reverse_step
 
+instance {v w u: V}: HMul (G.PathClass v w) (G.PathClass w u) (G.PathClass v u) where
+  hMul := PathClass.mul
+
 end PathClass
 
+
 @[local simp] lemma mul_path_path (p : G.EdgePath u v) (p' : G.EdgePath v w) :
-  .mul [[p]] [[p']] = [[p ++ p']] := rfl
+  [[p]] * [[p']] = [[p ++ p']] := rfl
 
 theorem cons_equiv_of_equiv{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
    [[cons a  b₁]] = [[cons a b₂]] := by
@@ -422,7 +426,23 @@ theorem concat_equiv_of_equiv {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G 
 
 abbrev π₁ (G: Graph V E) (v : V) := G.PathClass v v
 
+@[local simp] lemma mul_path_path' (p : G.EdgePath u v) (p' : G.EdgePath v w) :
+  .mul [[p]] [[p']] = [[p ++ p']] := rfl
+
+
 namespace PathClass
+
+protected theorem mul_assoc { v w u u' :  V}:
+  (p : G.PathClass v w) → (q : G.PathClass w  u) → 
+  (r : G.PathClass u  u') →  
+    (p * q) * r = p * (q * r) := by
+    apply Quot.ind
+    intro a
+    apply Quot.ind
+    intro b
+    apply Quot.ind
+    intro c
+    simp [append_assoc]
 
 -- Try to avoid this stuff
 
@@ -459,7 +479,7 @@ def ind {β : (u ⟶ v) → Prop} :
     p ≫ p.inv = 𝟙 u := by
   apply PathClass.ind; aesop
 
-protected theorem mul_assoc { v w u u' :  V}:
+protected theorem mul_assoc' { v w u u' :  V}:
   (p : v ⟶ w) → (q : w ⟶ u) → (r : u ⟶ u') →  
     (p ≫ q) ≫ r = p ≫ (q ≫ r) := by
     apply Quot.ind
@@ -484,7 +504,7 @@ set_option synthInstance.checkSynthOrder false in -- HACK
 @[instance] def FundamentalGroupoid [Graph V E] : Groupoid V where
   id_comp := PathClass.id_mul
   comp_id := PathClass.mul_id
-  assoc := PathClass.mul_assoc
+  assoc := PathClass.mul_assoc'
   inv := PathClass.inv
   inv_comp := PathClass.inv_mul
   comp_inv := PathClass.mul_inv
@@ -494,7 +514,7 @@ protected lemma PathClass.inv_eq_inv (p : u ⟶ v) : p.inv = inv p := by
 
 instance : Group (π₁ G v) where
   mul := PathClass.mul
-  mul_assoc := PathClass.mul_assoc
+  mul_assoc := PathClass.mul_assoc'
   one := .id v
   one_mul := PathClass.id_mul
   mul_one := PathClass.mul_id

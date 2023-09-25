@@ -138,21 +138,21 @@ instance : CoveringMap (proj G x₀) where
   localSection := 
     fun v₁ e h ↦
       ⟨v₁.τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, v₁.p, v₁.is_reduced⟩
-  section_init := by
+  init_localSection := by
     intro v₁ e h
     match v₁ with
     | ⟨τ, p, red⟩ =>
       have h' : τ = G.ι e := h
       cases h'
       rfl
-  left_inverse := by
+  mapE_localSection := by
     intro v₁ e h
     match v₁ with
     | ⟨τ, p, red⟩ =>
       have h' : τ = G.ι e := h
       cases h'
       rfl 
-  right_inverse := by
+  localSection_mapE := by
     intro v₁ e₁ h₁   
     have : (proj G x₀).mapE e₁ = e₁.nxt.edge := rfl
     let l := e₁.nxt.target
