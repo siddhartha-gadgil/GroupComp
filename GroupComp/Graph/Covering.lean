@@ -188,7 +188,7 @@ theorem EdgeBetween.map_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       (e.map f).edge = f.mapE e.edge := by
         simp [EdgeBetween.map, toList]
 
-theorem EdgeBetween.mapE_bar {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+theorem EdgeBetween.map_bar {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
       (e.map f).bar = e.bar.map f := by
         ext
@@ -216,11 +216,11 @@ theorem reverse_map {u v : V₁}(η : EdgePath G₁ u v):
       funext e
       simp only [Function.comp, f.mapE_bar]
 
-theorem map_reduction {v w : V₁} (η₁ η₂ : EdgePath G₁ v w):
+theorem map_of_reduction {v w : V₁} (η₁ η₂ : EdgePath G₁ v w):
   Reduction η₁ η₂ → Reduction (η₁.map f) (η₂.map f) 
   | Reduction.step u u' e p₁ p₂ => by 
     simp [append_map, cons_map]
-    rw [← EdgeBetween.mapE_bar]
+    rw [← EdgeBetween.map_bar]
     apply Reduction.step
 
 
@@ -235,9 +235,9 @@ def map  {v w : V₁}:
     apply Quot.lift (fun η => [[η.map f ]]) 
     intro η₁ η₂ step
     apply Quot.sound
-    apply Morphism.map_reduction f η₁ η₂ step
+    apply Morphism.map_of_reduction f η₁ η₂ step
 
-theorem map_commutes  {v w : V₁}
+theorem map_on_quotient  {v w : V₁}
   (η : EdgePath G₁ v w) : [[ η ]].map f = [[ η.map f ]] := by
     rfl
 

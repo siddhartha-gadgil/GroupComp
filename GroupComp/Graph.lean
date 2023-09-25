@@ -389,6 +389,10 @@ namespace PathClass
 protected def id {G : Graph V E} (v : V) : G.PathClass v v :=
   [[.nil v]]
 
+@[aesop norm unfold]
+protected def id' (G : Graph V E) (v : V) : G.PathClass v v :=
+  [[.nil v]]
+
 protected def mul {v w u : V} : 
     G.PathClass v w → G.PathClass w u → G.PathClass v u := by
   apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]]) <;>
@@ -397,6 +401,10 @@ protected def mul {v w u : V} :
 @[aesop norm unfold]
 protected def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
   Quot.lift ([[·.reverse]]) reverse_step
+
+theorem inverse_equiv_reverse {v w : V₁} (η : EdgePath G₁ v w):  
+  [[ η ]].inv = [[ η.reverse ]] := by
+    rfl
 
 instance {v w u: V}: HMul (G.PathClass v w) (G.PathClass w u) (G.PathClass v u) where
   hMul := PathClass.mul
@@ -444,6 +452,26 @@ protected theorem mul_assoc { v w u u' :  V}:
     intro c
     simp [append_assoc]
 
+def ind {β : (PathClass G u v) → Prop} : 
+   (∀ p : G.EdgePath u v, β [[p]]) → (∀ q : PathClass G u v, β q) :=
+  Quot.ind
+
+@[simp] protected theorem id_mul  {u v : V} : ∀ p : PathClass G u v, 
+  (PathClass.id' G u) * p = p := by
+    apply PathClass.ind; aesop
+
+@[simp] protected theorem mul_id  {u v : V} : ∀ p : PathClass G u v,
+    p * (PathClass.id' G v) = p := by
+  apply PathClass.ind; aesop
+
+@[simp] protected theorem inv_mul {u v : V} : ∀ p : PathClass G u v,
+    p.inv * p = PathClass.id' G v := by
+  apply PathClass.ind; aesop
+
+@[simp] protected theorem mul_inv {u v : V} : ∀ p : PathClass G u v,
+    p * p.inv = PathClass.id' G u := by
+  apply PathClass.ind; aesop
+
 -- Try to avoid this stuff
 
 open CategoryTheory
@@ -454,7 +482,7 @@ instance [G : Graph V E] : CategoryStruct V where
   id := PathClass.id
   comp := PathClass.mul
 
-def ind {β : (u ⟶ v) → Prop} : 
+def ind' {β : (u ⟶ v) → Prop} : 
    (∀ p : G.EdgePath u v, β [[p]]) → (∀ q : u ⟶ v, β q) :=
   Quot.ind
 
@@ -463,21 +491,21 @@ def ind {β : (u ⟶ v) → Prop} :
 @[local simp] lemma comp_mul (p : u ⟶ v) (p' : v ⟶ w) :
   p ≫ p' = .mul p p' := rfl
 
-@[simp] protected theorem id_mul  {u v : V} : ∀ p : u ⟶ v, 
+@[simp] protected theorem id_mul'  {u v : V} : ∀ p : u ⟶ v, 
   (𝟙 u) ≫ p = p := by
-    apply PathClass.ind; aesop
+    apply PathClass.ind'; aesop
 
-@[simp] protected theorem mul_id  {u v : V} : ∀ p : u ⟶ v,
+@[simp] protected theorem mul_id'  {u v : V} : ∀ p : u ⟶ v,
     p ≫ (𝟙 v) = p := by
-  apply PathClass.ind; aesop
+  apply PathClass.ind'; aesop
 
-@[simp] protected theorem inv_mul {u v : V} : ∀ p : u ⟶ v,
+@[simp] protected theorem inv_mul' {u v : V} : ∀ p : u ⟶ v,
     p.inv ≫ p = 𝟙 v := by
-  apply PathClass.ind; aesop
+  apply PathClass.ind'; aesop
 
-@[simp] protected theorem mul_inv {u v : V} : ∀ p : u ⟶ v,
+@[simp] protected theorem mul_inv' {u v : V} : ∀ p : u ⟶ v,
     p ≫ p.inv = 𝟙 u := by
-  apply PathClass.ind; aesop
+  apply PathClass.ind'; aesop
 
 protected theorem mul_assoc' { v w u u' :  V}:
   (p : v ⟶ w) → (q : w ⟶ u) → (r : u ⟶ u') →  
@@ -502,12 +530,12 @@ open PathClass CategoryTheory
 
 set_option synthInstance.checkSynthOrder false in -- HACK
 @[instance] def FundamentalGroupoid [Graph V E] : Groupoid V where
-  id_comp := PathClass.id_mul
-  comp_id := PathClass.mul_id
+  id_comp := PathClass.id_mul'
+  comp_id := PathClass.mul_id'
   assoc := PathClass.mul_assoc'
   inv := PathClass.inv
-  inv_comp := PathClass.inv_mul
-  comp_inv := PathClass.mul_inv
+  inv_comp := PathClass.inv_mul'
+  comp_inv := PathClass.mul_inv'
 
 protected lemma PathClass.inv_eq_inv (p : u ⟶ v) : p.inv = inv p := by
   rw [← Groupoid.inv_eq_inv]; rfl
@@ -516,10 +544,10 @@ instance : Group (π₁ G v) where
   mul := PathClass.mul
   mul_assoc := PathClass.mul_assoc'
   one := .id v
-  one_mul := PathClass.id_mul
-  mul_one := PathClass.mul_id
+  one_mul := PathClass.id_mul'
+  mul_one := PathClass.mul_id'
   inv := PathClass.inv
-  mul_left_inv := PathClass.inv_mul
+  mul_left_inv := PathClass.inv_mul'
 
 namespace π₁
 

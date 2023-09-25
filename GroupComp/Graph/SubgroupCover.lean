@@ -45,14 +45,14 @@ theorem relH_trans {τ : V} {v₁ v₂ v₃ : EdgePath G x₀ τ} :
   by
     simp [relH]
     intro h₁ h₂
-    let h₃ : [[v₁ ++ EdgePath.reverse v₂]] ++ [[v₂ ++ EdgePath.reverse v₃]] ∈ H := mul_mem h₁ h₂
-    rw [append_commutes, EdgePath.append_assoc, 
-      ←EdgePath.append_assoc v₂.reverse, ← append_commutes,
-      ← append_commutes] at h₃
+    let h₃  := mul_mem h₁ h₂
+    rw [mul_path_path, EdgePath.append_assoc, 
+      ←EdgePath.append_assoc v₂.reverse, ← mul_path_path,
+      ← mul_path_path] at h₃
     simp only [reverse_append_self] at h₃ 
-    rw [append_commutes] at h₃
+    rw [mul_path_path] at h₃
     simp only [nil_append, reverse_class_eq_inv] at h₃ 
-    rw [← append_commutes, ← reverse_commutes] 
+    rw [← mul_path_path, ← inverse_equiv_reverse] 
     exact h₃ 
 
 scoped instance vertSetoid  : Setoid (Vert G x₀) where
