@@ -23,15 +23,15 @@ theorem edges_terminal : ∀ e ∈ H.edges, G.τ e ∈ H.verts := by
   exact he
 
 theorem bar_edges (e : E) (ebH : G.bar e ∈ H.edges) : e ∈ H.edges := by
-  rw [← G.bar_involution e]
+  rw [← G.bar_bar e]
   apply edges_bar
   assumption
 
 def coe : Graph H.verts H.edges where
   ι := fun ⟨e, eH⟩ ↦ ⟨G.ι e, H.edges_init _ eH⟩
   bar := fun ⟨e, eH⟩ ↦ ⟨G.bar e, H.edges_bar _ eH⟩
-  bar_involution := by intro; simp only [Graph.bar_involution]
-  bar_no_fp := by intro ⟨_, _⟩; simp [Graph.bar_no_fp]
+  bar_bar := by intro; simp only [Graph.bar_bar]
+  bar_ne_self := by intro ⟨_, _⟩; simp [Graph.bar_ne_self]
 
 def contains {u v : V} : G.EdgePath u v → Prop
   | .nil x => x ∈ H.verts

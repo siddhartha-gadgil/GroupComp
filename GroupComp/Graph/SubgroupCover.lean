@@ -201,7 +201,7 @@ def bar : Quotient (edgeSetoid H) → Quotient (edgeSetoid H) := by
   simp only at lem₀
   cases lem₀
   cases lem₁
-  simp [bar_defn]
+  simp [bar_eq_bar]
   have h': edgeSetoid H |>.r ⟨τ₀, τ₁, e, p, pf⟩ ⟨τ₀, τ₁, e', p', pf'⟩ := h
   simp [Setoid.r, relH] at h'
   apply Quotient.sound
@@ -210,34 +210,32 @@ def bar : Quotient (edgeSetoid H) → Quotient (edgeSetoid H) := by
   · rw [← h'.2]
     rw [← append_commutes]
     simp [reducedConcat, ← cons_homotopic_redCons, cons_natural, PathClass]
-    rw [inv_commutes, append_commutes, reverse_cons, reverse_reverse, EdgeBetween.bar_involution,
+    rw [inv_commutes, append_commutes, reverse_cons, reverse_reverse, EdgeBetween.bar_bar,
     concat_append]
     have : [[p ++ cons e (cons (EdgeBetween.bar e) (EdgePath.reverse p'))]] = [[ p ++ p'.reverse ]] := by
       apply Quot.sound
       apply Reduction.step
     rw [this]
     exact h'.1
-  · simp [reducedConcat_cancel_pair p e pf, 
-      reducedConcat_cancel_pair p' e' pf']
-    rw [h'.2]
+  · rw [h'.2]
 
 theorem initial_defn (e: Edge G x₀):
   ι H ⟦ e ⟧ = ⟦ (G.univ x₀).ι e ⟧ := rfl
 
-theorem bar_defn (e : Edge G x₀):
+theorem bar_eq_barn (e : Edge G x₀):
   bar H ⟦ e ⟧ = ⟦ (G.univ x₀).bar e ⟧ := rfl
 
-theorem bar_involution :(ebar : Quotient (edgeSetoid H)) → 
+theorem bar_bar :(ebar : Quotient (edgeSetoid H)) → 
   bar H (bar H ebar) = ebar := by
   apply Quotient.ind
   intro e
-  simp [bar_defn]
+  simp [bar_eq_barn]
 
-theorem bar_no_fp : (ebar : Quotient (edgeSetoid H)) →
+theorem bar_ne_self : (ebar : Quotient (edgeSetoid H)) →
   ebar ≠ bar H ebar := by
   apply Quotient.ind
   intro ⟨τ₀, τ₁, e, p, pf⟩
-  simp [bar_defn, Edge.bar_defn]
+  simp [bar_eq_barn, Edge.bar_eq_bar]
   intro contra
   rw [@Quotient.eq _ (edgeSetoid H)] at contra
   let lem := terminal₀_eq_of_r H contra
@@ -247,7 +245,7 @@ theorem bar_no_fp : (ebar : Quotient (edgeSetoid H)) →
   let c := contra.2
   have : e.bar.edge = e.edge := by rw [← c]
   simp at this
-  let nfp := G.bar_no_fp e.edge
+  let nfp := G.bar_ne_self e.edge
   simp [this] at nfp
 
 end Quot
@@ -256,8 +254,8 @@ def groupCover :
   Graph (Quotient (vertSetoid H)) (Quotient (edgeSetoid H)) where
   ι := Quot.ι H
   bar := Quot.bar H
-  bar_involution := Quot.bar_involution H
-  bar_no_fp := Quot.bar_no_fp H
+  bar_bar := Quot.bar_bar H
+  bar_ne_self := Quot.bar_ne_self H
 
 namespace Quot
 
@@ -282,7 +280,7 @@ theorem edgeMap_defn (e : Edge G x₀):
 theorem initial (e : Edge G x₀):
   (groupCover H).ι ⟦ e ⟧ = ⟦ (G.univ x₀).ι e⟧ := rfl
 
-theorem bar_defn' (e : Edge G x₀):
+theorem bar_eq_barn' (e : Edge G x₀):
   (groupCover H).bar ⟦ e ⟧ = ⟦ (G.univ x₀).bar e ⟧ := rfl
 
 theorem commutes : (ebar : Quotient (edgeSetoid H)) → 
@@ -298,7 +296,7 @@ theorem bar_commutes : (ebar : Quotient (edgeSetoid H)) →
   edgeMap H ((groupCover H).bar ebar) = G.bar (edgeMap H ebar) := by
   apply Quotient.ind
   intro e
-  rw [edgeMap_defn, bar_defn']
+  rw [edgeMap_defn, bar_eq_barn']
   apply (proj G x₀).bar_commutes
 
 end Quot

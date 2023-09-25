@@ -52,9 +52,9 @@ def bar (e : Edge G x₀) : Edge G x₀ :=
   ⟨e.τ₁, e.τ₀, e.nxt.bar, e.p :+ e.nxt,  reducedConcat_reduced e.p e.nxt e.is_reduced⟩
 
 
-theorem bar_involution (e : Edge G x₀) : 
+theorem bar_bar (e : Edge G x₀) : 
     bar G x₀ (bar G x₀ e) = e := by
-  simp only [bar, EdgeBetween.bar_involution]
+  simp only [bar, EdgeBetween.bar_bar]
   ext
   · rfl
   · rfl
@@ -83,10 +83,10 @@ theorem bar_neq_self (e: Edge G x₀) :
 def _root_.Graph.univ : Graph (Vert G x₀) (Edge G x₀) where
   ι := initial G x₀
   bar := bar G x₀
-  bar_involution := bar_involution G x₀
-  bar_no_fp := bar_neq_self G x₀
+  bar_bar := bar_bar G x₀
+  bar_ne_self := bar_neq_self G x₀
 
-theorem bar_defn (τ₀ τ₁ : V)
+theorem bar_eq_bar (τ₀ τ₁ : V)
   (nxt: EdgeBetween G τ₀ τ₁)
   (p : EdgePath G x₀ τ₀)
   (is_reduced : reduced p) : 
@@ -257,7 +257,7 @@ theorem rayTo_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
       reverse_toList, List.map_reverse]
     have : G.bar ∘ G.bar = id := by
       funext x
-      simp only [Function.comp, bar_involution, id_eq]
+      simp only [Function.comp, bar_bar, id_eq]
     simp [this]
 
 def rayLift (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)

@@ -66,7 +66,7 @@ theorem tail_reducible_of_split {G : Graph V E} {u v w v' w': V} {e : EdgeBetwee
     ¬ reduced p := by
   rw [cons_append] at hyp
   let lhyp := congrArg EdgePath.toList hyp
-  simp only [cons_toList, append_toList, EdgeBetween.bar_def, List.cons.injEq] at lhyp 
+  simp only [cons_toList, append_toList, EdgeBetween.bar_eq_bar, List.cons.injEq] at lhyp 
   have : v' = v := by
     rw [← e.target, ←ph.target]
     symm
@@ -137,7 +137,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
             rename_i e''
             have : e' = e''.bar := by
               ext
-              rw [EdgeBetween.bar_def]
+              rw [EdgeBetween.bar_eq_bar]
               rw [← leqn.1, leqn.2.1]
             contradiction
           | cons ph pt =>
@@ -156,7 +156,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
             simp [cons_toList, nil_toList, append_toList] at leqn
             rename_i u'' e''
             apply c
-            rw [← e.source, ← e'.target, ← G.ι_bar, ← leqn.2.1, bar_involution]
+            rw [← e.source, ← e'.target, ← G.ι_bar, ← leqn.2.1, bar_bar]
           | cons ph pt =>
             symm at eqn
             let tred : ¬ reduced (cons e' p') := 
@@ -169,7 +169,7 @@ theorem cancelling_steps_redCons {G : Graph V E} {u v w : V} (e: EdgeBetween G u
   | inl h => 
       rw [h]
       apply redCons_cons_edge_eq
-      simp [bar_involution]
+      simp [bar_bar]
   | inr h => 
       let ⟨t, h₁, h₂⟩ := h
       rw[h₂, h₁]
@@ -180,7 +180,7 @@ theorem cancelling_steps_redCons {G : Graph V E} {u v w : V} (e: EdgeBetween G u
         let ⟨t', h₁', h₂'⟩ := h'
         rw [h₂', h₁']
         rw [h₁, h₁'] at hyp
-        simp [bar_involution] at *
+        simp [bar_bar] at *
         have split :
                   cons e.bar (cons e t') = 
                     (nil v : EdgePath G v v) ++ 
@@ -302,7 +302,7 @@ theorem reducedConcat_reduced {G : Graph V E} {v w u : V}  (p : EdgePath G v w) 
 theorem reducedConcat_cancel_pair {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: EdgeBetween G w u) (hyp : reduced p) :
     p :+ e :+ e.bar = p := by
   have hyp' :=  reverse_reduced p hyp
-  simp only [reducedConcat, EdgeBetween.bar_involution, reverse_reverse]
+  simp only [reducedConcat, EdgeBetween.bar_bar, reverse_reverse]
   let lm : 
     redCons e.bar.bar (redCons (EdgeBetween.bar e) (reverse p)) 
       = reverse p :=

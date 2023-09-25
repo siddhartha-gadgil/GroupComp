@@ -7,15 +7,15 @@ universe u v
 structure Graph (V : Type u) (E : Type v) where
   ι : E → V
   bar : E → E
-  bar_involution : ∀ e, bar (bar e) = e
-  bar_no_fp : ∀ e, e ≠ bar e
+  bar_bar : ∀ e, bar (bar e) = e
+  bar_ne_self : ∀ e, e ≠ bar e
 
 namespace Graph
 
 variable {V : Type u} {E : Type v} (G : Graph V E)
 variable {u v w : V}
 
-attribute [simp] bar_involution
+attribute [simp] bar_bar
 
 def τ (e : E) : V := G.ι (G.bar e)
 
@@ -39,7 +39,7 @@ def EdgeBetween.bar (e : G.EdgeBetween v w) : G.EdgeBetween w v :=
   , target := by aesop
   }
 
-@[simp] theorem EdgeBetween.bar_involution : e.bar.bar = e := by 
+@[simp] theorem EdgeBetween.bar_bar : e.bar.bar = e := by 
     ext; aesop (add norm simp [EdgeBetween.bar])
 
 -- @[aesop unsafe [cases, constructors]]
@@ -283,8 +283,8 @@ def FundamentalGroupoid : CategoryTheory.Groupoid V where
 def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
   ι := fun _ ↦ ()
   bar := fun (e, b) ↦ (e, !b)
-  bar_involution := by aesop
-  bar_no_fp := by aesop
+  bar_bar := by aesop
+  bar_ne_self := by aesop
 }
 
 class ConnectedGraph (G: Graph V E) where
