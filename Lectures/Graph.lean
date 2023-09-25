@@ -247,14 +247,14 @@ theorem mul_assoc { v w u u' :  V}:
 theorem append_mul {v w u : V} (p : EdgePath G v w) (q : EdgePath G w u) : 
     [[p ++ q]] = mul [[ p ]] [[ q]] := by rfl
 
-theorem cons_natural{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
+theorem cons_equiv_of_equiv{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
    [[cons a  b₁]] = [[cons a b₂]] := by
   intro rel
   rw [show cons a b₁ = cons a (nil _) ++ b₁ by rfl, 
       show cons a b₂ = cons a (nil _) ++ b₂ by rfl,
       append_mul, append_mul, rel]
 
-theorem concat_natural {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgeBetween G w u) : [[a₁]] = [[a₂]] → 
+theorem concat_equiv_of_equiv {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgeBetween G w u) : [[a₁]] = [[a₂]] → 
    [[concat a₁ b]] = [[concat a₂ b]] := by
   intro rel
   have: concat a₁  b = a₁ ++ (concat (nil _) b) := by 

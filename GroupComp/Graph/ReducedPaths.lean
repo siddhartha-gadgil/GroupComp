@@ -270,7 +270,7 @@ theorem reduction_homotopic_self {G: Graph V E} {v w : V} (p : EdgePath G v w)  
     simp [reduction_nil]
   | cons e p ih =>
     simp [reduction_cons, ←cons_homotopic_redCons]
-    apply cons_natural
+    apply cons_equiv_of_equiv
     assumption
 
 theorem redCons_parity_neq {G : Graph V E} {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) :

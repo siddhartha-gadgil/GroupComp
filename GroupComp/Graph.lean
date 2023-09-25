@@ -398,6 +398,32 @@ protected def mul {v w u : V} :
 protected def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
   Quot.lift ([[·.reverse]]) reverse_step
 
+end PathClass
+
+@[local simp] lemma mul_path_path (p : G.EdgePath u v) (p' : G.EdgePath v w) :
+  .mul [[p]] [[p']] = [[p ++ p']] := rfl
+
+theorem cons_equiv_of_equiv{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
+   [[cons a  b₁]] = [[cons a b₂]] := by
+  intro r
+  rw [show cons a b₁ = cons a (nil _) ++ b₁ by rfl, 
+      show cons a b₂ = cons a (nil _) ++ b₂ by rfl,
+      ← mul_path_path, ← mul_path_path, r]
+
+theorem concat_equiv_of_equiv {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgeBetween G w u) : [[a₁]] = [[a₂]] → 
+   [[concat a₁ b]] = [[concat a₂ b]] := by
+  intro r
+  have: concat a₁  b = a₁ ++ (concat (nil _) b) := by 
+    rw [append_concat, append_nil]
+  rw [this]
+  have: concat a₂  b = a₂ ++ (concat (nil _) b) := by 
+    rw [append_concat, append_nil]
+  rw [this, ← mul_path_path, ← mul_path_path, r]
+
+abbrev π₁ (G: Graph V E) (v : V) := G.PathClass v v
+
+namespace PathClass
+
 -- Try to avoid this stuff
 
 open CategoryTheory
@@ -413,9 +439,6 @@ def ind {β : (u ⟶ v) → Prop} :
   Quot.ind
 
 @[local simp] lemma id_eq_nil (u : V) : 𝟙 u = [[.nil (G := G) u]] := rfl
-
-@[local simp] lemma mul_paths (p : G.EdgePath u v) (p' : G.EdgePath v w) :
-  .mul [[p]] [[p']] = [[p ++ p']] := rfl
 
 @[local simp] lemma comp_mul (p : u ⟶ v) (p' : v ⟶ w) :
   p ≫ p' = .mul p p' := rfl
@@ -451,22 +474,6 @@ protected theorem mul_assoc { v w u u' :  V}:
 
 @[simp] lemma reverse_class_eq_inv (p : G.EdgePath u v) : [[p.reverse]] = [[p]].inv := rfl
 
-theorem cons_natural{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
-   [[cons a  b₁]] = [[cons a b₂]] := by
-  intro r
-  rw [show cons a b₁ = cons a (nil _) ++ b₁ by rfl, 
-      show cons a b₂ = cons a (nil _) ++ b₂ by rfl,
-      ← mul_paths, ← mul_paths, r]
-
-theorem concat_natural {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgeBetween G w u) : [[a₁]] = [[a₂]] → 
-   [[concat a₁ b]] = [[concat a₂ b]] := by
-  intro r
-  have: concat a₁  b = a₁ ++ (concat (nil _) b) := by 
-    rw [append_concat, append_nil]
-  rw [this]
-  have: concat a₂  b = a₂ ++ (concat (nil _) b) := by 
-    rw [append_concat, append_nil]
-  rw [this, ← mul_paths, ← mul_paths, r]
 
 end PathClass
 
@@ -484,8 +491,6 @@ set_option synthInstance.checkSynthOrder false in -- HACK
 
 protected lemma PathClass.inv_eq_inv (p : u ⟶ v) : p.inv = inv p := by
   rw [← Groupoid.inv_eq_inv]; rfl
-
-abbrev π₁ (G: Graph V E) (v : V) := G.PathClass v v
 
 instance : Group (π₁ G v) where
   mul := PathClass.mul
