@@ -189,15 +189,15 @@ theorem reverse_step {v w : V} (a₁ a₂ : G.EdgePath v w) (rel : Reduction a�
   induction rel
   aesop (add norm simp [reverse_append, reverse_cons])
 
-@[simp] theorem reverse_left_inverse {v w : V} 
+@[simp] theorem reverse_append_self {v w : V} 
 (p : G.EdgePath v w) : 
     [[p.reverse ++ p]] = [[.nil w]] := by
     induction p <;>
       aesop (add norm simp [reverse_cons, reverse_concat, cons_append])
 
-@[simp] theorem reverse_right_inverse {v w : V} (p : G.EdgePath w v) :
+@[simp] theorem self_append_reverse {v w : V} (p : G.EdgePath w v) :
     [[p ++ p.reverse]] = [[.nil w]] := by
-  have := reverse_left_inverse p.reverse
+  have := reverse_append_self p.reverse
   aesop
 
 namespace PathClass

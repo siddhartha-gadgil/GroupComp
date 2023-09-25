@@ -49,7 +49,7 @@ theorem relH_trans {τ : V} {v₁ v₂ v₃ : EdgePath G x₀ τ} :
     rw [append_commutes, EdgePath.append_assoc, 
       ←EdgePath.append_assoc v₂.reverse, ← append_commutes,
       ← append_commutes] at h₃
-    simp only [reverse_left_inverse] at h₃ 
+    simp only [reverse_append_self] at h₃ 
     rw [append_commutes] at h₃
     simp only [nil_append, reverse_class_eq_inv] at h₃ 
     rw [← append_commutes, ← reverse_commutes] 
