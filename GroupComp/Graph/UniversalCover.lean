@@ -353,7 +353,3 @@ theorem simple_connectivity_for_paths {G: Graph V E}{x₀: V}{vert : Vert G x₀
           (e₂.map (proj G x₀)) := by
         rw [proj_liftTerminal e₁, proj_liftTerminal e₂]        
       apply homotopic_of_liftTerminal_eq lem
-
-#check Quotient.eq_rel
-#check Quotient.mk'
-#check Quotient.eq

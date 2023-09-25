@@ -36,7 +36,7 @@ theorem relH_symm {τ : V} {v₁ v₂ : EdgePath G x₀ τ} :
     simp [relH]
     intro h
     let h': [[v₁ ++ EdgePath.reverse v₂]].inv ∈ H := inv_mem h
-    rw [PathClass.inv_commutes, 
+    rw [inv_equiv_reverse, 
       EdgePath.reverse_append,  reverse_reverse] at h'
     exact h'
 
@@ -52,7 +52,7 @@ theorem relH_trans {τ : V} {v₁ v₂ v₃ : EdgePath G x₀ τ} :
     simp only [reverse_append_self] at h₃ 
     rw [mul_path_path] at h₃
     simp only [nil_append, reverse_class_eq_inv] at h₃ 
-    rw [← mul_path_path, ← inverse_equiv_reverse] 
+    rw [← mul_path_path, ← inv_equiv_reverse] 
     exact h₃ 
 
 scoped instance vertSetoid  : Setoid (Vert G x₀) where
@@ -208,9 +208,9 @@ def bar : Quotient (edgeSetoid H) → Quotient (edgeSetoid H) := by
   simp [HasEquiv.Equiv, Setoid.r, relH]
   apply And.intro
   · rw [← h'.2]
-    rw [← append_commutes]
+    rw [← mul_path_path]
     simp [reducedConcat, ← cons_homotopic_redCons, cons_equiv_of_equiv, PathClass]
-    rw [inv_commutes, append_commutes, reverse_cons, reverse_reverse, EdgeBetween.bar_bar,
+    rw [inv_equiv_reverse, mul_path_path, reverse_cons, reverse_reverse, EdgeBetween.bar_bar,
     concat_append]
     have : [[p ++ cons e (cons (EdgeBetween.bar e) (EdgePath.reverse p'))]] = [[ p ++ p'.reverse ]] := by
       apply Quot.sound
@@ -349,7 +349,6 @@ theorem localSection_composition (τ₀ : V) (p : EdgePath G x₀ τ₀)
 
 -- set_option maxHeartbeats 200000
 
-#check HEq
 
 theorem localSection_composition' (τ : V) (p : EdgePath G x₀ τ)
   (is_reduced : reduced p)(τ₀ τ₁ : V) (nxt: EdgeBetween G τ₀ τ₁) (p' : EdgePath G x₀ τ₀)

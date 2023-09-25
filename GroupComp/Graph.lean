@@ -402,7 +402,7 @@ protected def mul {v w u : V} :
 protected def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
   Quot.lift ([[·.reverse]]) reverse_step
 
-theorem inverse_equiv_reverse {v w : V₁} (η : EdgePath G₁ v w):  
+theorem inv_equiv_reverse {v w : V₁} (η : EdgePath G₁ v w):  
   [[ η ]].inv = [[ η.reverse ]] := by
     rfl
 
