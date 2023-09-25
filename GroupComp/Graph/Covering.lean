@@ -139,29 +139,6 @@ def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         let ⟨tail, ih⟩ := pathMapAux f u' w₁ p' (f.mapV u') w₂ rfl hw
         exact ⟨cons edge₂ tail, by simp [cons_toList, ih]⟩ 
 
-section Extras 
-
-def Morphism.pathMap {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁)
-    (v₂ w₂ : V₂)(hv : f.mapV v₁ = v₂)(hw : f.mapV w₁ = w₂) : EdgePath G₂ v₂ w₂ :=
-      (pathMapAux f v₁ w₁ p v₂ w₂ hv hw).val
-
-theorem EdgePath.toList_map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁)
-    (v₂ w₂ : V₂)(hv : f.mapV v₁ = v₂)(hw : f.mapV w₁ = w₂) :
-      (f.pathMap v₁ w₁ p v₂ w₂ hv hw).toList = p.toList.map f.mapE := 
-      (f.pathMapAux  v₁ w₁ p v₂ w₂ hv hw).property
-
-theorem pathLift_commutes {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (p : Morphism G₁ G₂)[CoveringMap p] (v₁: V₁) (v₂ w₂ : V₂)
-    (h : p.mapV v₁ = v₂)(e: EdgePath G₂ v₂ w₂) 
-    (lift : PathLift p v₁ h e) :
-    p.pathMap v₁ lift.τ lift.path v₂ w₂ h lift.lift_terminal = e := by
-      apply eq_of_toList_eq
-      rw [toList_map, lift.list_commutes]      
-
-end Extras
-
 def EdgePath.map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}{v₁ w₁: V₁} 
     (p: G₁.EdgePath v₁ w₁)(f: Morphism G₁ G₂)  :=
     (f.pathMapAux v₁ w₁ p (f.mapV v₁) (f.mapV w₁) rfl rfl).val
