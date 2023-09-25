@@ -80,20 +80,20 @@ structure Subtree (G : Graph V E) extends PreconnectedSubgraph G where
 attribute [aesop safe apply] Subtree.path_unique
 
 structure Graph.hom {V E V' E' : Type _} (G : Graph V E) (G' : Graph V' E') where
-  vertexMap : V → V'
-  edgeMap : E → E'
-  preserve_init : ∀ e : E, vertexMap (G.ι e) = G'.ι (edgeMap e)
-  preserve_bar : ∀ e : E, edgeMap (G.bar e) = G'.bar (edgeMap e)
+  mapV : V → V'
+  mapE : E → E'
+  preserve_init : ∀ e : E, mapV (G.ι e) = G'.ι (mapE e)
+  preserve_bar : ∀ e : E, mapE (G.bar e) = G'.bar (mapE e)
 
 namespace Graph.hom
 
 variable {V E V' E' : Type _} (G : Graph V E) (G' : Graph V' E') (φ : Graph.hom G G')
 
-theorem preserve_terminal (e : E) : φ.vertexMap (G.τ e) = G'.τ (φ.edgeMap e) := by
+theorem preserve_terminal (e : E) : φ.mapV (G.τ e) = G'.τ (φ.mapE e) := by
   rw [← G.ι_bar, ← G'.ι_bar, preserve_init, preserve_bar]
 
-def edgeBetweenMap {u v : V} (e : G.EdgeBetween u v) : G'.EdgeBetween (φ.vertexMap u) (φ.vertexMap v) where
-  edge := φ.edgeMap e.edge
+def edgeBetweenMap {u v : V} (e : G.EdgeBetween u v) : G'.EdgeBetween (φ.mapV u) (φ.mapV v) where
+  edge := φ.mapE e.edge
   source := by
     have := φ.preserve_init e.edge
     rw [e.source] at this
@@ -105,7 +105,7 @@ def edgeBetweenMap {u v : V} (e : G.EdgeBetween u v) : G'.EdgeBetween (φ.vertex
     symm
     assumption
 
-def pathMap {u v : V} : G.EdgePath u v → G'.EdgePath (φ.vertexMap u) (φ.vertexMap v)
+def pathMap {u v : V} : G.EdgePath u v → G'.EdgePath (φ.mapV u) (φ.mapV v)
   | .nil _ => .nil _
   | .cons e p => .cons (φ.edgeBetweenMap e) (pathMap p)
 

@@ -89,8 +89,7 @@ def reverse {v w : V} (p : G.EdgePath v w) : G.EdgePath w v :=
   | nil .(v) => 
       nil v
   | cons  e p  => 
-      let tail := reverse p
-      concat tail e.bar  
+      concat (reverse p) e.bar  
 
 @[simp] theorem reverse_nil {v : V} : 
   reverse (.nil (G := G) v) = .nil (G := G) v := by rfl
@@ -107,14 +106,13 @@ def append { v w u : V}
   match p with
   | nil .(v) => q
   | cons  e' p'  => 
-      let tail := append p' q
-      cons e' tail
+      cons e' <| append p' q
 
 def fold (φ : {u v : V} → G.EdgeBetween u v → A) (comp : A → A → A) (init : A) {v w : V} : G.EdgePath v w → A
   | .nil _ => init
   | .cons e p => comp (φ e) (fold φ comp init p)
 
-instance  G.EdgePath {v w u : V} {G : Graph V E} : 
+instance  G.edgePathAppend {v w u : V} {G : Graph V E} : 
   HAppend (G.EdgePath v w) (G.EdgePath w u) (G.EdgePath v u) := 
     ⟨append⟩
 
@@ -158,7 +156,8 @@ theorem append_assoc { v w u u' :  V}
   p.reverse.reverse = p := by
   induction p <;> aesop (add norm simp [reverse_cons, reverse_concat])
 
-theorem reverse_append {u v w : V} (p : G.EdgePath u v) (q : G.EdgePath v w) :
+theorem reverse_append {u v w : V} (p : G.EdgePath u v) 
+  (q : G.EdgePath v w) :
     (p ++ q).reverse = q.reverse ++ p.reverse := by
   induction p <;>
     aesop (add norm simp [reverse_cons, concat_eq_append_edge, append_assoc])
@@ -398,6 +397,8 @@ protected def mul {v w u : V} :
 @[aesop norm unfold]
 protected def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
   Quot.lift ([[·.reverse]]) reverse_step
+
+-- Try to avoid this stuff
 
 open CategoryTheory
 

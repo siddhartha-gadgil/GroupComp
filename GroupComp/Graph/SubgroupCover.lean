@@ -259,23 +259,23 @@ def groupCover :
 
 namespace Quot
 
-def vertexMap : Quotient (vertSetoid H) → V := by
+def mapV : Quotient (vertSetoid H) → V := by
   apply Quotient.lift (fun v : Vert G x₀ ↦ v.τ)
   simp [HasEquiv.Equiv]
   intro v₁ v₂
   apply terminal_eq_of_r H
   
-theorem vertexMap_defn (v : Vert G x₀):
-  vertexMap H ⟦ v ⟧ = v.τ := rfl
+theorem mapV_defn (v : Vert G x₀):
+  mapV H ⟦ v ⟧ = v.τ := rfl
 
-def edgeMap : Quotient (edgeSetoid H) → E := by
+def mapE : Quotient (edgeSetoid H) → E := by
   apply Quotient.lift (fun e : Edge G x₀ ↦ e.nxt.edge)
   simp [HasEquiv.Equiv]
   intro e₁ e₂
   apply edge_eq_of_r H
 
-theorem edgeMap_defn (e : Edge G x₀):
-  edgeMap H ⟦ e ⟧ = e.nxt.edge := rfl
+theorem mapE_defn (e : Edge G x₀):
+  mapE H ⟦ e ⟧ = e.nxt.edge := rfl
 
 theorem initial (e : Edge G x₀):
   (groupCover H).ι ⟦ e ⟧ = ⟦ (G.univ x₀).ι e⟧ := rfl
@@ -284,44 +284,44 @@ theorem bar_eq_barn' (e : Edge G x₀):
   (groupCover H).bar ⟦ e ⟧ = ⟦ (G.univ x₀).bar e ⟧ := rfl
 
 theorem commutes : (ebar : Quotient (edgeSetoid H)) → 
-  vertexMap H ((groupCover H).ι ebar) = 
-   G.ι (edgeMap H ebar) := by
+  mapV H ((groupCover H).ι ebar) = 
+   G.ι (mapE H ebar) := by
   apply Quotient.ind
   intro e
   rw [initial]
-  rw [vertexMap_defn, edgeMap_defn]
+  rw [mapV_defn, mapE_defn]
   apply (proj G x₀).commutes
 
 theorem bar_commutes : (ebar : Quotient (edgeSetoid H)) → 
-  edgeMap H ((groupCover H).bar ebar) = G.bar (edgeMap H ebar) := by
+  mapE H ((groupCover H).bar ebar) = G.bar (mapE H ebar) := by
   apply Quotient.ind
   intro e
-  rw [edgeMap_defn, bar_eq_barn']
+  rw [mapE_defn, bar_eq_barn']
   apply (proj G x₀).bar_commutes
 
 end Quot
 
 def groupCoverProj : Morphism (groupCover H) G where
-  vertexMap := Quot.vertexMap H
-  edgeMap := Quot.edgeMap H
+  mapV := Quot.mapV H
+  mapE := Quot.mapE H
   commutes := Quot.commutes H
   bar_commutes := Quot.bar_commutes H
 
 namespace Quot
 
-theorem vertexMap_defn' (v : Vert G x₀):
-  (groupCoverProj H).vertexMap ⟦ v ⟧ = v.τ := rfl
+theorem mapV_defn' (v : Vert G x₀):
+  (groupCoverProj H).mapV ⟦ v ⟧ = v.τ := rfl
 
-theorem edgeMap_defn' (τ₀ : V) (τ₁: V)(nxt: EdgeBetween G τ₀ τ₁) 
+theorem mapE_defn' (τ₀ : V) (τ₁: V)(nxt: EdgeBetween G τ₀ τ₁) 
   (p: EdgePath G x₀ τ₀)(red: reduced p):
-  (groupCoverProj H).edgeMap ⟦ ⟨τ₀, τ₁, nxt, p, red⟩  ⟧ = nxt.edge := rfl
+  (groupCoverProj H).mapE ⟦ ⟨τ₀, τ₁, nxt, p, red⟩  ⟧ = nxt.edge := rfl
 
 def localSection : (v₁ : Quotient (vertSetoid H)) → (e : E) →
-  ((groupCoverProj H).vertexMap v₁) = G.ι e → 
+  ((groupCoverProj H).mapV v₁) = G.ι e → 
   Quotient (edgeSetoid H) := by
   intro v₁
   apply Quotient.hrecOn v₁ 
-    (motive:= fun v₁ ↦ (e : E) → Morphism.vertexMap (groupCoverProj H) v₁ = Graph.ι G e → Quotient (edgeSetoid H)) 
+    (motive:= fun v₁ ↦ (e : E) → Morphism.mapV (groupCoverProj H) v₁ = Graph.ι G e → Quotient (edgeSetoid H)) 
     (fun ⟨τ, p, is_reduced⟩ e h ↦ 
         ⟦ ⟨τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧)
   intro ⟨τ, p, is_reduced⟩ ⟨τ', p', is_reduced'⟩ rel
@@ -343,7 +343,7 @@ theorem localSection_defn (τ : V) (p : EdgePath G x₀ τ)
 theorem localSection_composition (τ₀ : V) (p : EdgePath G x₀ τ₀)
   (is_reduced : reduced p) 
   (e: Edge G x₀) (h: τ₀ = G.ι e.nxt.edge) :
-  localSection H ⟦ ⟨τ₀, p, is_reduced⟩ ⟧ ((groupCoverProj H).edgeMap ⟦ e⟧) h = 
+  localSection H ⟦ ⟨τ₀, p, is_reduced⟩ ⟧ ((groupCoverProj H).mapE ⟦ e⟧) h = 
     ⟦ ⟨τ₀, G.τ (e.nxt.edge), 
     ⟨e.nxt.edge, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧ := rfl
 
@@ -356,7 +356,7 @@ theorem localSection_composition' (τ : V) (p : EdgePath G x₀ τ)
   (is_reduced' : reduced p')
   (h: τ = G.ι nxt.edge) :
   localSection H ⟦ ⟨τ, p, is_reduced⟩ ⟧ 
-  ((groupCoverProj H).edgeMap ⟦ (⟨τ₀, τ₁, nxt, p', is_reduced'⟩ : Edge G x₀)⟧) h = 
+  ((groupCoverProj H).mapE ⟦ (⟨τ₀, τ₁, nxt, p', is_reduced'⟩ : Edge G x₀)⟧) h = 
     ⟦ ⟨τ, τ₁, 
     ⟨nxt.edge, Eq.symm h, nxt.target⟩, p, is_reduced⟩ ⟧ := by
   rw [localSection_composition]
@@ -411,7 +411,7 @@ instance : CoveringMap (groupCoverProj H)  where
     apply Quotient.ind
     intro ⟨τ, p, is_reduced⟩ e h
     simp [Quot.localSection_defn]
-    rw [Quot.edgeMap_defn']
+    rw [Quot.mapE_defn']
   
   right_inverse := by
     apply Quotient.ind

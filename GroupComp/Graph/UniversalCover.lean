@@ -115,8 +115,8 @@ theorem nxt_defn (τ₀ τ₁ : V)
 
 
 def proj : Morphism (G.univ x₀) G where
-  vertexMap := Vert.τ
-  edgeMap := fun e ↦ e.nxt.edge 
+  mapV := Vert.τ
+  mapE := fun e ↦ e.nxt.edge 
   commutes := by
     intro e
     match e with
@@ -154,7 +154,7 @@ instance : CoveringMap (proj G x₀) where
       rfl 
   right_inverse := by
     intro v₁ e₁ h₁   
-    have : (proj G x₀).edgeMap e₁ = e₁.nxt.edge := rfl
+    have : (proj G x₀).mapE e₁ = e₁.nxt.edge := rfl
     let l := e₁.nxt.target
     rw [← this] at l
     match e₁ with
