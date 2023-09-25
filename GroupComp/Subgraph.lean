@@ -55,7 +55,7 @@ def contains {u v : V} : G.EdgePath u v → Prop
   induction p <;> aesop    
 
 instance : PartialOrder (Subgraph G) where
-  le := sorry
+  le := fun s₁ s₂ ↦ s₁.verts ⊆ s₂.verts ∧ s₁.edges ⊆ s₂.edges
   lt := sorry
   le_refl := sorry
   le_trans := sorry

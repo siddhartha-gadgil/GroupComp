@@ -472,6 +472,15 @@ def ind {β : (PathClass G u v) → Prop} :
     p * p.inv = PathClass.id' G u := by
   apply PathClass.ind; aesop
 
+instance : Group (π₁ G v) where
+  mul := PathClass.mul
+  mul_assoc := PathClass.mul_assoc
+  one := .id v
+  one_mul := PathClass.id_mul
+  mul_one := PathClass.mul_id
+  inv := PathClass.inv
+  mul_left_inv := PathClass.inv_mul
+
 -- Try to avoid this stuff
 
 open CategoryTheory
@@ -540,14 +549,14 @@ set_option synthInstance.checkSynthOrder false in -- HACK
 protected lemma PathClass.inv_eq_inv (p : u ⟶ v) : p.inv = inv p := by
   rw [← Groupoid.inv_eq_inv]; rfl
 
-instance : Group (π₁ G v) where
-  mul := PathClass.mul
-  mul_assoc := PathClass.mul_assoc'
-  one := .id v
-  one_mul := PathClass.id_mul'
-  mul_one := PathClass.mul_id'
-  inv := PathClass.inv
-  mul_left_inv := PathClass.inv_mul'
+-- instance : Group (π₁ G v) where
+--   mul := PathClass.mul
+--   mul_assoc := PathClass.mul_assoc'
+--   one := .id v
+--   one_mul := PathClass.id_mul'
+--   mul_one := PathClass.mul_id'
+--   inv := PathClass.inv
+--   mul_left_inv := PathClass.inv_mul'
 
 namespace π₁
 
