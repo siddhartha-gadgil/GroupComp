@@ -39,7 +39,6 @@ theorem smallest_mem (l : List α) (hyp : l ≠ []) :
       intro contra
       contradiction
     · rename_i h
-      simp [h]
       by_cases h':(head ≤ smallest tail h)      
       · simp [h']
       · simp [h', h]
@@ -63,7 +62,6 @@ theorem smallest_le (l : List α) (hyp : l ≠ []) :
     apply And.intro
     · split  <;> simp 
     · intro a hyp'
-      simp [hyp]
       have c''  := List.ne_nil_of_mem hyp'
       simp [c'']
       right

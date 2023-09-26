@@ -66,9 +66,9 @@ theorem tail_reducible_of_split {G : Graph V E} {u v w v' w': V} {e : EdgeBetwee
     ¬ reduced p := by
   rw [cons_append] at hyp
   let lhyp := congrArg EdgePath.toList hyp
-  simp only [cons_toList, append_toList, EdgeBetween.bar_def, List.cons.injEq] at lhyp 
+  simp only [cons_toList, append_toList, EdgeBetween.bar_eq_bar, List.cons.injEq] at lhyp 
   have : v' = v := by
-    rw [← e.target, ←ph.target]
+    rw [← e.term_eq, ←ph.term_eq]
     symm
     apply congrArg G.τ lhyp.left
   cases this
@@ -80,7 +80,7 @@ theorem tail_reducible_of_split {G : Graph V E} {u v w v' w': V} {e : EdgeBetwee
 
 theorem reduced_singleton {G : Graph V E} {u v : V} (e : EdgeBetween G u v) : reduced (cons e (nil v)) := by
     intro p' red'  
-    let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
+    let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.property
     cases p₁ with
     | nil _ => 
       rw [nil_append] at eqn
@@ -94,7 +94,7 @@ theorem reduced_singleton {G : Graph V E} {u v : V} (e : EdgeBetween G u v) : re
 theorem reduced_nil {G : Graph V E} {v : V} : 
   reduced (nil v : EdgePath G v v) := by
     intro p' red'  
-    let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
+    let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.property
     cases p₁ with
     | nil _ => 
       rw [nil_append] at eqn
@@ -120,7 +120,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
         then 
           simp [redCons_cons_edge_eq p' c']
           intro p'' red'
-          let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
+          let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.property
           rw [←eqn, ← cons_append] at hyp
           let red := hyp <| cons e' p₁ ++ p₂
           apply red
@@ -128,7 +128,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
         else 
           simp [redCons_cons_edge_neq p' c']
           intro p'' red'
-          let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
+          let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.property
           match p₁ with
           | nil _ => 
             rw [nil_append] at eqn
@@ -137,7 +137,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
             rename_i e''
             have : e' = e''.bar := by
               ext
-              rw [EdgeBetween.bar_def]
+              rw [EdgeBetween.bar_eq_bar]
               rw [← leqn.1, leqn.2.1]
             contradiction
           | cons ph pt =>
@@ -148,7 +148,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
     else
       simp [redCons_cons_vertex_neq e e' p' c]
       intro p'' red'
-      let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.existence
+      let ⟨u, u', e, p₁, p₂, eqn⟩   := red'.property
       match p₁ with
           | nil _ => 
             rw [nil_append] at eqn
@@ -156,7 +156,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
             simp [cons_toList, nil_toList, append_toList] at leqn
             rename_i u'' e''
             apply c
-            rw [← e.source, ← e'.target, ← G.ι_bar, ← leqn.2.1, bar_involution]
+            rw [← e.init_eq, ← e'.term_eq, ← G.ι_bar, ← leqn.2.1, bar_bar]
           | cons ph pt =>
             symm at eqn
             let tred : ¬ reduced (cons e' p') := 
@@ -169,7 +169,7 @@ theorem cancelling_steps_redCons {G : Graph V E} {u v w : V} (e: EdgeBetween G u
   | inl h => 
       rw [h]
       apply redCons_cons_edge_eq
-      simp [bar_involution]
+      simp [bar_bar]
   | inr h => 
       let ⟨t, h₁, h₂⟩ := h
       rw[h₂, h₁]
@@ -180,7 +180,7 @@ theorem cancelling_steps_redCons {G : Graph V E} {u v w : V} (e: EdgeBetween G u
         let ⟨t', h₁', h₂'⟩ := h'
         rw [h₂', h₁']
         rw [h₁, h₁'] at hyp
-        simp [bar_involution] at *
+        simp [bar_bar] at *
         have split :
                   cons e.bar (cons e t') = 
                     (nil v : EdgePath G v v) ++ 
@@ -270,7 +270,7 @@ theorem reduction_homotopic_self {G: Graph V E} {v w : V} (p : EdgePath G v w)  
     simp [reduction_nil]
   | cons e p ih =>
     simp [reduction_cons, ←cons_homotopic_redCons]
-    apply cons_natural
+    apply cons_equiv_of_equiv
     assumption
 
 theorem redCons_parity_neq {G : Graph V E} {u v w : V} (e: EdgeBetween G u v) (p : EdgePath G v w) :
@@ -302,7 +302,7 @@ theorem reducedConcat_reduced {G : Graph V E} {v w u : V}  (p : EdgePath G v w) 
 theorem reducedConcat_cancel_pair {G : Graph V E} {v w u : V}  (p : EdgePath G v w) (e: EdgeBetween G w u) (hyp : reduced p) :
     p :+ e :+ e.bar = p := by
   have hyp' :=  reverse_reduced p hyp
-  simp only [reducedConcat, EdgeBetween.bar_involution, reverse_reverse]
+  simp only [reducedConcat, EdgeBetween.bar_bar, reverse_reverse]
   let lm : 
     redCons e.bar.bar (redCons (EdgeBetween.bar e) (reverse p)) 
       = reverse p :=

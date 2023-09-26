@@ -3,6 +3,7 @@ import Mathlib.Data.SetLike.Basic
 
 namespace Graph
 
+@[ext]
 structure Subgraph {V E : Type _} (G : Graph V E) where
   verts : Set V
   edges : Set E
@@ -23,15 +24,15 @@ theorem edges_terminal : ∀ e ∈ H.edges, G.τ e ∈ H.verts := by
   exact he
 
 theorem bar_edges (e : E) (ebH : G.bar e ∈ H.edges) : e ∈ H.edges := by
-  rw [← G.bar_involution e]
+  rw [← G.bar_bar e]
   apply edges_bar
   assumption
 
 def coe : Graph H.verts H.edges where
   ι := fun ⟨e, eH⟩ ↦ ⟨G.ι e, H.edges_init _ eH⟩
   bar := fun ⟨e, eH⟩ ↦ ⟨G.bar e, H.edges_bar _ eH⟩
-  bar_involution := by intro; simp only [Graph.bar_involution]
-  bar_no_fp := by intro ⟨_, _⟩; simp [Graph.bar_no_fp]
+  bar_bar := by intro; simp only [Graph.bar_bar]
+  bar_ne_self := by intro ⟨_, _⟩; simp [Graph.bar_ne_self]
 
 def contains {u v : V} : G.EdgePath u v → Prop
   | .nil x => x ∈ H.verts
@@ -45,7 +46,7 @@ def contains {u v : V} : G.EdgePath u v → Prop
   induction p with
   | nil => simp
   | cons e _ _ =>
-    simp_rw [← e.source]
+    simp_rw [← e.init_eq]
     aesop
 
 @[aesop safe apply] theorem contains_tail (p : G.EdgePath u v) : H.contains p → v ∈ H.verts := by
@@ -54,13 +55,34 @@ def contains {u v : V} : G.EdgePath u v → Prop
 @[simp] theorem contains_append {u v w : V} (p : G.EdgePath u v) (p' : G.EdgePath v w) : H.contains (p ++ p') ↔ H.contains p ∧ H.contains p' := by
   induction p <;> aesop    
 
+def Subgraph.le {G: Graph V E}(s₁ s₂ : Subgraph G) : Prop :=
+  s₁.verts ⊆ s₂.verts ∧ s₁.edges ⊆ s₂.edges
+
+instance {G: Graph V E} : LE (Subgraph G) := ⟨Subgraph.le⟩
+
+@[simp]
+theorem Subgraph.le_defn {G: Graph V E}(s₁ s₂ : Subgraph G) :
+    s₁ ≤ s₂ ↔ s₁.verts ⊆ s₂.verts ∧ s₁.edges ⊆ s₂.edges := Iff.rfl
+ 
 instance : PartialOrder (Subgraph G) where
-  le := sorry
-  lt := sorry
-  le_refl := sorry
-  le_trans := sorry
-  lt_iff_le_not_le := sorry
-  le_antisymm := sorry
+  le := (·  ≤ ·  )
+  lt := fun s₁ s₂ => s₁ ≤ s₂ ∧ ¬ s₂ ≤ s₁
+  le_refl := by 
+    intro s
+    simp [Subgraph.le_defn, subset_rfl]
+  le_trans := by
+    intro s₁ s₂ s₃ h₁ h₂
+    simp [Subgraph.le_defn] at *
+    apply And.intro
+    · apply subset_trans h₁.1 h₂.1
+    · apply subset_trans h₁.2 h₂.2
+  lt_iff_le_not_le := by simp
+  le_antisymm := by
+    intro s₁ s₂ h₁ h₂
+    simp [Subgraph.le_defn] at *
+    let h := subset_antisymm h₁.1 h₂.1
+    let h' := subset_antisymm h₁.2 h₂.2
+    ext <;> simp [h, h']
 
 end Subgraph
 
@@ -80,32 +102,32 @@ structure Subtree (G : Graph V E) extends PreconnectedSubgraph G where
 attribute [aesop safe apply] Subtree.path_unique
 
 structure Graph.hom {V E V' E' : Type _} (G : Graph V E) (G' : Graph V' E') where
-  vertexMap : V → V'
-  edgeMap : E → E'
-  preserve_init : ∀ e : E, vertexMap (G.ι e) = G'.ι (edgeMap e)
-  preserve_bar : ∀ e : E, edgeMap (G.bar e) = G'.bar (edgeMap e)
+  mapV : V → V'
+  mapE : E → E'
+  preserve_init : ∀ e : E, mapV (G.ι e) = G'.ι (mapE e)
+  preserve_bar : ∀ e : E, mapE (G.bar e) = G'.bar (mapE e)
 
 namespace Graph.hom
 
 variable {V E V' E' : Type _} (G : Graph V E) (G' : Graph V' E') (φ : Graph.hom G G')
 
-theorem preserve_terminal (e : E) : φ.vertexMap (G.τ e) = G'.τ (φ.edgeMap e) := by
+theorem preserve_terminal (e : E) : φ.mapV (G.τ e) = G'.τ (φ.mapE e) := by
   rw [← G.ι_bar, ← G'.ι_bar, preserve_init, preserve_bar]
 
-def edgeBetweenMap {u v : V} (e : G.EdgeBetween u v) : G'.EdgeBetween (φ.vertexMap u) (φ.vertexMap v) where
-  edge := φ.edgeMap e.edge
-  source := by
+def edgeBetweenMap {u v : V} (e : G.EdgeBetween u v) : G'.EdgeBetween (φ.mapV u) (φ.mapV v) where
+  edge := φ.mapE e.edge
+  init_eq := by
     have := φ.preserve_init e.edge
-    rw [e.source] at this
+    rw [e.init_eq] at this
     symm
     assumption
-  target := by
+  term_eq := by
     have := φ.preserve_terminal e.edge
-    rw [e.target] at this
+    rw [e.term_eq] at this
     symm
     assumption
 
-def pathMap {u v : V} : G.EdgePath u v → G'.EdgePath (φ.vertexMap u) (φ.vertexMap v)
+def pathMap {u v : V} : G.EdgePath u v → G'.EdgePath (φ.mapV u) (φ.mapV v)
   | .nil _ => .nil _
   | .cons e p => .cons (φ.edgeBetweenMap e) (pathMap p)
 

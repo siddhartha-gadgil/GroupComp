@@ -37,17 +37,17 @@ namespace Graph
 
 instance : ProperInvolutiveInv E where
   inv := X.bar
-  inv_inv := X.bar_involution
-  no_fixed_points := X.bar_no_fp
+  inv_inv := X.bar_bar
+  no_fixed_points := X.bar_ne_self
 
 instance (H : Subgraph X) : ProperInvolutiveInv ↑H.edges where
   inv e := ⟨X.bar e.val, H.edges_bar e e.prop⟩
   inv_inv := by
     intro; ext
-    apply X.bar_involution
+    apply X.bar_bar
   no_fixed_points := by
     intro ⟨_, _⟩ h
-    apply X.bar_no_fp
+    apply X.bar_ne_self
     simp at h
     assumption
 
@@ -57,11 +57,11 @@ instance (H : Subgraph X) : ProperInvolutiveInv ↑(H.edgesᶜ) where
     apply H.bar_edges; assumption⟩
   inv_inv := by
     intro; ext
-    simp only [bar_involution, Subtype.coe_eta]
+    simp only [bar_bar, Subtype.coe_eta]
   no_fixed_points := by
     intro _
     apply Subtype.ne_of_val_ne
-    apply X.bar_no_fp
+    apply X.bar_ne_self
 
 abbrev SpanningSubtree.ofOutEdge : ↑(Γ.edgesᶜ) →⁻¹ X.π₁ Γ.base where
   toFun e := Γ.surroundEdge (EdgeBetween.ofEdge e.val) 
@@ -80,9 +80,9 @@ abbrev SpanningSubtree.edgeLabelExtension (φ : ↑(Γ.edgesᶜ) →⁻¹ H) : G
       intro _ _ ⟨e, _, _⟩
       by_cases h : e ∈ Γ.edges
       · have : X.bar e ∈ Γ.edges := Γ.edges_bar e h
-        simp only [EdgeBetween.bar_def, this, dite_true, h, inv_one]
+        simp only [EdgeBetween.bar_eq_bar, this, dite_true, h, inv_one]
       · have : X.bar e ∉ Γ.edges := h ∘ (Γ.bar_edges e)
-        simp only [EdgeBetween.bar_def, this, dite_false, h]
+        simp only [EdgeBetween.bar_eq_bar, this, dite_false, h]
         erw [← φ.inv_map']; rfl
   }
 
@@ -124,13 +124,12 @@ def freeFundamentalGroup [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.ed
     ext u v e
     dsimp [SpanningSubtree.edgeLabelExtension]
     split
-    · simp
-      rw [SpanningSubtree.surround_tree_edge, ← map_one ψ]
+    · rw [SpanningSubtree.surround_tree_edge, ← map_one ψ]
       rfl; assumption
     · show ψ.toFun (Γ.surroundEdge _) = ψ.toFun (Γ.surroundEdge _)
       congr 1
       apply Γ.surroundEdge_cast <;> 
-      simp [EdgeBetween.source, EdgeBetween.target]
+      simp [EdgeBetween.init_eq, EdgeBetween.term_eq]
 
 def wedgeCircles.spanningSubTree (S : Type _) : SpanningSubtree (wedgeCircles S) where
   verts := ⊤

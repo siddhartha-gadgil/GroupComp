@@ -60,7 +60,6 @@ noncomputable def irrationalPairWithRationalPower :
       apply Classical.choice
       let ⟨a, b, pf⟩ := exists_irrationals_pow_rational
       use (a, b)
-      assumption
 
 #check irrationalPairWithRationalPower.val -- ℝ × ℝ
 
