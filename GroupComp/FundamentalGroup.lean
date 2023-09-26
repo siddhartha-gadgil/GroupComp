@@ -102,7 +102,7 @@ abbrev SpanningSubtree.inducedMap (φ : ↑(Γ.edgesᶜ) →⁻¹ H) : X.π₁ �
   simp only [GroupLabelledGraph.pathClassLabel_of_pathLabel, SpanningSubtree.contains_path, pathLabel_on_tree_path]
 
 @[instance]
-def freeFundamentalGroup [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges)] : -- TODO remove instance 
+def freeFundamentalGroupSymm [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges)] : -- TODO remove instance 
     SymmFreeGroup (X.π₁ Γ.base) ↑(Γ.edgesᶜ) where
   ι := Γ.ofOutEdge
   induced := Γ.inducedMap 
@@ -131,6 +131,18 @@ def freeFundamentalGroup [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.ed
       apply Γ.surroundEdge_cast <;> 
       simp [EdgeBetween.init_eq, EdgeBetween.term_eq]
 
+namespace Classical
+
+-- A proof that the fundamental group of a graph is free,
+-- which will work once it is shown that any `ProperInvolutiveInv` can be given an orientation
+-- def freeFundamentalGroup :=
+--   @SymmFreeGroup.toFreeGroup G _ _ _ freeFundamentalGroupSymm
+
+end Classical
+
+
+open PathClass
+
 def wedgeCircles.spanningSubTree (S : Type _) : SpanningSubtree (wedgeCircles S) where
   verts := ⊤
   edges := ⊥  
@@ -151,7 +163,7 @@ instance [DecidableEq S] : ∀ {u v : Unit} (e : (wedgeCircles S).EdgeBetween u 
 
 instance wedgeCircles.isSymmFreeGroup (S : Type _) [DecidableEq S] : 
     SymmFreeGroup ((wedgeCircles S).π₁ ()) ↑(wedgeCircles.spanningSubTree S).edgesᶜ :=
-  freeFundamentalGroup (Γ := wedgeCircles.spanningSubTree S)
+  freeFundamentalGroupSymm (Γ := wedgeCircles.spanningSubTree S)
 
 instance wedgeCircles.isFreeGroup (S : Type _) [DecidableEq S] : IsFreeGroup ((wedgeCircles S).π₁ ()) := sorry
 

@@ -87,6 +87,12 @@ def lift [InvolutiveInv Y] : (orientation X → Y) ≃ (X →⁻¹ Y) where
 
 end OrientableInvolutiveInv
 
+namespace Classical
+
+noncomputable scoped instance (priority := low) [ProperInvolutiveInv X] : OrientableInvolutiveInv X := sorry
+
+end Classical
+
 /-- The definition of a free group on a symmetric generating set. -/
 class SymmFreeGroup (G : Type _) [Group G] (X : Type _) [ProperInvolutiveInv X] where
   ι : X →⁻¹ G
