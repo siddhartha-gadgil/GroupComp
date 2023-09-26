@@ -357,22 +357,22 @@ theorem localSection_composition' (τ : V) (p : EdgePath G x₀ τ)
   localSection H ⟦ ⟨τ, p, is_reduced⟩ ⟧ 
   ((groupCoverProj H).mapE ⟦ (⟨τ₀, τ₁, nxt, p', is_reduced'⟩ : Edge G x₀)⟧) h = 
     ⟦ ⟨τ, τ₁, 
-    ⟨nxt.edge, Eq.symm h, nxt.has_term⟩, p, is_reduced⟩ ⟧ := by
+    ⟨nxt.edge, Eq.symm h, nxt.term_eq⟩, p, is_reduced⟩ ⟧ := by
   rw [localSection_composition]
   apply Quotient.sound  
-  simp [nxt.has_term]
+  simp [nxt.term_eq]
   have : (⟨τ, G.τ (nxt.edge), 
     ⟨nxt.edge, Eq.symm h, rfl⟩, p, is_reduced⟩ : Edge G x₀) =
     ⟨τ, τ₁,
-    ⟨nxt.edge, Eq.symm h, nxt.has_term⟩, p, is_reduced⟩ := by
-    simp [nxt.has_term, eq_of_edge_eq]
+    ⟨nxt.edge, Eq.symm h, nxt.term_eq⟩, p, is_reduced⟩ := by
+    simp [nxt.term_eq, eq_of_edge_eq]
     congr
-    rw [nxt.has_term]
+    rw [nxt.term_eq]
     have l {τ : V}(pf: G.τ nxt.edge = τ) :
       HEq (rfl: G.τ nxt.edge  = G.τ nxt.edge ) pf   := by
       cases pf
       simp
-    apply l nxt.has_term     
+    apply l nxt.term_eq     
   rw [this]
   apply @Setoid.refl _ (edgeSetoid H)
   

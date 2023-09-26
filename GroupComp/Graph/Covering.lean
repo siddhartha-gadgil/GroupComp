@@ -102,12 +102,12 @@ def EdgePath.lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}{v₂ w₂ : 
     | nil _ => exact ⟨v₁, nil _, h, (by simp [toList])⟩
     | cons e₂ b₂ =>
       rename_i w₂' w₂''
-      let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.has_init]) 
+      let e₁ := p.localSection v₁ e₂.edge (by rw [h, e₂.init_eq]) 
         -- lift of the edge
       let v₁' := G₁.τ e₁ -- the final vertex of the lift
       have init_vert : G₁.ι e₁ = v₁ := by apply p.init_localSection
       have term_vert : p.mapV (G₁.τ e₁) = w₂'' := by
-        rw [← e₂.has_term]
+        rw [← e₂.term_eq]
         rw [mapV_term ]
         congr
         apply p.mapE_localSection
@@ -131,9 +131,9 @@ def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         rename_i  w₁'' u'
         let e₁ := f.mapE e.edge
         let init_vert : G₂.ι e₁ = v₂ := by
-          rw [←hv, ←e.has_init, ←mapV_init] 
+          rw [←hv, ←e.init_eq, ←mapV_init] 
         let term_vert : G₂.τ e₁ = f.mapV u' := by
-          rw [← mapV_term, e.has_term]
+          rw [← mapV_term, e.term_eq]
         let edge₂ : EdgeBetween G₂ v₂ (f.mapV u') :=
           ⟨e₁, init_vert, term_vert⟩
         let ⟨tail, ih⟩ := pathMapAux f u' w₁ p' (f.mapV u') w₂ rfl hw
@@ -154,11 +154,11 @@ def EdgeBetween.map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
       ⟨f.mapE e.edge, by 
         simp [← f.mapV_init]
         congr
-        exact e.has_init
+        exact e.init_eq
         , by 
         rw [← mapV_term]
         congr
-        exact e.has_term⟩
+        exact e.term_eq⟩
 
 theorem EdgeBetween.map_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
@@ -250,13 +250,13 @@ theorem lifts_homotopic {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
         simp [cons_toList] at *
         let ⟨h₁, h₂⟩ := hyp
         have edg_eq : edg₁.edge = edg₂.edge := by 
-          let eq₁ := p.localSection_mapE v₁ edg₁.edge (Eq.symm edg₁.has_init)
-          let eq₂ := p.localSection_mapE v₁ edg₂.edge (Eq.symm edg₂.has_init)
+          let eq₁ := p.localSection_mapE v₁ edg₁.edge (Eq.symm edg₁.init_eq)
+          let eq₂ := p.localSection_mapE v₁ edg₂.edge (Eq.symm edg₂.init_eq)
           rw [← eq₁, ← eq₂]
           congr
         simp [edg_eq] 
         apply lifts_homotopic p p₁' p₂' 
-        · rw [← edg₁.has_term, ← edg₂.has_term, edg_eq]
+        · rw [← edg₁.term_eq, ← edg₂.term_eq, edg_eq]
         · exact h₂
 
 theorem unique_Pathlift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
@@ -344,7 +344,7 @@ def PathLift.cons_bar_cons {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     {p : Morphism G₁ G₂}[CoveringMap p] {v₁: V₁} {v₂ w₂ w₂' : V₂}
     {h : p.mapV v₁ = v₂}{e: EdgeBetween G₂ v₂ w₂'}{e': EdgePath G₂ v₂ w₂}(lift' : PathLift p v₁  h e') : 
       PathLift p v₁ h (cons e (cons e.bar e')) := 
-      let edgeLift := p.localSection v₁ e.edge (by rw [h, e.has_init])
+      let edgeLift := p.localSection v₁ e.edge (by rw [h, e.init_eq])
       let edgeBetween : EdgeBetween G₁ v₁ (G₁.τ edgeLift) := 
           ⟨edgeLift, p.init_localSection _ _ _, rfl⟩ 
           
@@ -366,7 +366,7 @@ theorem homotopy_step_lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   let θ₁ := η₁.lift p v₁ h
   let w₁ := θ₁.τ
   let hw : p.mapV w₁ = w₂ := θ₁.term_pushdown
-  let edgeLift := p.localSection w₁ e.edge (by rw [hw, e.has_init])
+  let edgeLift := p.localSection w₁ e.edge (by rw [hw, e.init_eq])
   let e' : EdgeBetween G₁ w₁ (G₁.τ edgeLift) := 
           ⟨edgeLift, p.init_localSection _ _ _, rfl⟩ 
   let θ₂ := η₂.lift p w₁ hw 

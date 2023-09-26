@@ -45,7 +45,7 @@ def contains {u v : V} : G.EdgePath u v → Prop
   induction p with
   | nil => simp
   | cons e _ _ =>
-    simp_rw [← e.has_init]
+    simp_rw [← e.init_eq]
     aesop
 
 @[aesop safe apply] theorem contains_tail (p : G.EdgePath u v) : H.contains p → v ∈ H.verts := by
@@ -94,14 +94,14 @@ theorem preserve_terminal (e : E) : φ.mapV (G.τ e) = G'.τ (φ.mapE e) := by
 
 def edgeBetweenMap {u v : V} (e : G.EdgeBetween u v) : G'.EdgeBetween (φ.mapV u) (φ.mapV v) where
   edge := φ.mapE e.edge
-  has_init := by
+  init_eq := by
     have := φ.preserve_init e.edge
-    rw [e.has_init] at this
+    rw [e.init_eq] at this
     symm
     assumption
-  has_term := by
+  term_eq := by
     have := φ.preserve_terminal e.edge
-    rw [e.has_term] at this
+    rw [e.term_eq] at this
     symm
     assumption
 

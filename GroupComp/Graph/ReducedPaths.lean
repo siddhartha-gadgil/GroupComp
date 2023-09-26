@@ -68,7 +68,7 @@ theorem tail_reducible_of_split {G : Graph V E} {u v w v' w': V} {e : EdgeBetwee
   let lhyp := congrArg EdgePath.toList hyp
   simp only [cons_toList, append_toList, EdgeBetween.bar_eq_bar, List.cons.injEq] at lhyp 
   have : v' = v := by
-    rw [← e.has_term, ←ph.has_term]
+    rw [← e.term_eq, ←ph.term_eq]
     symm
     apply congrArg G.τ lhyp.left
   cases this
@@ -156,7 +156,7 @@ theorem reduced_redCons (G : Graph V E) {u v w : V} (e: EdgeBetween G u v) (p : 
             simp [cons_toList, nil_toList, append_toList] at leqn
             rename_i u'' e''
             apply c
-            rw [← e.has_init, ← e'.has_term, ← G.ι_bar, ← leqn.2.1, bar_bar]
+            rw [← e.init_eq, ← e'.term_eq, ← G.ι_bar, ← leqn.2.1, bar_bar]
           | cons ph pt =>
             symm at eqn
             let tred : ¬ reduced (cons e' p') := 

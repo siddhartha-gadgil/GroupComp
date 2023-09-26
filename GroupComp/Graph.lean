@@ -49,32 +49,32 @@ def τ (e : E) : V := G.ι (G.bar e)
   /-- The edge -/
   edge : E
   /-- `edge` has initial vertex `v`  -/
-  has_init : G.ι edge = v
+  init_eq : G.ι edge = v
 deriving DecidableEq
 
 /-- Edge with given initial and terminal vertice in the graph `G` -/
 @[ext] structure EdgeBetween (v w : V) where
   edge : E
-  has_init : G.ι edge = v
-  has_term : G.τ edge = w
+  init_eq : G.ι edge = v
+  term_eq : G.τ edge = w
 deriving DecidableEq
 
-attribute [aesop safe forward] EdgeBetween.has_init EdgeBetween.has_term
+attribute [aesop safe forward] EdgeBetween.init_eq EdgeBetween.term_eq
 
 variable {G} (e : G.EdgeBetween v w)
 
 /-- Reversing the orientation for an edge between `v` and `w`. -/
 def EdgeBetween.bar (e : G.EdgeBetween v w) : G.EdgeBetween w v := 
   { edge := G.bar e.edge
-  , has_init := by aesop
-  , has_term := by aesop
+  , init_eq := by aesop
+  , term_eq := by aesop
   }
 
 /-- Edge as edge between specified vertices. -/
 def EdgeBetween.ofEdge (e : E) : G.EdgeBetween (G.ι e) (G.τ e) where
   edge := e
-  has_init := rfl
-  has_term := rfl
+  init_eq := rfl
+  term_eq := rfl
 
 @[simp] lemma EdgeBetween.ofEdge_eq_self (e : E) : 
   (EdgeBetween.ofEdge (G := G) e).edge = e := rfl
@@ -267,8 +267,8 @@ theorem toList_reverse {G : Graph V E}{v w : V} (p : EdgePath G v w):
       simp [cons_toList, nil_toList] at h
     | cons e₂ p₂'  =>
       simp [cons_toList] at h
-      have e1t := e₁.has_term
-      have e2t := e₂.has_term
+      have e1t := e₁.term_eq
+      have e2t := e₂.term_eq
       rw [h.1] at e1t
       rw [e1t] at e2t
       cases e2t
@@ -304,7 +304,7 @@ theorem terminal_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
     | EdgePath.cons e₂ p₂' =>
       simp [cons_toList] at h
       apply terminal_eq_of_toList_eq p₁' p₂' h.right
-      rw [←e₂.has_term, ←e.has_term, h.left]
+      rw [←e₂.term_eq, ←e.term_eq, h.left]
 
 
 /-- Sequence of reductions of a path by cancelling adjacent edges that are inverses. -/

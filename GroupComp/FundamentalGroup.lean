@@ -128,6 +128,6 @@ instance [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges)
     · show ψ.toFun (Γ.surroundEdge _) = ψ.toFun (Γ.surroundEdge _)
       congr 1
       apply Γ.surroundEdge_cast <;> 
-      simp [EdgeBetween.has_init, EdgeBetween.has_term]
+      simp [EdgeBetween.init_eq, EdgeBetween.term_eq]
 
 end Graph

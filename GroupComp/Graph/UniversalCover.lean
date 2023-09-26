@@ -121,17 +121,17 @@ def proj : Morphism (G.univ x₀) G where
     intro e
     match e with
     | ⟨τ₀, τ₁, nxt, _, _⟩ => 
-      simp only [init_defn, nxt.has_init]
+      simp only [init_defn, nxt.init_eq]
   mapE_bar := by
     intro e
     rfl
       
-lemma shift_heq (τ₀ τ₁ τ₂ : V)(edge : E)(has_init : G.ι edge = τ₀)
-    (has_term₁ : G.τ edge = τ₁)(has_term₂ : G.τ edge = τ₂):
-    HEq (⟨edge, has_init, has_term₁⟩ : EdgeBetween G τ₀ τ₁)
-      (⟨edge, has_init, has_term₂⟩ : EdgeBetween G τ₀ τ₂) := by
-    induction has_term₁
-    induction has_term₂
+lemma shift_heq (τ₀ τ₁ τ₂ : V)(edge : E)(init_eq : G.ι edge = τ₀)
+    (term_eq₁ : G.τ edge = τ₁)(term_eq₂ : G.τ edge = τ₂):
+    HEq (⟨edge, init_eq, term_eq₁⟩ : EdgeBetween G τ₀ τ₁)
+      (⟨edge, init_eq, term_eq₂⟩ : EdgeBetween G τ₀ τ₂) := by
+    induction term_eq₁
+    induction term_eq₂
     rfl
 
 instance : CoveringMap (proj G x₀) where
@@ -155,7 +155,7 @@ instance : CoveringMap (proj G x₀) where
   localSection_mapE := by
     intro v₁ e₁ h₁   
     have : (proj G x₀).mapE e₁ = e₁.nxt.edge := rfl
-    let l := e₁.nxt.has_term
+    let l := e₁.nxt.term_eq
     rw [← this] at l
     match e₁ with
     | ⟨τ₀, τ₁, nxt, p, red⟩ =>
