@@ -35,9 +35,9 @@ theorem relH_symm {τ : V} {v₁ v₂ : EdgePath G x₀ τ} :
   by
     simp [relH]
     intro h
-    let h': [[v₁ ++ EdgePath.reverse v₂]].inv ∈ H := inv_mem h
+    let h': [[v₁ ++ v₂.reverse]].inv ∈ H := inv_mem h
     rw [inv_equiv_reverse, 
-      EdgePath.reverse_append,  reverse_reverse] at h'
+      reverse_append,  reverse_reverse] at h'
     exact h'
 
 theorem relH_trans {τ : V} {v₁ v₂ v₃ : EdgePath G x₀ τ} :
@@ -46,8 +46,8 @@ theorem relH_trans {τ : V} {v₁ v₂ v₃ : EdgePath G x₀ τ} :
     simp [relH]
     intro h₁ h₂
     let h₃  := mul_mem h₁ h₂
-    rw [mul_path_path, EdgePath.append_assoc, 
-      ←EdgePath.append_assoc v₂.reverse, ← mul_path_path,
+    rw [mul_path_path, append_assoc, 
+      ← append_assoc v₂.reverse, ← mul_path_path,
       ← mul_path_path] at h₃
     simp only [reverse_append_self] at h₃ 
     rw [mul_path_path] at h₃
@@ -212,7 +212,7 @@ def bar : Quotient (edgeSetoid H) → Quotient (edgeSetoid H) := by
     simp [reducedConcat, ← cons_homotopic_redCons, cons_equiv_of_equiv, PathClass]
     rw [inv_equiv_reverse, mul_path_path, reverse_cons, reverse_reverse, EdgeBetween.bar_bar,
     concat_append]
-    have : [[p ++ cons e (cons (EdgeBetween.bar e) (EdgePath.reverse p'))]] = [[ p ++ p'.reverse ]] := by
+    have : [[p ++ cons e (cons (e.bar) (p'.reverse))]] = [[ p ++ p'.reverse ]] := by
       apply Quot.sound
       apply Reduction.step
     rw [this]
@@ -357,22 +357,22 @@ theorem localSection_composition' (τ : V) (p : EdgePath G x₀ τ)
   localSection H ⟦ ⟨τ, p, is_reduced⟩ ⟧ 
   ((groupCoverProj H).mapE ⟦ (⟨τ₀, τ₁, nxt, p', is_reduced'⟩ : Edge G x₀)⟧) h = 
     ⟦ ⟨τ, τ₁, 
-    ⟨nxt.edge, Eq.symm h, nxt.target⟩, p, is_reduced⟩ ⟧ := by
+    ⟨nxt.edge, Eq.symm h, nxt.has_term⟩, p, is_reduced⟩ ⟧ := by
   rw [localSection_composition]
   apply Quotient.sound  
-  simp [nxt.target]
+  simp [nxt.has_term]
   have : (⟨τ, G.τ (nxt.edge), 
     ⟨nxt.edge, Eq.symm h, rfl⟩, p, is_reduced⟩ : Edge G x₀) =
     ⟨τ, τ₁,
-    ⟨nxt.edge, Eq.symm h, nxt.target⟩, p, is_reduced⟩ := by
-    simp [nxt.target, eq_of_edge_eq]
+    ⟨nxt.edge, Eq.symm h, nxt.has_term⟩, p, is_reduced⟩ := by
+    simp [nxt.has_term, eq_of_edge_eq]
     congr
-    rw [nxt.target]
+    rw [nxt.has_term]
     have l {τ : V}(pf: G.τ nxt.edge = τ) :
       HEq (rfl: G.τ nxt.edge  = G.τ nxt.edge ) pf   := by
       cases pf
       simp
-    apply l nxt.target     
+    apply l nxt.has_term     
   rw [this]
   apply @Setoid.refl _ (edgeSetoid H)
   

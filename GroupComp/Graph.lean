@@ -4,13 +4,28 @@ import Mathlib.CategoryTheory.Endomorphism
 import Mathlib.Algebra.Group.Basic
 import Mathlib.CategoryTheory.Endomorphism
 import Mathlib
+/-!
+# Graphs (a la Serre)
 
+This file defines graphs, as defined by Serre in his book Trees. A graph is a type `V` of vertices, a type `E` of edges, and functions `ι : E → V` and `bar : E → E` satisfying some axioms.
+
+We also define paths of graphs and homotopy between paths via reduction. To define paths it is useful to define a type for edges between two vertices.
+
+We show that paths are determined by their initial vertices and list of edges. This is convenient as it allows us to avoid some of the subtleties of indexed inductive types.
+-/
 universe u v
 
+/--
+Graph a la Serre.
+-/
 @[class] structure Graph (V : Type u) (E : Type v) where
+  /-- The initial vertex of an edge in the Graph `G`. -/
   ι : E → V
+  /-- Edge with reversed orientation. -/
   bar : E → E
+  /-- Reversing the orientation of an edge is an involution. -/
   bar_bar : ∀ e, bar (bar e) = e
+  /-- An edge reversed is different from itself. -/
   bar_ne_self : ∀ e, e ≠ bar e
 
 namespace Graph
@@ -21,6 +36,7 @@ variable {u v w : V}
 
 attribute [simp] bar_bar
 
+/-- Terminal vertex of an edge in the graph `G`-/
 def τ (e : E) : V := G.ι (G.bar e)
 
 @[simp] theorem ι_bar (e : E) :  G.ι (G.bar e) = G.τ e := rfl
@@ -28,31 +44,37 @@ def τ (e : E) : V := G.ι (G.bar e)
 @[simp] theorem τ_bar (e : E) :  G.τ (G.bar e) = G.ι e := by
   aesop (add norm unfold [τ])
 
+/-- Edge with given initial vertex in the graph `G` -/
 @[ext] structure EdgeFrom (v : V) where
+  /-- The edge -/
   edge : E
-  source : G.ι edge = v
+  /-- `edge` has initial vertex `v`  -/
+  has_init : G.ι edge = v
 deriving DecidableEq
 
+/-- Edge with given initial and terminal vertice in the graph `G` -/
 @[ext] structure EdgeBetween (v w : V) where
   edge : E
-  source : G.ι edge = v
-  target : G.τ edge = w
+  has_init : G.ι edge = v
+  has_term : G.τ edge = w
 deriving DecidableEq
 
-attribute [aesop safe forward] EdgeBetween.source EdgeBetween.target
+attribute [aesop safe forward] EdgeBetween.has_init EdgeBetween.has_term
 
 variable {G} (e : G.EdgeBetween v w)
 
+/-- Reversing the orientation for an edge between `v` and `w`. -/
 def EdgeBetween.bar (e : G.EdgeBetween v w) : G.EdgeBetween w v := 
   { edge := G.bar e.edge
-  , source := by aesop
-  , target := by aesop
+  , has_init := by aesop
+  , has_term := by aesop
   }
 
+/-- Edge as edge between specified vertices. -/
 def EdgeBetween.ofEdge (e : E) : G.EdgeBetween (G.ι e) (G.τ e) where
   edge := e
-  source := rfl
-  target := rfl
+  has_init := rfl
+  has_term := rfl
 
 @[simp] lemma EdgeBetween.ofEdge_eq_self (e : E) : 
   (EdgeBetween.ofEdge (G := G) e).edge = e := rfl
@@ -63,19 +85,23 @@ def EdgeBetween.ofEdge (e : E) : G.EdgeBetween (G.ι e) (G.τ e) where
     ext; aesop (add norm simp [EdgeBetween.bar])
 
 -- @[aesop unsafe [cases, constructors]]
+/-- A path consisting of edges of the graph `G` between specified vertices. -/
 inductive EdgePath (G : Graph V E) : V → V → Type _ where
   | nil (v) : G.EdgePath v v
   | cons {v w u} : G.EdgeBetween v w → G.EdgePath w u → G.EdgePath v u
 deriving DecidableEq
 
+/-- Path with a single edge -/
 abbrev singletonPath (e : G.EdgeBetween u v) := EdgePath.cons e (.nil v)
 
 namespace EdgePath
 
+/-- Length of a path -/
 def length {v w : V} : G.EdgePath v w → ℕ
   | nil _ => 0
   | cons _ p'  => p'.length.succ
 
+/-- Concatenation of an edge between `w` and `u` to a path between `v` and `w`. -/
 def concat {v w u : V} (p : G.EdgePath v w) (e : G.EdgeBetween w u) : G.EdgePath v u := 
   match p with
   | nil .(v) => cons e (nil u)      
@@ -84,6 +110,7 @@ def concat {v w u : V} (p : G.EdgePath v w) (e : G.EdgeBetween w u) : G.EdgePath
 @[simp] theorem concat_cons {v w u u': V} (e: G.EdgeBetween v w) (p: G.EdgePath w u) (e': G.EdgeBetween u u')  : 
     concat (cons e p) e' = cons e (concat p e') := by rfl
 
+/-- Reverse of a path -/
 def reverse {v w : V} (p : G.EdgePath v w) : G.EdgePath w v := 
   match p with
   | nil .(v) => 
@@ -101,6 +128,7 @@ theorem reverse_concat {v w u : V} (p: G.EdgePath v w) (e: G.EdgeBetween w u) :
     reverse (concat p e) = cons e.bar (reverse p) := by 
     induction p <;> aesop (add norm simp [concat_cons, reverse_cons])
 
+/-- Appending a path between `w` and `u` to a path between `v` and `w` -/
 def append { v w u : V}
     (p : G.EdgePath v w) (q : G.EdgePath w u) : G.EdgePath v u :=
   match p with
@@ -108,10 +136,12 @@ def append { v w u : V}
   | cons  e' p'  => 
       cons e' <| append p' q
 
+/-- Folding a function along a path -/
 def fold (φ : {u v : V} → G.EdgeBetween u v → A) (comp : A → A → A) (init : A) {v w : V} : G.EdgePath v w → A
   | .nil _ => init
   | .cons e p => comp (φ e) (fold φ comp init p)
 
+/--Appending paths using `_++_` -/
 instance  G.edgePathAppend {v w u : V} {G : Graph V E} : 
   HAppend (G.EdgePath v w) (G.EdgePath w u) (G.EdgePath v u) := 
     ⟨append⟩
@@ -161,6 +191,14 @@ theorem reverse_append {u v w : V} (p : G.EdgePath u v)
     (p ++ q).reverse = q.reverse ++ p.reverse := by
   induction p <;>
     aesop (add norm simp [reverse_cons, concat_eq_append_edge, append_assoc])
+
+/-!
+## Lists of edges
+
+We associate lists of edges to paths in the obvious way. Note that lists of edges are not typically associated to paths. However, they determine the paths.
+
+This makes proofs of paths much easier by avoiding the need to reason about indexed inductive types.
+-/
 
 def toList {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
   List E := 
@@ -229,8 +267,8 @@ theorem toList_reverse {G : Graph V E}{v w : V} (p : EdgePath G v w):
       simp [cons_toList, nil_toList] at h
     | cons e₂ p₂'  =>
       simp [cons_toList] at h
-      have e1t := e₁.target
-      have e2t := e₂.target
+      have e1t := e₁.has_term
+      have e2t := e₂.has_term
       rw [h.1] at e1t
       rw [e1t] at e2t
       cases e2t
@@ -266,19 +304,22 @@ theorem terminal_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
     | EdgePath.cons e₂ p₂' =>
       simp [cons_toList] at h
       apply terminal_eq_of_toList_eq p₁' p₂' h.right
-      rw [←e₂.target, ←e.target, h.left]
+      rw [←e₂.has_term, ←e.has_term, h.left]
 
 
-
+/-- Sequence of reductions of a path by cancelling adjacent edges that are inverses. -/
 @[aesop safe [constructors, cases]]
 inductive Reduction {v w : V}:
       G.EdgePath v w →  G.EdgePath v w →  Prop where
+  /-- A cancellation of adjacent edges that are reductions -/
   | step (u u' : V)(e : G.EdgeBetween u u') (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) : 
       Reduction (p₁ ++ (cons e (cons e.bar p₂))) (p₁ ++ p₂)
 
+/-- A path being reduced, i.e., admitting no reductions. -/
 def reduced  {v w : V} (p : G.EdgePath v w) : Prop := 
   ∀ p', ¬ Reduction p p'
 
+/-- Reduction data and the corresponding relation -/
 theorem Reduction.property {v w : V} {p' : G.EdgePath v w}(p : G.EdgePath v w) : 
   Reduction p p' →
   ∃ u u': V, ∃ e : G.EdgeBetween u u', 
@@ -334,9 +375,11 @@ theorem reverse_reduced_iff {v w : V} (p : G.EdgePath v w) :
     apply reverse_reduced 
     assumption
 
+/-- Paths up to the equivalence relation generated by reduction. -/
 abbrev PathClass (G: Graph V E) (v w : V)  := 
     Quot <| @Reduction _ _ G v w
 
+/-- The class of a path up to the equivalence generated by reduction. -/
 abbrev homotopyClass  {v w : V} (p : G.EdgePath v w) :
    PathClass G v w  := 
   Quot.mk _ p
@@ -479,6 +522,19 @@ instance : Group (π₁ G v) where
   inv := PathClass.inv
   mul_left_inv := PathClass.inv_mul
 
+def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
+  ι := fun _ ↦ ()
+  bar := fun (e, b) ↦ (e, !b)
+  bar_bar := by aesop
+  bar_ne_self := by aesop
+}
+
+@[ext]
+structure PathClassFrom (G : Graph V E) (v : V) where
+  τ  : V
+  pathClass : PathClass G v τ
+
+
 -- Try to avoid this stuff
 
 open CategoryTheory
@@ -564,17 +620,5 @@ protected def inv_def (p : base ⟶ base) : (inv p) = (p : G.π₁ base)⁻¹ :=
   simp only [Groupoid.vertexGroup_inv, Groupoid.inv_eq_inv]
 
 end π₁
-
-def wedgeCircles (S: Type) : Graph Unit (S × Bool) := {
-  ι := fun _ ↦ ()
-  bar := fun (e, b) ↦ (e, !b)
-  bar_bar := by aesop
-  bar_ne_self := by aesop
-}
-
-@[ext]
-structure PathClassFrom (G : Graph V E) (v : V) where
-  τ  : V
-  pathClass : PathClass G v τ
 
 end Graph
