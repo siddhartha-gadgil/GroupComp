@@ -3,6 +3,7 @@ import Mathlib.Data.SetLike.Basic
 
 namespace Graph
 
+@[ext]
 structure Subgraph {V E : Type _} (G : Graph V E) where
   verts : Set V
   edges : Set E
@@ -54,13 +55,34 @@ def contains {u v : V} : G.EdgePath u v → Prop
 @[simp] theorem contains_append {u v w : V} (p : G.EdgePath u v) (p' : G.EdgePath v w) : H.contains (p ++ p') ↔ H.contains p ∧ H.contains p' := by
   induction p <;> aesop    
 
+def Subgraph.le {G: Graph V E}(s₁ s₂ : Subgraph G) : Prop :=
+  s₁.verts ⊆ s₂.verts ∧ s₁.edges ⊆ s₂.edges
+
+instance {G: Graph V E} : LE (Subgraph G) := ⟨Subgraph.le⟩
+
+@[simp]
+theorem Subgraph.le_defn {G: Graph V E}(s₁ s₂ : Subgraph G) :
+    s₁ ≤ s₂ ↔ s₁.verts ⊆ s₂.verts ∧ s₁.edges ⊆ s₂.edges := Iff.rfl
+ 
 instance : PartialOrder (Subgraph G) where
-  le := fun s₁ s₂ ↦ s₁.verts ⊆ s₂.verts ∧ s₁.edges ⊆ s₂.edges
-  lt := sorry
-  le_refl := sorry
-  le_trans := sorry
-  lt_iff_le_not_le := sorry
-  le_antisymm := sorry
+  le := (·  ≤ ·  )
+  lt := fun s₁ s₂ => s₁ ≤ s₂ ∧ ¬ s₂ ≤ s₁
+  le_refl := by 
+    intro s
+    simp [Subgraph.le_defn, subset_rfl]
+  le_trans := by
+    intro s₁ s₂ s₃ h₁ h₂
+    simp [Subgraph.le_defn] at *
+    apply And.intro
+    · apply subset_trans h₁.1 h₂.1
+    · apply subset_trans h₁.2 h₂.2
+  lt_iff_le_not_le := by simp
+  le_antisymm := by
+    intro s₁ s₂ h₁ h₂
+    simp [Subgraph.le_defn] at *
+    let h := subset_antisymm h₁.1 h₂.1
+    let h' := subset_antisymm h₁.2 h₂.2
+    ext <;> simp [h, h']
 
 end Subgraph
 
