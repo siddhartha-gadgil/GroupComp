@@ -1,5 +1,6 @@
 import GroupComp.Graph
 import Mathlib.Data.List.Basic
+import Mathlib
 
 namespace Graph 
 
@@ -31,6 +32,123 @@ theorem mapV_term {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   intro e
   rw [Graph.τ, Graph.τ, ←mapE_bar, ←mapV_init]
 
+def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁): 
+      {path : G₂.EdgePath (f.mapV v₁) (f.mapV w₁) // path.toList = p.toList.map f.mapE} := by 
+      match p with
+      | nil _ =>
+        exact ⟨nil _, by simp [nil_toList]⟩
+      | cons e p' => 
+        rename_i  w₁'' u'
+        let e₁ := f.mapE e.edge
+        let init_vert : G₂.ι e₁ = f.mapV v₁ := by
+          rw [←e.init_eq, ←mapV_init] 
+        let term_vert : G₂.τ e₁ = f.mapV u' := by
+          rw [← mapV_term, e.term_eq]
+        let edge₂ : EdgeBetween G₂ (f.mapV v₁) (f.mapV u') :=
+          ⟨e₁, init_vert, term_vert⟩
+        let ⟨tail, ih⟩ := pathMapAux f u' w₁ p' 
+        exact ⟨cons edge₂ tail, by simp [cons_toList, ih]⟩ 
+
+
+def EdgePath.map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}{v₁ w₁: V₁} 
+    (p: G₁.EdgePath v₁ w₁)(f: Morphism G₁ G₂)  :=
+    (f.pathMapAux v₁ w₁ p).val
+
+theorem EdgePath.map_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (f: Morphism G₁ G₂) {v₁ w₁: V₁} (p: G₁.EdgePath v₁ w₁) :
+      (p.map f).toList = p.toList.map f.mapE := 
+      (f.pathMapAux v₁ w₁ p).property
+
+def EdgeBetween.map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
+      G₂.EdgeBetween (f.mapV v₁) (f.mapV w₁) :=
+      ⟨f.mapE e.edge, by 
+        simp [← f.mapV_init]
+        congr
+        exact e.init_eq
+        , by 
+        rw [← mapV_term]
+        congr
+        exact e.term_eq⟩
+
+theorem EdgeBetween.map_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
+      (e.map f).edge = f.mapE e.edge := by
+        simp [EdgeBetween.map, toList]
+
+theorem EdgeBetween.map_bar {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
+      (e.map f).bar = e.bar.map f := by
+        ext
+        simp [f.mapE_bar, EdgeBetween.map]
+
+namespace Morphism
+
+variable {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} (f: Morphism G₁ G₂)
+
+theorem append_map {u v w : V₁}(η : EdgePath G₁ u v)(η' : EdgePath G₁ v w):
+   (η ++ η').map f = (η.map f) ++ (η'.map f) := by
+      apply eq_of_toList_eq
+      simp [map_toList, append_toList]
+      
+theorem cons_map {u v w : V₁}(e : G₁.EdgeBetween u v)(η : EdgePath G₁ v w):
+  (cons e η).map f = cons (e.map f) (η.map f) := by
+      apply eq_of_toList_eq
+      simp [map_toList, EdgeBetween.map_toList, cons_toList]
+
+theorem reverse_map {u v : V₁}(η : EdgePath G₁ u v):
+  η.reverse.map f = (η.map f).reverse := by
+      apply eq_of_toList_eq
+      simp [map_toList, reverse_toList, List.map_reverse]
+      congr
+      funext e
+      simp only [Function.comp, f.mapE_bar]
+
+theorem map_of_reduction {v w : V₁} (η₁ η₂ : EdgePath G₁ v w):
+  Reduction η₁ η₂ → Reduction (η₁.map f) (η₂.map f) 
+  | Reduction.step u u' e p₁ p₂ => by 
+    simp [append_map, cons_map]
+    rw [← EdgeBetween.map_bar]
+    apply Reduction.step
+
+
+end Morphism
+
+namespace PathClass
+
+variable {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} (f: Morphism G₁ G₂)
+
+def map  {v w : V₁}:
+  PathClass G₁ v w → PathClass G₂ (f.mapV v) (f.mapV w) := by
+    apply Quot.lift (fun η => [[η.map f ]]) 
+    intro η₁ η₂ step
+    apply Quot.sound
+    apply Morphism.map_of_reduction f η₁ η₂ step
+
+theorem map_on_quotient  {v w : V₁}
+  (η : EdgePath G₁ v w) : [[ η ]].map f = [[ η.map f ]] := by
+    rfl
+
+theorem map_mul {v w u : V₁}: 
+  (η₁ : PathClass G₁ v w) →  (η₂ : PathClass G₁ w u) → 
+    (η₁ * η₂).map f = η₁.map f * η₂.map f := by
+    apply Quot.ind
+    intro a
+    apply Quot.ind
+    intro b
+    simp only [mul_path_path, map_on_quotient, Morphism.append_map]
+    
+
+end PathClass
+
+def π₁map  {v : V₁}{G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+  (f: Morphism G₁ G₂): π₁ G₁ v  →* π₁ G₂ (f.mapV v)  := {
+  toFun := fun η => η.map f,
+  map_mul' := fun η₁ η₂ => map_mul f η₁ η₂,
+  map_one' := by rfl
+  }
+    
 
 
 
@@ -119,107 +237,6 @@ def EdgePath.lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}{v₂ w₂ : 
         apply p.mapE_localSection⟩
 
 
-def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁)
-    (v₂ w₂ : V₂)(hv : f.mapV v₁ = v₂)(hw : f.mapV w₁ = w₂) : 
-      {path : G₂.EdgePath v₂ w₂ // path.toList = p.toList.map f.mapE} := by 
-      match p with
-      | nil _ =>
-        rw [←hw, hv]
-        exact ⟨nil _, by simp [nil_toList]⟩
-      | cons e p' => 
-        rename_i  w₁'' u'
-        let e₁ := f.mapE e.edge
-        let init_vert : G₂.ι e₁ = v₂ := by
-          rw [←hv, ←e.init_eq, ←mapV_init] 
-        let term_vert : G₂.τ e₁ = f.mapV u' := by
-          rw [← mapV_term, e.term_eq]
-        let edge₂ : EdgeBetween G₂ v₂ (f.mapV u') :=
-          ⟨e₁, init_vert, term_vert⟩
-        let ⟨tail, ih⟩ := pathMapAux f u' w₁ p' (f.mapV u') w₂ rfl hw
-        exact ⟨cons edge₂ tail, by simp [cons_toList, ih]⟩ 
-
-def EdgePath.map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}{v₁ w₁: V₁} 
-    (p: G₁.EdgePath v₁ w₁)(f: Morphism G₁ G₂)  :=
-    (f.pathMapAux v₁ w₁ p (f.mapV v₁) (f.mapV w₁) rfl rfl).val
-
-theorem EdgePath.map_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (f: Morphism G₁ G₂) {v₁ w₁: V₁} (p: G₁.EdgePath v₁ w₁) :
-      (p.map f).toList = p.toList.map f.mapE := 
-      (f.pathMapAux v₁ w₁ p (f.mapV v₁) (f.mapV w₁) rfl rfl).property
-
-def EdgeBetween.map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
-      G₂.EdgeBetween (f.mapV v₁) (f.mapV w₁) :=
-      ⟨f.mapE e.edge, by 
-        simp [← f.mapV_init]
-        congr
-        exact e.init_eq
-        , by 
-        rw [← mapV_term]
-        congr
-        exact e.term_eq⟩
-
-theorem EdgeBetween.map_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
-      (e.map f).edge = f.mapE e.edge := by
-        simp [EdgeBetween.map, toList]
-
-theorem EdgeBetween.map_bar {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
-      (e.map f).bar = e.bar.map f := by
-        ext
-        simp [f.mapE_bar, EdgeBetween.map]
-
-namespace Morphism
-
-variable {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} (f: Morphism G₁ G₂)
-
-theorem append_map {u v w : V₁}(η : EdgePath G₁ u v)(η' : EdgePath G₁ v w):
-   (η ++ η').map f = (η.map f) ++ (η'.map f) := by
-      apply eq_of_toList_eq
-      simp [map_toList, append_toList]
-      
-theorem cons_map {u v w : V₁}(e : G₁.EdgeBetween u v)(η : EdgePath G₁ v w):
-  (cons e η).map f = cons (e.map f) (η.map f) := by
-      apply eq_of_toList_eq
-      simp [map_toList, EdgeBetween.map_toList, cons_toList]
-
-theorem reverse_map {u v : V₁}(η : EdgePath G₁ u v):
-  η.reverse.map f = (η.map f).reverse := by
-      apply eq_of_toList_eq
-      simp [map_toList, reverse_toList, List.map_reverse]
-      congr
-      funext e
-      simp only [Function.comp, f.mapE_bar]
-
-theorem map_of_reduction {v w : V₁} (η₁ η₂ : EdgePath G₁ v w):
-  Reduction η₁ η₂ → Reduction (η₁.map f) (η₂.map f) 
-  | Reduction.step u u' e p₁ p₂ => by 
-    simp [append_map, cons_map]
-    rw [← EdgeBetween.map_bar]
-    apply Reduction.step
-
-
-end Morphism
-
-namespace PathClass
-
-variable {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} (f: Morphism G₁ G₂)
-
-def map  {v w : V₁}:
-  PathClass G₁ v w → PathClass G₂ (f.mapV v) (f.mapV w) := by
-    apply Quot.lift (fun η => [[η.map f ]]) 
-    intro η₁ η₂ step
-    apply Quot.sound
-    apply Morphism.map_of_reduction f η₁ η₂ step
-
-theorem map_on_quotient  {v w : V₁}
-  (η : EdgePath G₁ v w) : [[ η ]].map f = [[ η.map f ]] := by
-    rfl
-
-
-end PathClass
 
 
 def asPathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
