@@ -1,6 +1,7 @@
 import Mathlib.GroupTheory.IsFreeGroup
 import Mathlib.Data.Bool.Basic
 import Mathlib.Order.Zorn
+import Mathlib.Data.Set.Functor
 
 #check IsFreeGroup
 
@@ -90,7 +91,62 @@ end OrientableInvolutiveInv
 
 namespace Classical
 
-#check zorn_partialOrder
+variable {X : Type _} [ProperInvolutiveInv X]
+
+def InvFreeSet (S : Set X) := ∀ x ∈ S, x⁻¹ ∉ S
+
+variable (X) in
+abbrev InvFreeSets := {S : Set X // InvFreeSet S}
+
+instance : PartialOrder (InvFreeSets X) where
+  le_antisymm S T hST hTS := by ext; aesop
+
+def InvFreeSets.chainUnion (c : Set (InvFreeSets X)) (hcChain : IsChain (·.val ⊆ ·.val) c) : InvFreeSets X :=
+  ⟨Monad.join (Subtype.val '' c), by
+    intro x hxS hx'S
+    simp only [Monad.join, joinM, Set.bind_def, Set.mem_image, exists_and_right, exists_eq_right, id_eq,
+      Set.iUnion_exists, Set.mem_iUnion, exists_prop] at hxS hx'S 
+    have ⟨_, ⟨U, hUc, rfl⟩, hxU⟩ := hxS
+    have ⟨_, ⟨V, hVc, rfl⟩, hxV⟩ := hx'S
+    have hUV := hcChain hUc hVc
+    by_cases h:U = V
+    · subst h
+      exact U.prop x ‹_› ‹_›
+    · dsimp at hUV
+      have hUV := hUV h
+      cases hUV
+      · have hxV : x ∈ V.val := by aesop
+        exact V.prop x ‹_› ‹_›
+      · have hx'U : x⁻¹ ∈ U.val := by aesop
+        exact U.prop x ‹_› ‹_›
+  ⟩   
+
+lemma InvFreeSets.chains_bounded_above (c : Set (InvFreeSets X))
+    (hcChain : IsChain LE.le c) : BddAbove c := by
+  dsimp [BddAbove, upperBounds]
+  let sup := InvFreeSets.chainUnion c hcChain
+  use sup
+  intro A hAc
+  simp only [LE.le, chainUnion, Monad.join, joinM, Set.bind_def, Set.mem_image, exists_and_right,
+    exists_eq_right, id_eq, Set.iUnion_exists]
+  -- the argument below is very low level
+  intro x hxA
+  use A
+  refine' ⟨_, hxA⟩
+  use A
+  dsimp
+  ext
+  simp
+  intro
+  exact ⟨A.prop, hAc⟩
+
+variable (X) in
+noncomputable def ProperInvolutiveInv.orientation :=
+  Classical.choose <| zorn_partialOrder <| InvFreeSets.chains_bounded_above (X := X)
+
+theorem ProperInvolutiveInv.orientation_spec : ∀ S : InvFreeSets X, 
+    (ProperInvolutiveInv.orientation X).val ⊆ S.val → S = (ProperInvolutiveInv.orientation X) :=
+  Classical.choose_spec <| zorn_partialOrder <| InvFreeSets.chains_bounded_above (X := X)
 
 noncomputable scoped instance (priority := low) [ProperInvolutiveInv X] : OrientableInvolutiveInv X where
   pos := sorry
