@@ -141,16 +141,59 @@ lemma InvFreeSets.chains_bounded_above (c : Set (InvFreeSets X))
   exact ⟨A.prop, hAc⟩
 
 variable (X) in
-noncomputable def ProperInvolutiveInv.orientation :=
+noncomputable def ProperInvolutiveInv.maxInvFreeSet :=
   Classical.choose <| zorn_partialOrder <| InvFreeSets.chains_bounded_above (X := X)
 
-theorem ProperInvolutiveInv.orientation_spec : ∀ S : InvFreeSets X, 
-    (ProperInvolutiveInv.orientation X).val ⊆ S.val → S = (ProperInvolutiveInv.orientation X) :=
-  Classical.choose_spec <| zorn_partialOrder <| InvFreeSets.chains_bounded_above (X := X)
+theorem ProperInvolutiveInv.maxInvFreeSet_spec : ∀ S : InvFreeSets X, 
+    (maxInvFreeSet X).val ⊆ S.val → S = (maxInvFreeSet X) :=
+  Classical.choose_spec <| zorn_partialOrder <| InvFreeSets.chains_bounded_above (X := X) 
+
+noncomputable def ProperInvolutiveInv.orientation : X → Bool := 
+  fun x ↦ Decidable.decide (x ∈ (ProperInvolutiveInv.maxInvFreeSet X).val)
+
+lemma ProperInvolutiveInv.maxInvFreeSet_mem_inv {x : X} :
+    x ∉ (maxInvFreeSet X).val → x⁻¹ ∈ (maxInvFreeSet X).val := by
+  intro h
+  let C : InvFreeSets X := 
+    ⟨(maxInvFreeSet X).val.insert x⁻¹, by
+        simp only [Set.insert]
+        intro a h
+        simp only [Set.mem_setOf_eq] at h
+        cases h
+        · subst ‹a = x⁻¹›
+          rw [ProperInvolutiveInv.toInvolutiveInv.inv_inv]
+          simp [not_or]
+          refine' ⟨_, h⟩
+          exact ProperInvolutiveInv.no_fixed_points _
+        · simp [not_or]
+          constructor
+          · rintro rfl
+            contradiction
+          · apply (maxInvFreeSet X).prop a ‹_›
+    ⟩
+  have : (maxInvFreeSet X).val ⊆ C.val := by
+    show (maxInvFreeSet X).val ⊆ (maxInvFreeSet X).val.insert x⁻¹
+    intro _; aesop (add norm simp [Set.insert])
+  have := maxInvFreeSet_spec C this
+  rw [← this]
+  simp only [Set.insert, Set.mem_setOf_eq, true_or]
+
+theorem ProperInvolutiveInv.selection (x : X) :
+    xor (ProperInvolutiveInv.orientation x) (ProperInvolutiveInv.orientation x⁻¹) := by
+  rw [@Bool.xor_iff_ne]
+  dsimp [orientation]
+  rw [@decide_eq_decide]
+  intro hmem
+  rw [@iff_eq_eq] at hmem 
+  by_cases hx:x ∈ (maxInvFreeSet X).val
+  · exact (maxInvFreeSet X).prop x hx (hmem ▸ hx)   
+  · have :=  maxInvFreeSet_mem_inv hx
+    rw [← hmem] at this
+    contradiction
 
 noncomputable scoped instance (priority := low) [ProperInvolutiveInv X] : OrientableInvolutiveInv X where
-  pos := sorry
-  selection := sorry
+  pos := ProperInvolutiveInv.orientation (X := X)
+  selection := ProperInvolutiveInv.selection
 
 end Classical
 
