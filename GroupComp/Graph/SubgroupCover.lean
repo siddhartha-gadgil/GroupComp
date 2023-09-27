@@ -10,7 +10,7 @@ variable {V : Type u} {E : Type v} [DecidableEq V] [DecidableEq E]
 
 variable {G: Graph V E} {x₀ : V}
 
-variable (H : Subgroup (π₁ G x₀))
+variable (H : Subgroup (π₁ G x₀)) 
 
 abbrev rel : Vert G x₀ → Vert G x₀ → Prop
 | ⟨τ₁, v₁, _⟩, ⟨τ₂, v₂, _⟩ => by
@@ -173,6 +173,9 @@ theorem edge_eq_of_r :{e₁ e₂ : Edge G x₀ } →
 
 def QuotVert  := Quotient (vertSetoid H)
 def QuotEdge  := Quotient (edgeSetoid H)
+
+def basepoint : QuotVert H  := 
+  ⟦ UniversalCover.basepoint G x₀ ⟧
 
 namespace Quot
 
@@ -426,6 +429,22 @@ instance : CoveringMap (groupCoverProj H)  where
     simp [HasEquiv.Equiv, Setoid.r, relH] 
     simp [HasEquiv.Equiv, Setoid.r, relH] at rel
     exact rel
+
+theorem imageInSubgroup : ∀ h : π₁ (groupCover H) (basepoint H), 
+      (groupCoverProj H).π₁map (basepoint H) h ∈ H := by
+      apply Quot.ind
+      intro η
+      let η' := reduced η
+      -- have eqn := reduction_homotopic_self η
+      simp [Morphism.π₁map, PathClass.map]
+      sorry 
+
+theorem groupImage : ∀ (g : π₁ G x₀),  
+  (g ∈ H ↔ ∃ h' : π₁ (groupCover H) (basepoint H), 
+      h = (groupCoverProj H).π₁map (basepoint H) h') := by
+      apply Quot.ind
+      intro η
+      sorry
 
 end SubgroupCover
 

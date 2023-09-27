@@ -142,7 +142,7 @@ theorem map_mul {v w u : V₁}:
 
 end PathClass
 
-def π₁map  {v : V₁}{G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+def Morphism.π₁map  (v : V₁){G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
   (f: Morphism G₁ G₂): π₁ G₁ v  →* π₁ G₂ (f.mapV v)  := {
   toFun := fun η => η.map f,
   map_mul' := fun η₁ η₂ => map_mul f η₁ η₂,
@@ -478,5 +478,15 @@ theorem proj_injective {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     rw [lift_of_proj] at lem
     simp at lem
     exact lem
+
+theorem cover_π₁injective {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p: Morphism G₁ G₂)[CoveringMap p] {v : V₁}:
+    Function.Injective (p.π₁map  v) := by
+    apply Quot.ind
+    intro η₁
+    apply Quot.ind
+    intro η₂
+    simp [Morphism.π₁map]
+    apply proj_injective
 
 end Graph
