@@ -133,10 +133,12 @@ def freeFundamentalGroupSymm [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (
 
 namespace Classical
 
+noncomputable instance : OrientableInvolutiveInv (↑Γ.edgesᶜ) := Classical.instOrientableInvolutiveInv
+
 -- A proof that the fundamental group of a graph is free,
 -- which will work once it is shown that any `ProperInvolutiveInv` can be given an orientation
--- def freeFundamentalGroup :=
---   @SymmFreeGroup.toFreeGroup G _ _ _ freeFundamentalGroupSymm
+noncomputable def freeFundamentalGroup : IsFreeGroup (X.π₁ Γ.base) :=
+  @SymmFreeGroup.toFreeGroup _ _ _ _ freeFundamentalGroupSymm
 
 end Classical
 
