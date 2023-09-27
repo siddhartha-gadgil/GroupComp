@@ -1,5 +1,6 @@
 import Mathlib.GroupTheory.IsFreeGroup
 import Mathlib.Data.Bool.Basic
+import Mathlib.Order.Zorn
 
 #check IsFreeGroup
 
@@ -89,7 +90,11 @@ end OrientableInvolutiveInv
 
 namespace Classical
 
-noncomputable scoped instance (priority := low) [ProperInvolutiveInv X] : OrientableInvolutiveInv X := sorry
+#check zorn_partialOrder
+
+noncomputable scoped instance (priority := low) [ProperInvolutiveInv X] : OrientableInvolutiveInv X where
+  pos := sorry
+  selection := sorry
 
 end Classical
 
