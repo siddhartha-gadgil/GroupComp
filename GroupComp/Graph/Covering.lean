@@ -1,5 +1,6 @@
 import GroupComp.Graph
 import Mathlib.Data.List.Basic
+import Mathlib
 
 namespace Graph 
 
@@ -32,34 +33,32 @@ theorem mapV_term {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
   rw [Graph.τ, Graph.τ, ←mapE_bar, ←mapV_init]
 
 def Morphism.pathMapAux {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁)
-    (v₂ w₂ : V₂)(hv : f.mapV v₁ = v₂)(hw : f.mapV w₁ = w₂) : 
-      {path : G₂.EdgePath v₂ w₂ // path.toList = p.toList.map f.mapE} := by 
+    (f: Morphism G₁ G₂) (v₁ w₁: V₁) (p: G₁.EdgePath v₁ w₁): 
+      {path : G₂.EdgePath (f.mapV v₁) (f.mapV w₁) // path.toList = p.toList.map f.mapE} := by 
       match p with
       | nil _ =>
-        rw [←hw, hv]
         exact ⟨nil _, by simp [nil_toList]⟩
       | cons e p' => 
         rename_i  w₁'' u'
         let e₁ := f.mapE e.edge
-        let init_vert : G₂.ι e₁ = v₂ := by
-          rw [←hv, ←e.init_eq, ←mapV_init] 
+        let init_vert : G₂.ι e₁ = f.mapV v₁ := by
+          rw [←e.init_eq, ←mapV_init] 
         let term_vert : G₂.τ e₁ = f.mapV u' := by
           rw [← mapV_term, e.term_eq]
-        let edge₂ : EdgeBetween G₂ v₂ (f.mapV u') :=
+        let edge₂ : EdgeBetween G₂ (f.mapV v₁) (f.mapV u') :=
           ⟨e₁, init_vert, term_vert⟩
-        let ⟨tail, ih⟩ := pathMapAux f u' w₁ p' (f.mapV u') w₂ rfl hw
+        let ⟨tail, ih⟩ := pathMapAux f u' w₁ p' 
         exact ⟨cons edge₂ tail, by simp [cons_toList, ih]⟩ 
 
 
 def EdgePath.map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}{v₁ w₁: V₁} 
     (p: G₁.EdgePath v₁ w₁)(f: Morphism G₁ G₂)  :=
-    (f.pathMapAux v₁ w₁ p (f.mapV v₁) (f.mapV w₁) rfl rfl).val
+    (f.pathMapAux v₁ w₁ p).val
 
 theorem EdgePath.map_toList {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) {v₁ w₁: V₁} (p: G₁.EdgePath v₁ w₁) :
       (p.map f).toList = p.toList.map f.mapE := 
-      (f.pathMapAux v₁ w₁ p (f.mapV v₁) (f.mapV w₁) rfl rfl).property
+      (f.pathMapAux v₁ w₁ p).property
 
 def EdgeBetween.map {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (f: Morphism G₁ G₂) {v₁ w₁: V₁} (e: G₁.EdgeBetween v₁ w₁) : 
@@ -143,6 +142,13 @@ theorem map_mul {v w u : V₁}:
 
 end PathClass
 
+def π₁map  {v : V₁}{G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂} 
+  (f: Morphism G₁ G₂): π₁ G₁ v  →* π₁ G₂ (f.mapV v)  := {
+  toFun := fun η => η.map f,
+  map_mul' := fun η₁ η₂ => map_mul f η₁ η₂,
+  map_one' := by rfl
+  }
+    
 
 
 
