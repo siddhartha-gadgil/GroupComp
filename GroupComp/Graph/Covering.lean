@@ -110,8 +110,48 @@ theorem map_of_reduction {v w : V₁} (η₁ η₂ : EdgePath G₁ v w):
   | Reduction.step u u' e p₁ p₂ => by 
     simp [append_map, cons_map]
     rw [← EdgeBetween.map_bar]
-    apply Reduction.step
+    apply Reduction.step 
 
+def comp {G₃: Graph V₃ E₃} (g: Morphism G₂ G₃)(f: Morphism G₁ G₂) :
+    Morphism G₁ G₃ := {
+  toFuncV := g.toFuncV ∘ f.toFuncV,
+  toFuncE := g.toFuncE ∘ f.toFuncE,
+  toFuncV_init := by 
+    intro e
+    simp [Function.comp]
+    rw [← g.toFuncV_init, ← f.toFuncV_init]
+  toFuncE_bar := by 
+    intro e
+    simp [Function.comp]
+    rw [← g.toFuncE_bar, ← f.toFuncE_bar]
+  }
+
+protected def id : Morphism G₁ G₁ where
+  toFuncV := id
+  toFuncE := id
+  toFuncV_init := by 
+    intro e
+    simp 
+  toFuncE_bar := by 
+    intro e
+    simp
+
+protected theorem comp_id  (f: Morphism G₁ G₂) :
+  Morphism.comp (Morphism.id) f = f := by
+    cases f
+    rfl
+
+protected theorem id_comp (f: Morphism G₁ G₂) :
+  Morphism.id.comp f  = f := by
+    cases f
+    rfl
+
+theorem comp_assoc {G₃: Graph V₃ E₃} (h: Morphism G₃ G₄) (g: Morphism G₂ G₃)(f: Morphism G₁ G₂) :
+  Morphism.comp h (Morphism.comp g f) = Morphism.comp (Morphism.comp h g) f := by
+    cases h
+    cases g
+    cases f
+    rfl
 
 end Morphism
 

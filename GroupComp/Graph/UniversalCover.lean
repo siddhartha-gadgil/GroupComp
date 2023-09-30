@@ -130,8 +130,8 @@ lemma shift_heq (τ₀ τ₁ τ₂ : V)(edge : E)(init_eq : G.ι edge = τ₀)
     (term_eq₁ : G.τ edge = τ₁)(term_eq₂ : G.τ edge = τ₂):
     HEq (⟨edge, init_eq, term_eq₁⟩ : EdgeBetween G τ₀ τ₁)
       (⟨edge, init_eq, term_eq₂⟩ : EdgeBetween G τ₀ τ₂) := by
-    induction term_eq₁
-    induction term_eq₂
+    cases term_eq₁
+    cases term_eq₂
     rfl
 
 instance : CoveringMap (proj G x₀) where
@@ -140,32 +140,23 @@ instance : CoveringMap (proj G x₀) where
       ⟨v₁.τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, v₁.p, v₁.is_reduced⟩
   init_localSection := by
     intro v₁ e h
-    match v₁ with
-    | ⟨τ, p, red⟩ =>
-      have h' : τ = G.ι e := h
-      cases h'
-      rfl
+    rfl
   toFuncE_localSection := by
     intro v₁ e h
-    match v₁ with
-    | ⟨τ, p, red⟩ =>
-      have h' : τ = G.ι e := h
-      cases h'
-      rfl 
+    rfl 
   localSection_toFuncE := by
     intro v₁ e₁ h₁   
-    have : (proj G x₀).toFuncE e₁ = e₁.nxt.edge := rfl
-    let l := e₁.nxt.term_eq
-    rw [← this] at l
-    match e₁ with
-    | ⟨τ₀, τ₁, nxt, p, red⟩ =>
-      cases h₁ 
-      ext
-      · rfl
-      · rw [← l]
-      · simp only [nxt_defn]
-        apply shift_heq
-      · rfl 
+    have l: G.τ ((proj G x₀).toFuncE e₁) = e₁.τ₁ := by
+      simp [← e₁.nxt.term_eq]
+      rfl
+    cases e₁ 
+    cases h₁ 
+    ext
+    · rfl
+    · rw [← l]
+    · simp only [nxt_defn]
+      apply shift_heq
+    · rfl 
 
 end Edge
 
