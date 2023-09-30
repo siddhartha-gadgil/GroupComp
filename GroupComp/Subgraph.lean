@@ -102,20 +102,20 @@ structure Subtree (G : Graph V E) extends PreconnectedSubgraph G where
 attribute [aesop safe apply] Subtree.path_unique
 
 structure Graph.hom {V E V' E' : Type _} (G : Graph V E) (G' : Graph V' E') where
-  mapV : V → V'
-  mapE : E → E'
-  preserve_init : ∀ e : E, mapV (G.ι e) = G'.ι (mapE e)
-  preserve_bar : ∀ e : E, mapE (G.bar e) = G'.bar (mapE e)
+  toFuncV : V → V'
+  toFuncE : E → E'
+  preserve_init : ∀ e : E, toFuncV (G.ι e) = G'.ι (toFuncE e)
+  preserve_bar : ∀ e : E, toFuncE (G.bar e) = G'.bar (toFuncE e)
 
 namespace Graph.hom
 
 variable {V E V' E' : Type _} (G : Graph V E) (G' : Graph V' E') (φ : Graph.hom G G')
 
-theorem preserve_terminal (e : E) : φ.mapV (G.τ e) = G'.τ (φ.mapE e) := by
+theorem preserve_terminal (e : E) : φ.toFuncV (G.τ e) = G'.τ (φ.toFuncE e) := by
   rw [← G.ι_bar, ← G'.ι_bar, preserve_init, preserve_bar]
 
-def edgeBetweenMap {u v : V} (e : G.EdgeBetween u v) : G'.EdgeBetween (φ.mapV u) (φ.mapV v) where
-  edge := φ.mapE e.edge
+def edgeBetweenMap {u v : V} (e : G.EdgeBetween u v) : G'.EdgeBetween (φ.toFuncV u) (φ.toFuncV v) where
+  edge := φ.toFuncE e.edge
   init_eq := by
     have := φ.preserve_init e.edge
     rw [e.init_eq] at this
@@ -127,7 +127,7 @@ def edgeBetweenMap {u v : V} (e : G.EdgeBetween u v) : G'.EdgeBetween (φ.mapV u
     symm
     assumption
 
-def pathMap {u v : V} : G.EdgePath u v → G'.EdgePath (φ.mapV u) (φ.mapV v)
+def pathMap {u v : V} : G.EdgePath u v → G'.EdgePath (φ.toFuncV u) (φ.toFuncV v)
   | .nil _ => .nil _
   | .cons e p => .cons (φ.edgeBetweenMap e) (pathMap p)
 

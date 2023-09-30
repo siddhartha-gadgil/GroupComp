@@ -115,14 +115,14 @@ theorem nxt_defn (τ₀ τ₁ : V)
 
 
 def proj : Morphism (G.univ x₀) G where
-  mapV := Vert.τ
-  mapE := fun e ↦ e.nxt.edge 
-  mapV_init := by
+  toFuncV := Vert.τ
+  toFuncE := fun e ↦ e.nxt.edge 
+  toFuncV_init := by
     intro e
     match e with
     | ⟨τ₀, τ₁, nxt, _, _⟩ => 
       simp only [init_defn, nxt.init_eq]
-  mapE_bar := by
+  toFuncE_bar := by
     intro e
     rfl
       
@@ -145,16 +145,16 @@ instance : CoveringMap (proj G x₀) where
       have h' : τ = G.ι e := h
       cases h'
       rfl
-  mapE_localSection := by
+  toFuncE_localSection := by
     intro v₁ e h
     match v₁ with
     | ⟨τ, p, red⟩ =>
       have h' : τ = G.ι e := h
       cases h'
       rfl 
-  localSection_mapE := by
+  localSection_toFuncE := by
     intro v₁ e₁ h₁   
-    have : (proj G x₀).mapE e₁ = e₁.nxt.edge := rfl
+    have : (proj G x₀).toFuncE e₁ = e₁.nxt.edge := rfl
     let l := e₁.nxt.term_eq
     rw [← this] at l
     match e₁ with
