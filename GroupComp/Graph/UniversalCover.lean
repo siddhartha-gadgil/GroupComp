@@ -229,7 +229,25 @@ theorem toList_shiftTarget {G: Graph V E}{v w w' : V}
     simp [shiftTarget]
   | cons e p', w', eql =>
     simp [shiftTarget, cons_toList, toList_shiftTarget]
-    
+
+def shiftEnds {G: Graph V E}{v v' w w' : V}
+  (p : EdgePath G v w)(eqlv : v = v')(eqlw : w = w'):  
+    EdgePath G v' w' := by
+  match p, w', eqlv, eqlw with
+  | nil _, _, rfl, rfl => 
+    exact (nil v)
+  | cons e p', w', rfl,  eqlw => 
+    exact cons e (shiftTarget p' eqlw)
+
+theorem toList_shiftEnds {G: Graph V E}{v v' w w' : V}
+  (p : EdgePath G v w)(eqlv : v = v')(eqlw : w = w'):
+  (shiftEnds p eqlv eqlw).toList = p.toList := by
+  match p, w', eqlv, eqlw with
+  | nil _, _, rfl, rfl =>
+    rename_i v'
+    simp [shiftEnds]
+  | cons e p', w', rfl,  eqlw =>
+    simp [shiftEnds, cons_toList, toList_shiftTarget]     
 
 def rayTo (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
   (hyp : reduced p)  : 

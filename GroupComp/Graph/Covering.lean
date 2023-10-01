@@ -112,6 +112,13 @@ theorem map_of_reduction {v w : V₁} (η₁ η₂ : EdgePath G₁ v w):
     rw [← EdgeBetween.map_bar]
     apply Reduction.step 
 
+theorem reduced_of_image_reduced {v w : V₁} (η : EdgePath G₁ v w):
+  reduced (η.map f) → reduced η := by
+    intro hyp η' contra
+    apply hyp (η'.map f)
+    apply map_of_reduction 
+    exact contra
+
 def comp {G₃: Graph V₃ E₃} (g: Morphism G₂ G₃)(f: Morphism G₁ G₂) :
     Morphism G₁ G₃ := {
   toFuncV := g.toFuncV ∘ f.toFuncV,
@@ -144,6 +151,14 @@ protected theorem comp_id  (f: Morphism G₁ G₂) :
 protected theorem id_comp (f: Morphism G₁ G₂) :
   Morphism.id.comp f  = f := by
     cases f
+    rfl
+
+theorem comp_toFuncV {G₃: Graph V₃ E₃} (g: Morphism G₂ G₃)(f: Morphism G₁ G₂) (v : V₁) :
+  (g.comp f).toFuncV v = g.toFuncV (f.toFuncV v) := by
+    rfl
+
+theorem comp_toFuncE {G₃: Graph V₃ E₃} (g: Morphism G₂ G₃)(f: Morphism G₁ G₂) (e : E₁) :
+  (g.comp f).toFuncE e = g.toFuncE (f.toFuncE e) := by
     rfl
 
 theorem comp_assoc {G₃: Graph V₃ E₃} (h: Morphism G₃ G₄) (g: Morphism G₂ G₃)(f: Morphism G₁ G₂) :
