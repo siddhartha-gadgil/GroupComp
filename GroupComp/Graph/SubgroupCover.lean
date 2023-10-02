@@ -493,11 +493,10 @@ theorem reduced_liftTerminal_factor' {w₂ : V}(e: EdgePath G x₀ w₂)
 
 
 theorem imageInSubgroup : ∀ h : π₁ (groupCover H) (basepoint H), 
-      (groupCoverProj H).π₁map (basepoint H) h ∈ H := by
+      (groupCoverProj H).π₁map (basepoint H) x₀ rfl h ∈ H := by
       apply Quot.ind
       intro η
-      let θ := η.map (groupCoverProj H)
-      let θ' := reduction θ
+      let θ : EdgePath G x₀ x₀ := η.map (groupCoverProj H)
       let heqn := reduction_homotopic_self θ
       simp [Morphism.π₁map, PathClass.map]
       rw [← heqn]
@@ -508,17 +507,14 @@ theorem imageInSubgroup : ∀ h : π₁ (groupCover H) (basepoint H),
       rw [reduced_liftTerminal_factor' H (reduction θ)
         (by apply reduction_reduced)] at term_eqn
       simp only [basepoint, UniversalCover.basepoint] at term_eqn
-      simp only
       rw [Quotient.eq (r := vertSetoid H)] at term_eqn
       simp [HasEquiv.Equiv, Setoid.r, relH] at term_eqn
-      let l' := EdgePath.append_nil (reduction (EdgePath.map η (groupCoverProj H)))
-      simp [groupCoverProj, basepoint] at l'
-      sorry
+      exact term_eqn
 
 
 theorem groupImage : ∀ (g : π₁ G x₀),  
   (g ∈ H ↔ ∃ h' : π₁ (groupCover H) (basepoint H), 
-      h = (groupCoverProj H).π₁map (basepoint H) h') := by
+      h = (groupCoverProj H).π₁map (basepoint H) x₀ rfl h') := by
       apply Quot.ind
       intro η
       apply Iff.intro
