@@ -310,6 +310,23 @@ def groupCoverProj : Morphism (groupCover H) G where
   toFuncV_init := Quot.toFuncV_init H
   toFuncE_bar := Quot.toFuncE_bar H
 
+def univGroupProj : Morphism (G.univ x₀) (groupCover H)  where
+  toFuncV := fun v ↦ ⟦ v ⟧
+  toFuncE := fun e ↦ ⟦ e ⟧
+  toFuncV_init := by
+    intro e 
+    rfl
+  toFuncE_bar := by
+    intro e
+    rfl
+
+theorem projections_compose : 
+  (groupCoverProj H).comp (univGroupProj H) = 
+    UniversalCover.proj G x₀ := by
+    ext
+    · rfl
+    · rfl 
+
 namespace Quot
 
 theorem toFuncV_defn' (v : Vert G x₀):
@@ -430,13 +447,42 @@ instance : CoveringMap (groupCoverProj H)  where
     simp [HasEquiv.Equiv, Setoid.r, relH] at rel
     exact rel
 
+/-!
+- Show that lifts are compositions of lifts to the universal cover and pushdowns, using uniqueness of lifts.
+- Conclude terminal points of lifts are pushforwards of terminal points.
+- Can take initial points as basepoints
+-/
+def liftViaUniv {w₂ : V}
+    (e: EdgePath G x₀ w₂):
+    PathLift (groupCoverProj H) (basepoint H) rfl e := 
+    let univPath := 
+      e.lift (proj G x₀) (UniversalCover.basepoint G x₀) rfl
+    {
+      τ := ⟦ univPath.τ ⟧
+      path := univPath.path.map (univGroupProj H)
+      term_pushdown := by 
+        rw [Quot.toFuncV_defn']
+        exact univPath.term_pushdown
+      list_pushdown := by
+        simp [map_toList, List.map_map]
+        rw [← Morphism.comp_toFuncE']
+        simp only [projections_compose, univPath.list_pushdown]
+    }
+
 theorem imageInSubgroup : ∀ h : π₁ (groupCover H) (basepoint H), 
       (groupCoverProj H).π₁map (basepoint H) h ∈ H := by
       apply Quot.ind
       intro η
-      let η' := reduced η
-      -- have eqn := reduction_homotopic_self η
+      let θ := η.map (groupCoverProj H)
+      let θ' := reduction θ
+      let heqn := reduction_homotopic_self θ
       simp [Morphism.π₁map, PathClass.map]
+      rw [← heqn]
+      have term_eqn := 
+        liftTerminal_eq_of_homotopic (groupCoverProj H) 
+        (basepoint H) rfl heqn
+      rw [liftTerminal_of_proj (groupCoverProj H)  η] at term_eqn
+      -- showed that the lift of θ' has terminal point the base point
       sorry 
 
 theorem groupImage : ∀ (g : π₁ G x₀),  

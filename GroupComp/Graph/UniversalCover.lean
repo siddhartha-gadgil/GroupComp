@@ -113,6 +113,9 @@ theorem nxt_defn (τ₀ τ₁ : V)
   (is_reduced : reduced p) : 
   (⟨τ₀, τ₁,  nxt, p, is_reduced⟩ : Edge G x₀).nxt = nxt := rfl
 
+end Edge
+
+open Edge
 
 def proj : Morphism (G.univ x₀) G where
   toFuncV := Vert.τ
@@ -157,11 +160,6 @@ instance : CoveringMap (proj G x₀) where
     · simp only [nxt_defn]
       apply shift_heq
     · rfl 
-
-end Edge
-
-open Edge
-
 
 
 def basepoint : Vert G x₀  := 
@@ -211,43 +209,6 @@ theorem rayToRev_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
       apply reverse_reduced
       assumption
     simp [rayToRev, cons_toList, concat_toList, ih red']    
-
-def shiftTarget {G: Graph V E}{v w w' : V}
-  (p : EdgePath G v w)(eql : w = w'):  EdgePath G v w' := by
-  match p, w', eql with
-  | nil _, _, rfl => 
-    exact (nil v)
-  | cons e p', w', eql => 
-    exact cons e (shiftTarget p' eql)
-
-theorem toList_shiftTarget {G: Graph V E}{v w w' : V}
-  (p : EdgePath G v w)(eql : w = w'):
-  (shiftTarget p eql).toList = p.toList := by
-  match p, w', eql with
-  | nil _, _, rfl =>
-    rename_i v'
-    simp [shiftTarget]
-  | cons e p', w', eql =>
-    simp [shiftTarget, cons_toList, toList_shiftTarget]
-
-def shiftEnds {G: Graph V E}{v v' w w' : V}
-  (p : EdgePath G v w)(eqlv : v = v')(eqlw : w = w'):  
-    EdgePath G v' w' := by
-  match p, w', eqlv, eqlw with
-  | nil _, _, rfl, rfl => 
-    exact (nil v)
-  | cons e p', w', rfl,  eqlw => 
-    exact cons e (shiftTarget p' eqlw)
-
-theorem toList_shiftEnds {G: Graph V E}{v v' w w' : V}
-  (p : EdgePath G v w)(eqlv : v = v')(eqlw : w = w'):
-  (shiftEnds p eqlv eqlw).toList = p.toList := by
-  match p, w', eqlv, eqlw with
-  | nil _, _, rfl, rfl =>
-    rename_i v'
-    simp [shiftEnds]
-  | cons e p', w', rfl,  eqlw =>
-    simp [shiftEnds, cons_toList, toList_shiftTarget]     
 
 def rayTo (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
   (hyp : reduced p)  : 

@@ -161,6 +161,11 @@ theorem comp_toFuncE {G₃: Graph V₃ E₃} (g: Morphism G₂ G₃)(f: Morphism
   (g.comp f).toFuncE e = g.toFuncE (f.toFuncE e) := by
     rfl
 
+theorem comp_toFuncE' {G₃: Graph V₃ E₃} (g: Morphism G₂ G₃)(f: Morphism G₁ G₂)  :
+  (g.comp f).toFuncE  = g.toFuncE ∘ f.toFuncE  := by
+    rfl
+
+
 theorem comp_assoc {G₃: Graph V₃ E₃} (h: Morphism G₃ G₄) (g: Morphism G₂ G₃)(f: Morphism G₁ G₂) :
   Morphism.comp h (Morphism.comp g f) = Morphism.comp (Morphism.comp h g) f := by
     cases h
@@ -290,8 +295,6 @@ def EdgePath.lift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}{v₂ w₂ : 
       exact ⟨w₁, cons edge₁ tail, pf₁, by 
         simp [cons_toList, pf₂]
         apply p.toFuncE_localSection⟩
-
-
 
 
 def asPathLift {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
@@ -521,6 +524,12 @@ theorem lift_of_proj {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p: Morphism G₁ G₂)[CoveringMap p] {v₁ w₁: V₁} (e: G₁.EdgePath v₁ w₁):
     (e.map p).lift p v₁ rfl   = ⟨w₁, e, rfl, by simp [map_toList]⟩ := by
     apply unique_Pathlift
+
+theorem liftTerminal_of_proj {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
+    (p: Morphism G₁ G₂)[CoveringMap p] {v₁ w₁: V₁} (e: G₁.EdgePath v₁ w₁):
+    liftTerminal p v₁ rfl (e.map p) = w₁ := by 
+      simp only [liftTerminal, liftClass, lift_of_proj]
+      rfl
 
 theorem proj_injective {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     (p: Morphism G₁ G₂)[CoveringMap p] {v₁ w₁: V₁} 

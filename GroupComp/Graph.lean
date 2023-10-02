@@ -307,6 +307,43 @@ theorem terminal_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
       rw [←e₂.term_eq, ←e.term_eq, h.left]
 
 
+def shiftTarget {G: Graph V E}{v w w' : V}
+  (p : EdgePath G v w)(eql : w = w'):  EdgePath G v w' := by
+  match p, w', eql with
+  | nil _, _, rfl => 
+    exact (nil v)
+  | cons e p', w', eql => 
+    exact cons e (shiftTarget p' eql)
+
+theorem toList_shiftTarget {G: Graph V E}{v w w' : V}
+  (p : EdgePath G v w)(eql : w = w'):
+  (shiftTarget p eql).toList = p.toList := by
+  match p, w', eql with
+  | nil _, _, rfl =>
+    rename_i v'
+    simp only [shiftTarget]
+  | cons e p', w', eql =>
+    simp only [shiftTarget, cons_toList, toList_shiftTarget]
+
+def shiftEnds {G: Graph V E}{v v' w w' : V}
+  (p : EdgePath G v w)(eqlv : v = v')(eqlw : w = w'):  
+    EdgePath G v' w' := by
+  match p, w', eqlv, eqlw with
+  | nil _, _, rfl, rfl => 
+    exact (nil v)
+  | cons e p', w', rfl,  eqlw => 
+    exact cons e (shiftTarget p' eqlw)
+
+theorem toList_shiftEnds {G: Graph V E}{v v' w w' : V}
+  (p : EdgePath G v w)(eqlv : v = v')(eqlw : w = w'):
+  (shiftEnds p eqlv eqlw).toList = p.toList := by
+  match p, w', eqlv, eqlw with
+  | nil _, _, rfl, rfl =>
+    simp only [shiftEnds]
+  | cons e p', w', rfl,  eqlw =>
+    simp only [shiftEnds, cons_toList, toList_shiftTarget]     
+
+
 /-- Sequence of reductions of a path by cancelling adjacent edges that are inverses. -/
 @[aesop safe [constructors, cases]]
 inductive Reduction {v w : V}:
