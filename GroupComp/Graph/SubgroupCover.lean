@@ -514,12 +514,38 @@ theorem imageInSubgroup : ∀ h : π₁ (groupCover H) (basepoint H),
 
 theorem groupImage : ∀ (g : π₁ G x₀),  
   (g ∈ H ↔ ∃ h' : π₁ (groupCover H) (basepoint H), 
-      h = (groupCoverProj H).π₁map (basepoint H) x₀ rfl h') := by
+      g = (groupCoverProj H).π₁map (basepoint H) x₀ rfl h') := by
       apply Quot.ind
       intro η
+      let η' := reduction η
       apply Iff.intro
-      · sorry
-      · sorry
+      · intro mem 
+        have mem' :  [[ η ]] ∈ H := mem
+        rw [← reduction_homotopic_self] at mem'
+        let pL := η'.lift (groupCoverProj H) (basepoint H) rfl
+        let p := pL.path
+        have term_lift : pL.τ = _ := 
+          reduced_liftTerminal_factor H η' (reduction_reduced η) 
+        have term_lift' : pL.τ = basepoint H := by
+          rw [term_lift]
+          simp [basepoint, UniversalCover.basepoint]
+          apply Quotient.sound
+          simp [HasEquiv.Equiv, Setoid.r, relH]
+          exact mem'
+        let p' := p.shiftTarget term_lift'
+        let h' : π₁ (groupCover H) (basepoint H) :=
+          [[ p' ]]
+        use h'
+        simp [Morphism.π₁map, PathClass.map]
+        show [[ η ]] = _
+        rw [← reduction_homotopic_self]
+        congr
+        apply eq_of_toList_eq
+        rw [EdgePath.map_toList, toList_shiftTarget,
+          pL.list_pushdown]
+        
+      · intro ⟨h, heqn⟩
+        simp [imageInSubgroup H h, heqn]
 
 end SubgroupCover
 
