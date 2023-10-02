@@ -113,16 +113,19 @@ theorem nxt_defn (τ₀ τ₁ : V)
   (is_reduced : reduced p) : 
   (⟨τ₀, τ₁,  nxt, p, is_reduced⟩ : Edge G x₀).nxt = nxt := rfl
 
+end Edge
+
+open Edge
 
 def proj : Morphism (G.univ x₀) G where
-  mapV := Vert.τ
-  mapE := fun e ↦ e.nxt.edge 
-  mapV_init := by
+  toFuncV := Vert.τ
+  toFuncE := fun e ↦ e.nxt.edge 
+  toFuncV_init := by
     intro e
     match e with
     | ⟨τ₀, τ₁, nxt, _, _⟩ => 
       simp only [init_defn, nxt.init_eq]
-  mapE_bar := by
+  toFuncE_bar := by
     intro e
     rfl
       
@@ -130,8 +133,8 @@ lemma shift_heq (τ₀ τ₁ τ₂ : V)(edge : E)(init_eq : G.ι edge = τ₀)
     (term_eq₁ : G.τ edge = τ₁)(term_eq₂ : G.τ edge = τ₂):
     HEq (⟨edge, init_eq, term_eq₁⟩ : EdgeBetween G τ₀ τ₁)
       (⟨edge, init_eq, term_eq₂⟩ : EdgeBetween G τ₀ τ₂) := by
-    induction term_eq₁
-    induction term_eq₂
+    cases term_eq₁
+    cases term_eq₂
     rfl
 
 instance : CoveringMap (proj G x₀) where
@@ -140,37 +143,23 @@ instance : CoveringMap (proj G x₀) where
       ⟨v₁.τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, v₁.p, v₁.is_reduced⟩
   init_localSection := by
     intro v₁ e h
-    match v₁ with
-    | ⟨τ, p, red⟩ =>
-      have h' : τ = G.ι e := h
-      cases h'
-      rfl
-  mapE_localSection := by
+    rfl
+  toFuncE_localSection := by
     intro v₁ e h
-    match v₁ with
-    | ⟨τ, p, red⟩ =>
-      have h' : τ = G.ι e := h
-      cases h'
-      rfl 
-  localSection_mapE := by
+    rfl 
+  localSection_toFuncE := by
     intro v₁ e₁ h₁   
-    have : (proj G x₀).mapE e₁ = e₁.nxt.edge := rfl
-    let l := e₁.nxt.term_eq
-    rw [← this] at l
-    match e₁ with
-    | ⟨τ₀, τ₁, nxt, p, red⟩ =>
-      cases h₁ 
-      ext
-      · rfl
-      · rw [← l]
-      · simp only [nxt_defn]
-        apply shift_heq
-      · rfl 
-
-end Edge
-
-open Edge
-
+    have l: G.τ ((proj G x₀).toFuncE e₁) = e₁.τ₁ := by
+      simp [← e₁.nxt.term_eq]
+      rfl
+    cases e₁ 
+    cases h₁ 
+    ext
+    · rfl
+    · rw [← l]
+    · simp only [nxt_defn]
+      apply shift_heq
+    · rfl 
 
 
 def basepoint : Vert G x₀  := 
@@ -220,25 +209,6 @@ theorem rayToRev_proj_list (G: Graph V E)(x₀ τ : V)(p : EdgePath G τ x₀)
       apply reverse_reduced
       assumption
     simp [rayToRev, cons_toList, concat_toList, ih red']    
-
-def shiftTarget {G: Graph V E}{v w w' : V}
-  (p : EdgePath G v w)(eql : w = w'):  EdgePath G v w' := by
-  match p, w', eql with
-  | nil _, _, rfl => 
-    exact (nil v)
-  | cons e p', w', eql => 
-    exact cons e (shiftTarget p' eql)
-
-theorem toList_shiftTarget {G: Graph V E}{v w w' : V}
-  (p : EdgePath G v w)(eql : w = w'):
-  (shiftTarget p eql).toList = p.toList := by
-  match p, w', eql with
-  | nil _, _, rfl =>
-    rename_i v'
-    simp [shiftTarget]
-  | cons e p', w', eql =>
-    simp [shiftTarget, cons_toList, toList_shiftTarget]
-    
 
 def rayTo (G: Graph V E)(x₀ τ : V)(p : EdgePath G x₀ τ)
   (hyp : reduced p)  : 
