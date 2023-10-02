@@ -548,7 +548,7 @@ theorem proj_injective {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
     exact lem
 
 theorem cover_π₁injective {G₁ : Graph V₁ E₁} {G₂ : Graph V₂ E₂}
-    (p: Morphism G₁ G₂)[CoveringMap p] {v₁ : V₁}{v₂ : V₂}(hyp : p.toFuncV v₁ = v₂):
+    (p: Morphism G₁ G₂)[inst : CoveringMap p] (v₁ : V₁)(v₂ : V₂)(hyp : p.toFuncV v₁ = v₂):
     Function.Injective (p.π₁map v₁ v₂ hyp) := by
     cases hyp
     apply Quot.ind

@@ -417,7 +417,7 @@ theorem edge_to (e : Edge G x₀)(τ₀ : V){τ₁ : V}: τ₀ = e.τ₀  →  e
 
 end Quot 
 
-instance : CoveringMap (groupCoverProj H)  where
+instance groupCovering : CoveringMap (groupCoverProj H)  where
   localSection := Quot.localSection H
     
   init_localSection := by
@@ -512,7 +512,7 @@ theorem imageInSubgroup : ∀ h : π₁ (groupCover H) (basepoint H),
       exact term_eqn
 
 
-theorem groupImage : ∀ (g : π₁ G x₀),  
+theorem proj_image : ∀ (g : π₁ G x₀),  
   (g ∈ H ↔ ∃ h' : π₁ (groupCover H) (basepoint H), 
       g = (groupCoverProj H).π₁map (basepoint H) x₀ rfl h') := by
       apply Quot.ind
@@ -542,10 +542,34 @@ theorem groupImage : ∀ (g : π₁ G x₀),
         congr
         apply eq_of_toList_eq
         rw [EdgePath.map_toList, toList_shiftTarget,
-          pL.list_pushdown]
-        
+          pL.list_pushdown]        
       · intro ⟨h, heqn⟩
         simp [imageInSubgroup H h, heqn]
+
+theorem range_proj : MonoidHom.range
+    (Morphism.π₁map (basepoint H) x₀ (groupCoverProj H) rfl) = H := by
+  apply Subgroup.ext
+  intro x
+  simp [MonoidHom.mem_range]
+  let l := proj_image H x
+  apply Iff.intro
+  · intro ⟨h, heq⟩  
+    apply l.2
+    use h
+    rw [heq]
+  · intro g
+    let ⟨h, heq⟩  := l.1 g 
+    use h
+    rw [heq]
+
+theorem group_of_cover_is_subgroup : 
+    π₁ (groupCover H) (basepoint H) ≃* H := by
+  let hf := 
+    cover_π₁injective (groupCoverProj H) (basepoint H) x₀ rfl
+  let lem := MonoidHom.ofInjective hf
+  apply MulEquiv.trans lem  
+  rw [range_proj]
+
 
 end SubgroupCover
 
