@@ -101,7 +101,8 @@ abbrev SpanningSubtree.inducedMap (φ : ↑(Γ.edgesᶜ) →⁻¹ H) : X.π₁ �
   show (Γ.edgeLabelExtension φ).pathClassLabel ([[_]]) = _
   simp only [GroupLabelledGraph.pathClassLabel_of_pathLabel, SpanningSubtree.contains_path, pathLabel_on_tree_path]
 
-instance [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges)] : -- TODO remove instance 
+@[instance]
+def freeFundamentalGroupSymm [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges)] : -- TODO remove instance 
     SymmFreeGroup (X.π₁ Γ.base) ↑(Γ.edgesᶜ) where
   ι := Γ.ofOutEdge
   induced := Γ.inducedMap 
@@ -129,5 +130,43 @@ instance [∀ {u v : V} (e : X.EdgeBetween u v), Decidable (e.edge ∈ Γ.edges)
       congr 1
       apply Γ.surroundEdge_cast <;> 
       simp [EdgeBetween.init_eq, EdgeBetween.term_eq]
+
+namespace Classical
+
+noncomputable instance : OrientableInvolutiveInv (↑Γ.edgesᶜ) := Classical.instOrientableInvolutiveInv
+
+-- A proof that the fundamental group of a graph is free,
+-- which will work once it is shown that any `ProperInvolutiveInv` can be given an orientation
+noncomputable def freeFundamentalGroup : IsFreeGroup (X.π₁ Γ.base) :=
+  @SymmFreeGroup.toFreeGroup _ _ _ _ freeFundamentalGroupSymm
+
+end Classical
+
+
+open PathClass
+
+def wedgeCircles.spanningSubTree (S : Type _) : SpanningSubtree (wedgeCircles S) where
+  verts := ⊤
+  edges := ⊥  
+  edges_bar := by aesop
+  edges_init := by aesop
+  spanning := by aesop
+  path := fun _ _ ↦ ⟨.nil (), by simp⟩
+  path_unique := by
+    intro _ _ p
+    cases p <;> simp
+  basePoint := ⟨(), trivial⟩
+
+instance [DecidableEq S] : ∀ {u v : Unit} (e : (wedgeCircles S).EdgeBetween u v), 
+  Decidable (e.edge ∈ (wedgeCircles.spanningSubTree S).edges) := 
+    fun e ↦ Decidable.isFalse <| by
+      show e.edge ∉ ∅
+      simp only [Set.mem_empty_iff_false, not_false_eq_true]  
+
+instance wedgeCircles.isSymmFreeGroup (S : Type _) [DecidableEq S] : 
+    SymmFreeGroup ((wedgeCircles S).π₁ ()) ↑(wedgeCircles.spanningSubTree S).edgesᶜ :=
+  freeFundamentalGroupSymm (Γ := wedgeCircles.spanningSubTree S)
+
+instance wedgeCircles.isFreeGroup (S : Type _) [DecidableEq S] : IsFreeGroup ((wedgeCircles S).π₁ ()) := sorry
 
 end Graph

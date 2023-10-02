@@ -1,2 +1,3 @@
 /build
 /lake-packages/*
+.github/workflows/*
