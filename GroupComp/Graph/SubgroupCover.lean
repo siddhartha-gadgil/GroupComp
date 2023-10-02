@@ -469,6 +469,29 @@ def liftViaUniv {w₂ : V}
         simp only [projections_compose, univPath.list_pushdown]
     }
 
+theorem liftFactors {w₂ : V}(e: EdgePath G x₀ w₂) :
+  (e.lift (groupCoverProj H) (basepoint H) rfl) = liftViaUniv H e := by
+    apply unique_Pathlift
+
+theorem liftTermFactors {w₂ : V}(e: EdgePath G x₀ w₂) :
+  (e.lift (groupCoverProj H) (basepoint H) rfl).τ = 
+    ⟦ liftTerminal (proj G x₀) (UniversalCover.basepoint G x₀) rfl e ⟧ := by
+    rw [liftFactors]
+    rfl
+
+theorem reduced_liftTerminal_factor {w₂ : V}(e: EdgePath G x₀ w₂)
+  (hyp : reduced e) :
+    (e.lift (groupCoverProj H) (basepoint H) rfl).τ = 
+      ⟦ ⟨w₂, e, hyp⟩ ⟧ := by
+        rw [liftTermFactors, reduced_liftTerminal]
+
+theorem reduced_liftTerminal_factor' {w₂ : V}(e: EdgePath G x₀ w₂)
+  (hyp : reduced e) :
+    (liftTerminal (groupCoverProj H) (basepoint H) rfl e) = 
+      ⟦ ⟨w₂, e, hyp⟩ ⟧ := by
+        apply reduced_liftTerminal_factor
+
+
 theorem imageInSubgroup : ∀ h : π₁ (groupCover H) (basepoint H), 
       (groupCoverProj H).π₁map (basepoint H) h ∈ H := by
       apply Quot.ind
@@ -482,15 +505,25 @@ theorem imageInSubgroup : ∀ h : π₁ (groupCover H) (basepoint H),
         liftTerminal_eq_of_homotopic (groupCoverProj H) 
         (basepoint H) rfl heqn
       rw [liftTerminal_of_proj (groupCoverProj H)  η] at term_eqn
-      -- showed that the lift of θ' has terminal point the base point
-      sorry 
+      rw [reduced_liftTerminal_factor' H (reduction θ)
+        (by apply reduction_reduced)] at term_eqn
+      simp only [basepoint, UniversalCover.basepoint] at term_eqn
+      simp only
+      rw [Quotient.eq (r := vertSetoid H)] at term_eqn
+      simp [HasEquiv.Equiv, Setoid.r, relH] at term_eqn
+      let l' := EdgePath.append_nil (reduction (EdgePath.map η (groupCoverProj H)))
+      simp [groupCoverProj, basepoint] at l'
+      sorry
+
 
 theorem groupImage : ∀ (g : π₁ G x₀),  
   (g ∈ H ↔ ∃ h' : π₁ (groupCover H) (basepoint H), 
       h = (groupCoverProj H).π₁map (basepoint H) h') := by
       apply Quot.ind
       intro η
-      sorry
+      apply Iff.intro
+      · sorry
+      · sorry
 
 end SubgroupCover
 
