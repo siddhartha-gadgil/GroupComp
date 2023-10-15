@@ -249,6 +249,12 @@ theorem toList_reverse {G : Graph V E}{v w : V} (p : EdgePath G v w):
     simp [cons_toList, reverse_cons, concat_toList]
     simp [ih, EdgeBetween.bar]
 
+def initVerts (p : G.EdgePath u v) : List V :=
+  p.toList.map G.ι
+
+def termVerts (p : G.EdgePath u v) : List V :=
+  p.toList.map G.τ
+
 @[ext] theorem eq_of_toList_eq {G: Graph V E}{v w: V}
   (p₁ p₂ : EdgePath G v w) : p₁.toList = p₂.toList → p₁ = p₂ := by
   induction p₁ with

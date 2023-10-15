@@ -155,6 +155,50 @@ def SpanningSubgraph.coe {V E : Type _} {G : Graph V E} (H : SpanningSubgraph G)
 
 structure SpanningSubtree (G : Graph V E) extends SpanningSubgraph G, Subtree G, PointedSubgraph G
 
+section MaximalSubtree
+
+variable {V E : Type _} (G : Graph V E)
+
+instance : LE (Subtree G) where
+  le t t' := t.toSubgraph ≤ t'.toSubgraph
+
+
+def chainUnion (c : Set (Subtree G)) (h : IsChain (· ≤ ·) c) : Subtree G where
+  verts := sorry
+  edges := sorry
+  edges_bar := sorry
+  edges_init := sorry
+  path := sorry
+  path_unique := sorry
+
+def pathToTree (t : Subtree G) [∀ v : V, Decidable (v ∈ t.verts)] 
+    {u v : V} (hu : u ∈ t.verts) (hv : v ∉ t.verts) (p : G.EdgePath v u) : 
+    {q : Σ w : V, G.EdgePath v w // q.1 ∈ t.verts ∧ q.2.initVerts.all (· ∉ t.verts)} :=
+  match p with
+    | .nil _ => by contradiction
+    | .cons e p' => by
+      rename_i x w 
+      if h:w ∈ t.verts then
+        refine' ⟨⟨w, G.singletonPath e⟩, ⟨h, _⟩⟩
+        simp only [EdgePath.initVerts, List.map, EdgeBetween.init_eq, 
+          decide_not, List.all_cons, hv, decide_False,
+          Bool.not_false, List.all_nil, Bool.and_self]
+      else 
+        let ⟨⟨v', q⟩, hqt, hqverts⟩ := pathToTree t hu h p'
+        refine' ⟨⟨v', .cons e q⟩, ⟨hqt, _⟩⟩
+        simp only [EdgePath.initVerts, decide_not, List.all_eq_true, 
+          List.mem_map, Bool.not_eq_true', decide_eq_false_iff_not, forall_exists_index, 
+          and_imp, forall_apply_eq_imp_iff₂, List.map, List.all_cons, Bool.and_eq_true] at hqverts ⊢
+        refine' ⟨_, hqverts⟩
+        simp only [EdgeBetween.init_eq, hv]
+
+-- Idea: attach the above path to the tree
+def extendTree (t : Subtree G) (v : V) (h : v ∉ t.verts) : {t' : Subtree G // t ≤ t' ∧ v ∈ t'.verts} := sorry  
+
+end MaximalSubtree
+
+#exit
+
 namespace SpanningSubtree
 
 variable {V E : Type _} {G : Graph V E} (Γ : SpanningSubtree G)
