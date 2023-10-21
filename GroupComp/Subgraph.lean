@@ -42,6 +42,19 @@ def contains {u v : V} : G.EdgePath u v → Prop
 
 @[simp] theorem contains_cons : H.contains (.cons e p) ↔ e.edge ∈ H.edges ∧ H.contains p := Iff.rfl
 
+@[simp] theorem contains_concat : H.contains (.concat p e) ↔ e.edge ∈ H.edges ∧ H.contains p := by
+  induction p with
+    | nil => 
+      rw [EdgePath.concat]
+      simp only [contains_cons, contains_nil, and_congr_right_iff]
+      intro he
+      have := e.init_eq ▸ H.edges_init e.edge he
+      have := e.term_eq ▸ H.edges_terminal e.edge he
+      simp_all only
+    | cons e p' ih =>
+      rw [EdgePath.concat_cons]
+      aesop
+
 @[aesop safe apply] theorem contains_head (p : G.EdgePath u v) : H.contains p → u ∈ H.verts := by
   induction p with
   | nil => simp
@@ -54,6 +67,15 @@ def contains {u v : V} : G.EdgePath u v → Prop
 
 @[simp] theorem contains_append {u v w : V} (p : G.EdgePath u v) (p' : G.EdgePath v w) : H.contains (p ++ p') ↔ H.contains p ∧ H.contains p' := by
   induction p <;> aesop    
+
+theorem contains_reverse {u v : V} (p : G.EdgePath u v) : H.contains p → H.contains p.reverse := by
+  induction p with
+    | nil => simp only [contains_nil, EdgePath.reverse_nil, imp_self]
+    | cons e p' ih =>
+      rw [EdgePath.reverse_cons]
+      simp only [contains_cons, contains_concat, EdgeBetween.bar_eq_bar, and_imp]
+      intro he hp'H
+      exact ⟨H.edges_bar _ he, ih hp'H⟩
 
 def Subgraph.le {G: Graph V E}(s₁ s₂ : Subgraph G) : Prop :=
   s₁.verts ⊆ s₂.verts ∧ s₁.edges ⊆ s₂.edges
@@ -131,6 +153,30 @@ structure PointedSubgraph {V E : Type _} (G : Graph V E) extends Subgraph G wher
 structure Subtree (G : Graph V E) extends PreconnectedSubgraph G where
   path_unique : ∀ u v : verts, ∀ p : G.EdgePath u v, toSubgraph.contains p →
     [[p]] = [[(path u v).val]]
+
+open CategoryTheory in
+def Subtree.ofPointed {G : Graph V E} (H : Subgraph G) {u : V} (hu : u ∈ H.verts)
+  (path : (v : H.verts) → {p : G.EdgePath ↑u ↑v // H.contains p})
+  (path_unique : (v : H.verts) → (p : G.EdgePath u v) → H.contains p → [[p]] = [[(path v).val]]) :
+      Subtree G := { H with
+    path := fun (x y : H.verts) ↦ 
+      let ⟨p, hpH⟩ := path x
+      let ⟨q, hqH⟩ := path y
+      ⟨p.reverse ++ q, by
+        rw [H.contains_append]
+        exact ⟨H.contains_reverse _ hpH, hqH⟩⟩
+    path_unique := by
+      intro (a : H.verts) (b : H.verts) p (hpH : H.contains p)
+      simp only [Eq.ndrec, id_eq, eq_mpr_eq_cast]
+      rw [← mul_path_path, ← PathClass.inv_equiv_reverse]
+      -- calc [[p]] = [[p]] * (𝟙 _) := by sorry
+      --         _  = [[p]] * ([[path b]] * [[path b]].inv) := by sorry
+      --         _  = ([[p]] * [[path b]]) * ([[path b]].inv) := by sorry
+      --         _  = [[path a]].inv * [[path b]] := by sorry
+      sorry
+  }
+
+#exit
 
 @[simp] theorem PreconnectedSubgraph.contains_path (H : PreconnectedSubgraph G) (u v : H.verts) : H.contains (H.path u v).val := 
   (H.path u v).property
