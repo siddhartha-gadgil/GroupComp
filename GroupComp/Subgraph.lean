@@ -84,6 +84,42 @@ instance : PartialOrder (Subgraph G) where
     let h' := subset_antisymm h₁.2 h₂.2
     ext <;> simp [h, h']
 
+def Subgraph.union (H H' : Subgraph G) : Subgraph G where
+  verts := H.verts ∪ H'.verts
+  edges := H.edges ∪ H'.edges
+  edges_bar e := by
+    rintro (_ | _)
+    · left; apply H.edges_bar; assumption
+    · right; apply H'.edges_bar; assumption 
+  edges_init e := by
+    rintro (_ | _)
+    · left; apply Subgraph.edges_init; assumption
+    · right; apply Subgraph.edges_init; assumption 
+
+def Subgraph.inter (H H' : Subgraph G) : Subgraph G where
+  verts := H.verts ∩ H'.verts
+  edges := H.edges ∩ H'.edges
+  edges_bar e := by
+    rintro ⟨_, _⟩
+    constructor <;>
+    ( apply Subgraph.edges_bar
+      assumption )
+  edges_init e := by
+    rintro ⟨_, _⟩
+    constructor <;>
+    ( apply Subgraph.edges_init
+      assumption )
+
+instance : Lattice (Subgraph G) where
+  sup := Subgraph.union
+  le_sup_left := by aesop (add norm unfold [Subgraph.union]) 
+  le_sup_right := by aesop (add norm unfold [Subgraph.union])
+  sup_le := by aesop (add norm unfold [Subgraph.union])
+  inf := Subgraph.inter
+  inf_le_left := by aesop (add norm unfold [Subgraph.inter]) 
+  inf_le_right := by aesop (add norm unfold [Subgraph.inter]) 
+  le_inf := by aesop (add norm unfold [Subgraph.inter]) 
+
 end Subgraph
 
 structure PreconnectedSubgraph (G : Graph V E) extends Subgraph G where
@@ -191,6 +227,20 @@ def pathToTree (t : Subtree G) [∀ v : V, Decidable (v ∈ t.verts)]
           and_imp, forall_apply_eq_imp_iff₂, List.map, List.all_cons, Bool.and_eq_true] at hqverts ⊢
         refine' ⟨_, hqverts⟩
         simp only [EdgeBetween.init_eq, hv]
+
+section JointAtPoint
+
+variable (t t' : Subtree G) {u : V} (h : ∀ v : V, v ∈ t.verts → v ∈ t'.verts → v = u)
+
+-- def Subtree.joinAtPoint : Subtree G := {}
+
+-- def Subtree.jointAtPoint_contains_common_vertex : v ∈ (Subtree.jointAtPoint t t' h).verts := sorry 
+
+-- def Subtree.jointAtPoint_contains_left : t ≤ Subtree.joinAtPoint t t' h := sorry  
+
+-- def Subtree.jointAtPoint_contains_right : t' ≤ Subtree.joinAtPoint t t' h := sorry 
+
+end JointAtPoint
 
 -- Idea: attach the above path to the tree
 def extendTree (t : Subtree G) (v : V) (h : v ∉ t.verts) : {t' : Subtree G // t ≤ t' ∧ v ∈ t'.verts} := sorry  
