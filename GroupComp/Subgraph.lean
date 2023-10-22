@@ -155,7 +155,7 @@ structure Subtree (G : Graph V E) extends PreconnectedSubgraph G where
     [[p]] = [[(path u v).val]]
 
 open CategoryTheory in
-def Subtree.ofPointed {G : Graph V E} (H : Subgraph G) {u : V} (hu : u ∈ H.verts)
+def Subtree.ofPointed {G : Graph V E} (H : Subgraph G) {u : V}
   (path : (v : H.verts) → {p : G.EdgePath ↑u ↑v // H.contains p})
   (path_unique : (v : H.verts) → (p : G.EdgePath u v) → H.contains p → [[p]] = [[(path v).val]]) :
       Subtree G := { H with
