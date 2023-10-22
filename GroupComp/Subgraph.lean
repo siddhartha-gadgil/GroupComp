@@ -70,7 +70,7 @@ def contains {u v : V} : G.EdgePath u v → Prop
 
 theorem contains_reverse {u v : V} (p : G.EdgePath u v) : H.contains p → H.contains p.reverse := by
   induction p with
-    | nil => simp only [contains_nil, EdgePath.reverse_nil, imp_self]
+    | nil => simp only  [contains_nil, EdgePath.reverse_nil, imp_self]
     | cons e p' ih =>
       rw [EdgePath.reverse_cons]
       simp only [contains_cons, contains_concat, EdgeBetween.bar_eq_bar, and_imp]
@@ -82,12 +82,20 @@ def Subgraph.le {G: Graph V E}(s₁ s₂ : Subgraph G) : Prop :=
 
 instance {G: Graph V E} : LE (Subgraph G) := ⟨Subgraph.le⟩
 
+theorem contains_le {H H' : Subgraph G} {p : G.EdgePath u v} 
+    (hpH : H.contains p) (h : H ≤ H') : H'.contains p := by
+  let ⟨hv, he⟩ := h
+  induction p with
+    | nil => apply hv; exact hpH
+    | cons e p' ih => 
+      simp at hpH ⊢
+      refine' ⟨he hpH.left, ih hpH.right⟩
+
 @[simp]
 theorem Subgraph.le_defn {G: Graph V E}(s₁ s₂ : Subgraph G) :
     s₁ ≤ s₂ ↔ s₁.verts ⊆ s₂.verts ∧ s₁.edges ⊆ s₂.edges := Iff.rfl
  
 instance : PartialOrder (Subgraph G) where
-  le := (·  ≤ ·  )
   lt := fun s₁ s₂ => s₁ ≤ s₂ ∧ ¬ s₂ ≤ s₁
   le_refl := by 
     intro s
@@ -277,9 +285,21 @@ def pathToTree (t : Subtree G) [∀ v : V, Decidable (v ∈ t.verts)]
 
 section JointAtPoint
 
-variable (t t' : Subtree G) {u : V} (h : ∀ v : V, v ∈ t.verts → v ∈ t'.verts → v = u)
+variable (t t' : Subtree G) {u : V} (h : ∀ v : V, v ∈ t.verts ∧ v ∈ t'.verts ↔ v = u)
+variable [∀ v : V, Decidable (v ∈ t.verts)] [∀ v : V, Decidable (v ∈ t'.verts)]
 
--- def Subtree.joinAtPoint : Subtree G := {}
+def Subtree.joinAtPoint : Subtree G := Subtree.ofPointed (u := u) (t.toSubgraph ⊔ t'.toSubgraph) 
+  (
+    fun ⟨v, (hv : v ∈ t.verts ∨ v ∈ t'.verts)⟩ ↦
+      if hvt : v ∈ t.verts then
+        let ⟨p, hpt⟩ := t.path ⟨u, ((h u).mpr rfl).left⟩ ⟨v, hvt⟩
+        ⟨p, Subgraph.contains_le hpt le_sup_left⟩
+      else if hvt' : v ∈ t'.verts then
+        let ⟨p, hpt'⟩ := t'.path ⟨u, ((h u).mpr rfl).right⟩ ⟨v, hvt'⟩
+        ⟨p, Subgraph.contains_le hpt' le_sup_right⟩
+      else by aesop
+  ) 
+  sorry
 
 -- def Subtree.jointAtPoint_contains_common_vertex : v ∈ (Subtree.jointAtPoint t t' h).verts := sorry 
 
