@@ -556,6 +556,14 @@ def ind {β : (PathClass G u v) → Prop} :
     p * p.inv = PathClass.id' G u := by
   apply PathClass.ind; aesop
 
+protected theorem inv_eq : ∀ {p : G.PathClass u v} {q : G.PathClass v u},
+    p.inv = q → p = q.inv := by
+  apply PathClass.ind; aesop
+
+protected theorem eq_inv {p : G.PathClass u v} {q : G.PathClass v u} :
+    p = q.inv → p.inv = q := fun h ↦
+  (PathClass.inv_eq h.symm).symm
+
 instance : Group (π₁ G v) where
   mul := PathClass.mul
   mul_assoc := PathClass.mul_assoc

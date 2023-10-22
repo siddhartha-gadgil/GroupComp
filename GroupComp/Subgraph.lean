@@ -169,14 +169,15 @@ def Subtree.ofPointed {G : Graph V E} (H : Subgraph G) {u : V} (hu : u ∈ H.ver
       intro (a : H.verts) (b : H.verts) p (hpH : H.contains p)
       simp only [Eq.ndrec, id_eq, eq_mpr_eq_cast]
       rw [← mul_path_path, ← PathClass.inv_equiv_reverse]
-      -- calc [[p]] = [[p]] * (𝟙 _) := by sorry
-      --         _  = [[p]] * ([[path b]] * [[path b]].inv) := by sorry
-      --         _  = ([[p]] * [[path b]]) * ([[path b]].inv) := by sorry
-      --         _  = [[path a]].inv * [[path b]] := by sorry
-      sorry
-  }
-
-#exit
+      rw [← PathClass.mul_id [[p]], ← PathClass.inv_mul [[(path b).val]], ← PathClass.mul_assoc]
+      congr
+      apply PathClass.inv_eq
+      apply path_unique
+      apply Subgraph.contains_reverse
+      rw [Subgraph.contains_append]
+      refine' ⟨hpH, Subgraph.contains_reverse _ _ _⟩
+      exact (path b).property
+    }
 
 @[simp] theorem PreconnectedSubgraph.contains_path (H : PreconnectedSubgraph G) (u v : H.verts) : H.contains (H.path u v).val := 
   (H.path u v).property
