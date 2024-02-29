@@ -1,4 +1,4 @@
-import Mathlib.GroupTheory.IsFreeGroup
+import Mathlib
 import Mathlib.Data.Bool.Basic
 import Mathlib.Order.Zorn
 import Mathlib.Data.Set.Functor
@@ -6,7 +6,7 @@ import Mathlib.Data.Set.Functor
 #check IsFreeGroup
 
 -- TODO Integrate this with the definition of a graph
-class ProperInvolutiveInv (X : Type _) extends InvolutiveInv X where   
+class ProperInvolutiveInv (X : Type _) extends InvolutiveInv X where
   no_fixed_points : ∀ x : X, x ≠ x⁻¹
 
 instance (X : Type _) : ProperInvolutiveInv (X ⊕ X) where
@@ -20,8 +20,8 @@ instance (X : Type _) : ProperInvolutiveInv (X ⊕ X) where
   toFun : X → Y
   inv_map' : ∀ x : X, toFun x⁻¹ = (toFun x)⁻¹
 
-class InvHomClass (F : Type _) (X Y : outParam (Type _)) [Inv X] [Inv Y] 
-  extends FunLike F X fun _ ↦ Y where 
+class InvHomClass (F : Type _) (X Y : outParam (Type _)) [Inv X] [Inv Y]
+  extends DFunLike F X fun _ ↦ Y where
   inv_map : ∀ f : F, ∀ x : X, f x⁻¹ = (f x)⁻¹
 
 instance InvHom.invHomClass [Inv X] [Inv Y] : InvHomClass (InvHom X Y) X Y where
@@ -41,7 +41,7 @@ instance MonoidHom.toInvHom [Group G] [Group H] (φ : G →* H) : G →⁻¹ H w
 
 class OrientableInvolutiveInv (X : Type _) extends InvolutiveInv X where
   pos : X → Bool
-  selection : ∀ x : X, xor (pos x) (pos x⁻¹) 
+  selection : ∀ x : X, xor (pos x) (pos x⁻¹)
 
 namespace OrientableInvolutiveInv
 
@@ -58,10 +58,10 @@ variable (X : Type _) [OrientableInvolutiveInv X] (x x' : X)
 
 @[simp] lemma pos_of_not_pos_inv (h : ¬(pos x⁻¹)) : pos x := by
   have := selection x
-  simp_all only [Bool.not_eq_true, Bool.xor_false_right]
+  simp_all only [Bool.not_eq_true, Bool.xor_false]
 
 instance (priority := high) : ProperInvolutiveInv X where
-  no_fixed_points x := by 
+  no_fixed_points x := by
     apply ne_of_apply_ne pos
     simp only [ne_eq, no_fixed_points, not_false_eq_true]
 
@@ -73,19 +73,19 @@ def lift [InvolutiveInv Y] : (orientation X → Y) ≃ (X →⁻¹ Y) where
         if h:pos x then
           f ⟨x, h⟩
         else
-          (f ⟨x⁻¹, by simp [h]⟩)⁻¹ 
+          (f ⟨x⁻¹, by simp [h]⟩)⁻¹
       inv_map' := by
         intro x
         by_cases h : pos x <;>
         simp [h]
-    }        
+    }
     invFun φ := fun ⟨x, _⟩ ↦ φ x
     left_inv f := by
       ext ⟨x, h⟩
-      simp [FunLike.coe, h]
+      simp [DFunLike.coe, h]
     right_inv φ := by
       ext x
-      simp [FunLike.coe, φ.inv_map']
+      simp [DFunLike.coe, φ.inv_map']
 
 end OrientableInvolutiveInv
 
@@ -105,7 +105,7 @@ def InvFreeSets.chainUnion (c : Set (InvFreeSets X)) (hcChain : IsChain (·.val 
   ⟨Monad.join (Subtype.val '' c), by
     intro x hxS hx'S
     simp only [Monad.join, joinM, Set.bind_def, Set.mem_image, exists_and_right, exists_eq_right, id_eq,
-      Set.iUnion_exists, Set.mem_iUnion, exists_prop] at hxS hx'S 
+      Set.iUnion_exists, Set.mem_iUnion, exists_prop] at hxS hx'S
     have ⟨_, ⟨U, hUc, rfl⟩, hxU⟩ := hxS
     have ⟨_, ⟨V, hVc, rfl⟩, hxV⟩ := hx'S
     have hUV := hcChain hUc hVc
@@ -119,7 +119,7 @@ def InvFreeSets.chainUnion (c : Set (InvFreeSets X)) (hcChain : IsChain (·.val 
         exact V.prop x ‹_› ‹_›
       · have hx'U : x⁻¹ ∈ U.val := by aesop
         exact U.prop x ‹_› ‹_›
-  ⟩   
+  ⟩
 
 lemma InvFreeSets.chains_bounded_above (c : Set (InvFreeSets X))
     (hcChain : IsChain LE.le c) : BddAbove c := by
@@ -132,29 +132,23 @@ lemma InvFreeSets.chains_bounded_above (c : Set (InvFreeSets X))
   -- the argument below is very low level
   intro x hxA
   use A
-  refine' ⟨_, hxA⟩
-  use A
-  dsimp
-  ext
-  simp
-  intro
-  exact ⟨A.prop, hAc⟩
+
 
 variable (X) in
 noncomputable def ProperInvolutiveInv.maxInvFreeSet :=
   Classical.choose <| zorn_partialOrder <| InvFreeSets.chains_bounded_above (X := X)
 
-theorem ProperInvolutiveInv.maxInvFreeSet_spec : ∀ S : InvFreeSets X, 
+theorem ProperInvolutiveInv.maxInvFreeSet_spec : ∀ S : InvFreeSets X,
     (maxInvFreeSet X).val ⊆ S.val → S = (maxInvFreeSet X) :=
-  Classical.choose_spec <| zorn_partialOrder <| InvFreeSets.chains_bounded_above (X := X) 
+  Classical.choose_spec <| zorn_partialOrder <| InvFreeSets.chains_bounded_above (X := X)
 
-noncomputable def ProperInvolutiveInv.orientation : X → Bool := 
+noncomputable def ProperInvolutiveInv.orientation : X → Bool :=
   fun x ↦ Decidable.decide (x ∈ (ProperInvolutiveInv.maxInvFreeSet X).val)
 
 lemma ProperInvolutiveInv.maxInvFreeSet_mem_inv {x : X} :
     x ∉ (maxInvFreeSet X).val → x⁻¹ ∈ (maxInvFreeSet X).val := by
   intro h
-  let C : InvFreeSets X := 
+  let C : InvFreeSets X :=
     ⟨(maxInvFreeSet X).val.insert x⁻¹, by
         simp only [Set.insert]
         intro a h
@@ -184,9 +178,9 @@ theorem ProperInvolutiveInv.selection (x : X) :
   dsimp [orientation]
   rw [@decide_eq_decide]
   intro hmem
-  rw [@iff_eq_eq] at hmem 
+  rw [@iff_eq_eq] at hmem
   by_cases hx:x ∈ (maxInvFreeSet X).val
-  · exact (maxInvFreeSet X).prop x hx (hmem ▸ hx)   
+  · exact (maxInvFreeSet X).prop x hx (hmem ▸ hx)
   · have :=  maxInvFreeSet_mem_inv hx
     rw [← hmem] at this
     contradiction
@@ -201,7 +195,7 @@ end Classical
 class SymmFreeGroup (G : Type _) [Group G] (X : Type _) [ProperInvolutiveInv X] where
   ι : X →⁻¹ G
   induced {H : Type _} [Group H] (φ : X →⁻¹ H) : G →* H
-  induced_is_lift {H : Type _} [Group H] (φ : X →⁻¹ H) : ι.comp (induced φ).toInvHom = φ 
+  induced_is_lift {H : Type _} [Group H] (φ : X →⁻¹ H) : ι.comp (induced φ).toInvHom = φ
   lift_unique {H : Type _} [Group H] (φ : X →⁻¹ H) : ∀ ψ : G →* H, ι.comp ψ.toInvHom = φ → induced φ = ψ
 
 namespace SymmFreeGroup
@@ -215,7 +209,7 @@ theorem induced_restrict_eq_iff_lift_unique (ι : X →⁻¹ G) (ind : {H : Type
   · intro h φ ψ hres
     exact hres ▸ (h ψ)
   · intro h ψ
-    exact h (ι.comp ψ.toInvHom) ψ rfl   
+    exact h (ι.comp ψ.toInvHom) ψ rfl
 
 def lift [SymmFreeGroup G X] : (X →⁻¹ H) ≃ (G →* H) where
   toFun := SymmFreeGroup.induced
@@ -227,25 +221,25 @@ def lift [SymmFreeGroup G X] : (X →⁻¹ H) ≃ (G →* H) where
 
 set_option synthInstance.checkSynthOrder false in -- HACK
 @[instance] def toFreeGroup {X : Type _} [OrientableInvolutiveInv X] [SymmFreeGroup G X] : IsFreeGroup G :=
-  IsFreeGroup.ofLift 
-    (OrientableInvolutiveInv.orientation X) 
-    ((OrientableInvolutiveInv.lift X).invFun SymmFreeGroup.ι) 
-    (Equiv.trans (OrientableInvolutiveInv.lift X) (SymmFreeGroup.lift)) 
+  IsFreeGroup.ofLift
+    (OrientableInvolutiveInv.orientation X)
+    ((OrientableInvolutiveInv.lift X).invFun SymmFreeGroup.ι)
+    (Equiv.trans (OrientableInvolutiveInv.lift X) (SymmFreeGroup.lift))
     <| by
     intro H _ f ⟨x, h⟩
     simp [lift]
     let φ := (OrientableInvolutiveInv.lift X (Y := H)).toFun f
     show (InvHom.comp ι (MonoidHom.toInvHom (induced φ))) _ = _
     rw [induced_is_lift (G := G) φ]
-    simp [OrientableInvolutiveInv.lift, FunLike.coe, EquivLike.coe, h]
+    simp [OrientableInvolutiveInv.lift, DFunLike.coe, EquivLike.coe, h]
 
 instance [IsFreeGroup G] : SymmFreeGroup G (IsFreeGroup.Generators G ⊕ IsFreeGroup.Generators G) where
-  ι := 
-    { toFun := fun 
-        | .inl g => IsFreeGroup.of g 
+  ι :=
+    { toFun := fun
+        | .inl g => IsFreeGroup.of g
         | .inr g => (IsFreeGroup.of g)⁻¹
       inv_map' := by intro x; cases x <;> simp }
-  induced φ := IsFreeGroup.lift.toFun (φ ∘ .inl) 
+  induced φ := IsFreeGroup.lift.toFun (φ ∘ .inl)
   induced_is_lift φ := by
     ext x
     cases x
