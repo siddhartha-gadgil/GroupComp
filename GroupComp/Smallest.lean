@@ -16,34 +16,32 @@ variable {α : Type}[LinearOrder α]
 #check List.ne_nil_of_mem -- ∀ {α : Type u_1} {a : α} {l : List α}, a ∈ l → l ≠ []
 
 
-/-- 
+/--
 Smallest member of a non-empty list of elements of a linearly ordered type.
 -/
-def smallest (l: List α)(_: l ≠ []): α := 
+def smallest (l: List α)(_: l ≠ []): α :=
   match l with
-  | h::t => 
-      if c:(t = []) then  
+  | h::t =>
+      if c:(t = []) then
       h else min h (smallest t c)
 
 /--
 The result of `smallest` is a member of the list.
 -/
-theorem smallest_mem (l : List α) (hyp : l ≠ []) : 
+theorem smallest_mem (l : List α) (hyp : l ≠ []) :
   smallest l hyp ∈ l := by
   match l with
   | head::tail =>
     simp [smallest]
-    split 
+    split
     · rename_i h
       simp [h]
-      intro contra
-      contradiction
     · rename_i h
-      by_cases h':(head ≤ smallest tail h)      
+      by_cases h':(head ≤ smallest tail h)
       · simp [h']
       · simp [h', h]
-        have lem : 
-          min head (smallest tail h) = smallest tail h :=   by 
+        have lem :
+          min head (smallest tail h) = smallest tail h :=   by
             apply min_eq_right
             apply le_of_not_ge
             exact h'
@@ -54,13 +52,13 @@ theorem smallest_mem (l : List α) (hyp : l ≠ []) :
 /--
 The result of `smallest` is `≤` every member of the list.
 -/
-theorem smallest_le (l : List α) (hyp : l ≠ []) : 
-  ∀ a : α, a ∈ l → smallest l hyp ≤ a  := 
+theorem smallest_le (l : List α) (hyp : l ≠ []) :
+  ∀ a : α, a ∈ l → smallest l hyp ≤ a  :=
   match l with
   | head :: tail => by
     simp [smallest, hyp]
     apply And.intro
-    · split  <;> simp 
+    · split  <;> simp
     · intro a hyp'
       have c''  := List.ne_nil_of_mem hyp'
       simp [c'']
@@ -79,12 +77,12 @@ def defaultEg(α : Type) : Inhabited (ℕ × ℕ × (α → ℕ)) := inferInstan
 
 #reduce defaultEg
 
-instance (priority := low) (α : Type) : Inhabited (α → α) := 
+instance (priority := low) (α : Type) : Inhabited (α → α) :=
   ⟨id⟩
 
 def defaultEg'(α : Type) : Inhabited (ℕ × (Empty → Empty) × (α → ℕ)) := inferInstance
 
 #reduce defaultEg'
 
-partial def bad [Nonempty α]: ℕ → α 
-| n => bad n  
+partial def bad [Nonempty α]: ℕ → α
+| n => bad n
