@@ -16,7 +16,7 @@ We can prove this in Lean. But a function that returns such a pair of numbers ha
 #check Real.sqrt_pos -- ∀ {x : ℝ}, 0 < Real.sqrt x ↔ 0 < x
 
 /--
-An auxiliary lemma that (√2^√2)^√2 = 2. 
+An auxiliary lemma that (√2^√2)^√2 = 2.
 -/
 theorem sq2_pow_twice : ((Real.sqrt 2) ^ (Real.sqrt 2)) ^ (Real.sqrt 2) = 2 := by
   have two_nonneg : (2 : ℝ) ≥ 0 := by norm_cast
@@ -29,14 +29,12 @@ theorem sq2_pow_twice : ((Real.sqrt 2) ^ (Real.sqrt 2)) ^ (Real.sqrt 2) = 2 := b
   rw [one_plus_one] at lm
   rw [lm]
   simp [Real.rpow_one]
-  apply  Real.mul_self_sqrt
-  exact two_nonneg
 
 #check irrational_sqrt_two -- Irrational (Real.sqrt 2)
 #check irrational_iff_ne_rational -- ∀ (x : ℝ), Irrational x ↔ ∀ (a b : ℤ), x ≠ ↑a / ↑b
 
-/-- 
-There exist irrational numbers `a` and `b` such that `a^b` is rational. 
+/--
+There exist irrational numbers `a` and `b` such that `a^b` is rational.
 -/
 theorem exists_irrationals_pow_rational :
   ∃ a b : ℝ, (Irrational a) ∧ (Irrational b) ∧ ¬ (Irrational (a ^ b)) := by
@@ -51,15 +49,14 @@ theorem exists_irrationals_pow_rational :
     · use b, b
       simp [irrational_sqrt_two, c]
 
-/-- 
+/--
 Function giving a pair of irrational numbers `a` and `b` such that `a^b` is rational, together with a proof of their irrationality.
 -/
-noncomputable def irrationalPairWithRationalPower : 
-    {ab : ℝ × ℝ  // 
+noncomputable def irrationalPairWithRationalPower :
+    {ab : ℝ × ℝ  //
       Irrational ab.1 ∧ Irrational ab.2 ∧ ¬ Irrational (ab.1 ^ ab.2)} := by
       apply Classical.choice
       let ⟨a, b, pf⟩ := exists_irrationals_pow_rational
       use (a, b)
 
 #check irrationalPairWithRationalPower.val -- ℝ × ℝ
-
