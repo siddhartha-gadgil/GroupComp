@@ -114,7 +114,7 @@ def hcf (a b : ℕ) : ℕ :=
       apply Nat.pos_of_ne_zero
       assumption
     hcf (b % a) a
-termination_by a b => a
+termination_by a
 
 #eval hcf 8 12 -- 4
 
