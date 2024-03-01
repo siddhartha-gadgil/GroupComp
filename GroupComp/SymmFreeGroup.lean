@@ -261,9 +261,10 @@ noncomputable instance [IsFreeGroup G] : SymmFreeGroup G (IsFreeGroup.Generators
       assumption
   lift_unique φ ψ := by
     intro h
-    ext g
-    simp
+    dsimp
     rw [← h]
-    rfl
+    show (IsFreeGroup.lift (ψ ∘ (IsFreeGroup.of ·))) = ψ
+    apply IsFreeGroup.ext_hom
+    simp
 
 end SymmFreeGroup
