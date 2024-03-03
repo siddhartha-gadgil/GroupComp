@@ -101,6 +101,8 @@ abbrev InvFreeSets := {S : Set X // InvFreeSet S}
 instance : PartialOrder (InvFreeSets X) where
   le_antisymm S T hST hTS := by ext; aesop
 
+attribute [local instance] Set.monad
+
 def InvFreeSets.chainUnion (c : Set (InvFreeSets X)) (hcChain : IsChain (·.val ⊆ ·.val) c) : InvFreeSets X :=
   ⟨Monad.join (Subtype.val '' c), by
     intro x hxS hx'S
@@ -132,6 +134,13 @@ lemma InvFreeSets.chains_bounded_above (c : Set (InvFreeSets X))
   -- the argument below is very low level
   intro x hxA
   use A
+  refine' ⟨_, hxA⟩
+  use A
+  dsimp
+  ext
+  simp
+  intro
+  exact ⟨A.prop, hAc⟩
 
 
 variable (X) in
@@ -233,7 +242,7 @@ set_option synthInstance.checkSynthOrder false in -- HACK
     rw [induced_is_lift (G := G) φ]
     simp [OrientableInvolutiveInv.lift, DFunLike.coe, EquivLike.coe, h]
 
-instance [IsFreeGroup G] : SymmFreeGroup G (IsFreeGroup.Generators G ⊕ IsFreeGroup.Generators G) where
+noncomputable instance [IsFreeGroup G] : SymmFreeGroup G (IsFreeGroup.Generators G ⊕ IsFreeGroup.Generators G) where
   ι :=
     { toFun := fun
         | .inl g => IsFreeGroup.of g
@@ -252,9 +261,10 @@ instance [IsFreeGroup G] : SymmFreeGroup G (IsFreeGroup.Generators G ⊕ IsFreeG
       assumption
   lift_unique φ ψ := by
     intro h
-    ext g
-    simp
+    dsimp
     rw [← h]
-    rfl
+    show (IsFreeGroup.lift (ψ ∘ (IsFreeGroup.of ·))) = ψ
+    apply IsFreeGroup.ext_hom
+    simp
 
 end SymmFreeGroup

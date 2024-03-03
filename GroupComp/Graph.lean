@@ -249,6 +249,12 @@ theorem toList_reverse {G : Graph V E}{v w : V} (p : EdgePath G v w):
     simp [cons_toList, reverse_cons, concat_toList]
     simp [ih, EdgeBetween.bar]
 
+def initVerts (p : G.EdgePath u v) : List V :=
+  p.toList.map G.ι
+
+def termVerts (p : G.EdgePath u v) : List V :=
+  p.toList.map G.τ
+
 @[ext] theorem eq_of_toList_eq {G: Graph V E}{v w: V}
   (p₁ p₂ : EdgePath G v w) : p₁.toList = p₂.toList → p₁ = p₂ := by
   induction p₁ with
@@ -549,6 +555,14 @@ def ind {β : (PathClass G u v) → Prop} :
 @[simp] protected theorem mul_inv {u v : V} : ∀ p : PathClass G u v,
     p * p.inv = PathClass.id' G u := by
   apply PathClass.ind; aesop
+
+protected theorem inv_eq : ∀ {p : G.PathClass u v} {q : G.PathClass v u},
+    p.inv = q → p = q.inv := by
+  apply PathClass.ind; aesop
+
+protected theorem eq_inv {p : G.PathClass u v} {q : G.PathClass v u} :
+    p = q.inv → p.inv = q := fun h ↦
+  (PathClass.inv_eq h.symm).symm
 
 instance : Group (π₁ G v) where
   mul := PathClass.mul
