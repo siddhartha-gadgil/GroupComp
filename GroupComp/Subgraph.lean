@@ -8,8 +8,8 @@ structure Subgraph {V E : Type _} (G : Graph V E) where
   verts : Set V
   edges : Set E
   edges_bar : ∀ e ∈ edges, G.bar e ∈ edges
-  edges_init : ∀ e ∈ edges, G.ι e ∈ verts 
-  
+  edges_init : ∀ e ∈ edges, G.ι e ∈ verts
+
 namespace Subgraph
 
 variable {V E : Type _} {G : Graph V E} (H : Subgraph G)
@@ -17,7 +17,7 @@ variable {V E : Type _} {G : Graph V E} (H : Subgraph G)
 attribute [aesop safe apply] edges_bar edges_init
 
 theorem edges_terminal : ∀ e ∈ H.edges, G.τ e ∈ H.verts := by
-  intro e he 
+  intro e he
   rw [← G.ι_bar e]
   apply H.edges_init
   apply H.edges_bar
@@ -38,13 +38,13 @@ def contains {u v : V} : G.EdgePath u v → Prop
   | .nil x => x ∈ H.verts
   | .cons e p => e.edge ∈ H.edges ∧ contains p
 
-@[simp] theorem contains_nil : H.contains (.nil v) ↔ v ∈ H.verts := Iff.rfl 
+@[simp] theorem contains_nil : H.contains (.nil v) ↔ v ∈ H.verts := Iff.rfl
 
 @[simp] theorem contains_cons : H.contains (.cons e p) ↔ e.edge ∈ H.edges ∧ H.contains p := Iff.rfl
 
 @[simp] theorem contains_concat : H.contains (.concat p e) ↔ e.edge ∈ H.edges ∧ H.contains p := by
   induction p with
-    | nil => 
+    | nil =>
       rw [EdgePath.concat]
       simp only [contains_cons, contains_nil, and_congr_right_iff]
       intro he
@@ -63,10 +63,10 @@ def contains {u v : V} : G.EdgePath u v → Prop
     aesop
 
 @[aesop safe apply] theorem contains_tail (p : G.EdgePath u v) : H.contains p → v ∈ H.verts := by
-  induction p <;> aesop 
+  induction p <;> aesop
 
 @[simp] theorem contains_append {u v w : V} (p : G.EdgePath u v) (p' : G.EdgePath v w) : H.contains (p ++ p') ↔ H.contains p ∧ H.contains p' := by
-  induction p <;> aesop    
+  induction p <;> aesop
 
 theorem contains_reverse {u v : V} (p : G.EdgePath u v) : H.contains p → H.contains p.reverse := by
   induction p with
@@ -82,22 +82,22 @@ def Subgraph.le {G: Graph V E}(s₁ s₂ : Subgraph G) : Prop :=
 
 instance {G: Graph V E} : LE (Subgraph G) := ⟨Subgraph.le⟩
 
-theorem contains_le {H H' : Subgraph G} {p : G.EdgePath u v} 
+theorem contains_le {H H' : Subgraph G} {p : G.EdgePath u v}
     (hpH : H.contains p) (h : H ≤ H') : H'.contains p := by
   let ⟨hv, he⟩ := h
   induction p with
     | nil => apply hv; exact hpH
-    | cons e p' ih => 
+    | cons e p' ih =>
       simp at hpH ⊢
       refine' ⟨he hpH.left, ih hpH.right⟩
 
 @[simp]
 theorem Subgraph.le_defn {G: Graph V E}(s₁ s₂ : Subgraph G) :
     s₁ ≤ s₂ ↔ s₁.verts ⊆ s₂.verts ∧ s₁.edges ⊆ s₂.edges := Iff.rfl
- 
+
 instance : PartialOrder (Subgraph G) where
   lt := fun s₁ s₂ => s₁ ≤ s₂ ∧ ¬ s₂ ≤ s₁
-  le_refl := by 
+  le_refl := by
     intro s
     simp [Subgraph.le_defn, subset_rfl]
   le_trans := by
@@ -120,11 +120,11 @@ def Subgraph.union (H H' : Subgraph G) : Subgraph G where
   edges_bar e := by
     rintro (_ | _)
     · left; apply H.edges_bar; assumption
-    · right; apply H'.edges_bar; assumption 
+    · right; apply H'.edges_bar; assumption
   edges_init e := by
     rintro (_ | _)
     · left; apply Subgraph.edges_init; assumption
-    · right; apply Subgraph.edges_init; assumption 
+    · right; apply Subgraph.edges_init; assumption
 
 def Subgraph.inter (H H' : Subgraph G) : Subgraph G where
   verts := H.verts ∩ H'.verts
@@ -142,13 +142,13 @@ def Subgraph.inter (H H' : Subgraph G) : Subgraph G where
 
 instance : Lattice (Subgraph G) where
   sup := Subgraph.union
-  le_sup_left := by aesop (add norm unfold [Subgraph.union]) 
+  le_sup_left := by aesop (add norm unfold [Subgraph.union])
   le_sup_right := by aesop (add norm unfold [Subgraph.union])
   sup_le := by aesop (add norm unfold [Subgraph.union])
   inf := Subgraph.inter
-  inf_le_left := by aesop (add norm unfold [Subgraph.inter]) 
-  inf_le_right := by aesop (add norm unfold [Subgraph.inter]) 
-  le_inf := by aesop (add norm unfold [Subgraph.inter]) 
+  inf_le_left := by aesop (add norm unfold [Subgraph.inter])
+  inf_le_right := by aesop (add norm unfold [Subgraph.inter])
+  le_inf := by aesop (add norm unfold [Subgraph.inter])
 
 end Subgraph
 
@@ -167,7 +167,7 @@ def Subtree.ofPointed {G : Graph V E} (H : Subgraph G) {u : V}
   (path : (v : H.verts) → {p : G.EdgePath ↑u ↑v // H.contains p})
   (path_unique : (v : H.verts) → (p : G.EdgePath u v) → H.contains p → [[p]] = [[(path v).val]]) :
       Subtree G := { H with
-    path := fun (x y : H.verts) ↦ 
+    path := fun (x y : H.verts) ↦
       let ⟨p, hpH⟩ := path x
       let ⟨q, hqH⟩ := path y
       ⟨p.reverse ++ q, by
@@ -187,7 +187,7 @@ def Subtree.ofPointed {G : Graph V E} (H : Subgraph G) {u : V}
       exact (path b).property
     }
 
-@[simp] theorem PreconnectedSubgraph.contains_path (H : PreconnectedSubgraph G) (u v : H.verts) : H.contains (H.path u v).val := 
+@[simp] theorem PreconnectedSubgraph.contains_path (H : PreconnectedSubgraph G) (u v : H.verts) : H.contains (H.path u v).val :=
   (H.path u v).property
 
 attribute [aesop safe apply] Subtree.path_unique
@@ -222,16 +222,16 @@ def pathMap {u v : V} : G.EdgePath u v → G'.EdgePath (φ.toFuncV u) (φ.toFunc
   | .nil _ => .nil _
   | .cons e p => .cons (φ.edgeBetweenMap e) (pathMap p)
 
-def pathMap_append {u v w : V} (p : G.EdgePath u v) (p' : G.EdgePath v w) : 
+def pathMap_append {u v w : V} (p : G.EdgePath u v) (p' : G.EdgePath v w) :
     φ.pathMap (p ++ p') = φ.pathMap p ++ φ.pathMap p' := by
   induction p with
     | nil _ => rfl
-    | cons e p ih => 
+    | cons e p ih =>
       dsimp [pathMap]
       congr
       apply ih
 
--- instance : @CategoryTheory.Functor V G.FundamentalGroupoid.toCategory V' G'.FundamentalGroupoid.toCategory := sorry 
+-- instance : @CategoryTheory.Functor V G.FundamentalGroupoid.toCategory V' G'.FundamentalGroupoid.toCategory := sorry
 
 end Graph.hom
 
@@ -262,33 +262,33 @@ def chainUnion (c : Set (Subtree G)) (h : IsChain (· ≤ ·) c) : Subtree G whe
   path := sorry
   path_unique := sorry
 
-def pathToTree (t : Subtree G) [∀ v : V, Decidable (v ∈ t.verts)] 
-    {u v : V} (hu : u ∈ t.verts) (hv : v ∉ t.verts) (p : G.EdgePath v u) : 
+def pathToTree (t : Subtree G) [∀ v : V, Decidable (v ∈ t.verts)]
+    {u v : V} (hu : u ∈ t.verts) (hv : v ∉ t.verts) (p : G.EdgePath v u) :
     {q : Σ w : V, G.EdgePath v w // q.1 ∈ t.verts ∧ q.2.initVerts.all (· ∉ t.verts)} :=
   match p with
     | .nil _ => by contradiction
     | .cons e p' => by
-      rename_i x w 
+      rename_i x w
       if h:w ∈ t.verts then
         refine' ⟨⟨w, G.singletonPath e⟩, ⟨h, _⟩⟩
-        simp only [EdgePath.initVerts, List.map, EdgeBetween.init_eq, 
+        simp only [EdgePath.initVerts, List.map, EdgeBetween.init_eq,
           decide_not, List.all_cons, hv, decide_False,
           Bool.not_false, List.all_nil, Bool.and_self]
-      else 
+      else
         let ⟨⟨v', q⟩, hqt, hqverts⟩ := pathToTree t hu h p'
         refine' ⟨⟨v', .cons e q⟩, ⟨hqt, _⟩⟩
-        simp only [EdgePath.initVerts, decide_not, List.all_eq_true, 
-          List.mem_map, Bool.not_eq_true', decide_eq_false_iff_not, forall_exists_index, 
+        simp only [EdgePath.initVerts, decide_not, List.all_eq_true,
+          List.mem_map, Bool.not_eq_true', decide_eq_false_iff_not, forall_exists_index,
           and_imp, forall_apply_eq_imp_iff₂, List.map, List.all_cons, Bool.and_eq_true] at hqverts ⊢
         refine' ⟨_, hqverts⟩
-        simp only [EdgeBetween.init_eq, hv]
+        simp only [EdgeBetween.init_eq, hv, not_false_eq_true]
 
 section JointAtPoint
 
 variable (t t' : Subtree G) {u : V} (h : ∀ v : V, v ∈ t.verts ∧ v ∈ t'.verts ↔ v = u)
 variable [∀ v : V, Decidable (v ∈ t.verts)] [∀ v : V, Decidable (v ∈ t'.verts)]
 
-def Subtree.joinAtPoint : Subtree G := Subtree.ofPointed (u := u) (t.toSubgraph ⊔ t'.toSubgraph) 
+def Subtree.joinAtPoint : Subtree G := Subtree.ofPointed (u := u) (t.toSubgraph ⊔ t'.toSubgraph)
   (
     fun ⟨v, (hv : v ∈ t.verts ∨ v ∈ t'.verts)⟩ ↦
       if hvt : v ∈ t.verts then
@@ -298,19 +298,19 @@ def Subtree.joinAtPoint : Subtree G := Subtree.ofPointed (u := u) (t.toSubgraph 
         let ⟨p, hpt'⟩ := t'.path ⟨u, ((h u).mpr rfl).right⟩ ⟨v, hvt'⟩
         ⟨p, Subgraph.contains_le hpt' le_sup_right⟩
       else by aesop
-  ) 
+  )
   sorry
 
--- def Subtree.jointAtPoint_contains_common_vertex : v ∈ (Subtree.jointAtPoint t t' h).verts := sorry 
+-- def Subtree.jointAtPoint_contains_common_vertex : v ∈ (Subtree.jointAtPoint t t' h).verts := sorry
 
--- def Subtree.jointAtPoint_contains_left : t ≤ Subtree.joinAtPoint t t' h := sorry  
+-- def Subtree.jointAtPoint_contains_left : t ≤ Subtree.joinAtPoint t t' h := sorry
 
--- def Subtree.jointAtPoint_contains_right : t' ≤ Subtree.joinAtPoint t t' h := sorry 
+-- def Subtree.jointAtPoint_contains_right : t' ≤ Subtree.joinAtPoint t t' h := sorry
 
 end JointAtPoint
 
 -- Idea: attach the above path to the tree
-def extendTree (t : Subtree G) (v : V) (h : v ∉ t.verts) : {t' : Subtree G // t ≤ t' ∧ v ∈ t'.verts} := sorry  
+def extendTree (t : Subtree G) (v : V) (h : v ∉ t.verts) : {t' : Subtree G // t ≤ t' ∧ v ∈ t'.verts} := sorry
 
 end MaximalSubtree
 
@@ -330,10 +330,10 @@ open CategoryTheory
 
 def pathClassBetween (u v : V) : u ⟶ v := [[(Γ.toSubtree.path (Γ.vertex_coe u) (Γ.vertex_coe v)).val]]
 
-@[simp] lemma contains_path {u v : V} : Γ.contains (Γ.path (Γ.vertex_coe u) (Γ.vertex_coe v)).val := 
+@[simp] lemma contains_path {u v : V} : Γ.contains (Γ.path (Γ.vertex_coe u) (Γ.vertex_coe v)).val :=
   Γ.toSubtree.toPreconnectedSubgraph.contains_path (Γ.vertex_coe u) (Γ.vertex_coe v)
 
-notation u " ⤳[" Γ "] " v  => pathClassBetween Γ u v 
+notation u " ⤳[" Γ "] " v  => pathClassBetween Γ u v
 
 @[local simp] def surround {u v : V} (p : u ⟶ v) : Γ.base ⟶ Γ.base :=
   (Γ.base ⤳[Γ] u) ≫ p ≫ (v ⤳[Γ] Γ.base)
@@ -349,7 +349,7 @@ notation u " ⤳[" Γ "] " v  => pathClassBetween Γ u v
   symm
   apply path_class_of_contains_path
   simp
-  
+
 @[simp] theorem tree_path_comp {u v w : V} : (u ⤳[Γ] v) ≫ (v ⤳[Γ] w) = (u ⤳[Γ] w) := by
   apply path_class_of_contains_path
   simp
@@ -374,14 +374,14 @@ theorem opp_path_eq_inv {u v : V} : (u ⤳[Γ] v) = inv (v ⤳[Γ] u) := by
 @[local simp] lemma path_to_base_eq {u : V} : (u ⤳[Γ] Γ.base) = inv (Γ.base ⤳[Γ] u) := by
   apply opp_path_eq_inv
 
-@[simp] theorem surround_append {u v w : V} (p : u ⟶ v) (q : v ⟶ w) : 
-    Γ.surround p ≫ Γ.surround q = Γ.surround (p ≫ q) := by 
+@[simp] theorem surround_append {u v w : V} (p : u ⟶ v) (q : v ⟶ w) :
+    Γ.surround p ≫ Γ.surround q = Γ.surround (p ≫ q) := by
   simp only [surround, path_to_base_eq, Category.assoc, IsIso.inv_hom_id_assoc]
 
-@[simp] theorem surround_nil (u : V) : Γ.surround (𝟙 u) = 𝟙 Γ.base := by 
+@[simp] theorem surround_nil (u : V) : Γ.surround (𝟙 u) = 𝟙 Γ.base := by
   simp only [surround, path_to_base_eq, Category.id_comp, IsIso.hom_inv_id]
 
-@[simp] theorem surround_cons : 
+@[simp] theorem surround_cons :
     Γ.surround [[.cons e p]] = Γ.surroundEdge e ≫ Γ.surround [[p]] := by
   erw [Graph.EdgePath.cons_eq_append_singletonPath, surround_append]; rfl
 
@@ -390,14 +390,14 @@ theorem opp_path_eq_inv {u v : V} : (u ⤳[Γ] v) = inv (v ⤳[Γ] u) := by
     IsIso.hom_inv_id_assoc, IsIso.hom_inv_id]
 
 @[simp] theorem surround_loop (p : Γ.base ⟶ Γ.base) : Γ.surround p = p := by
-  simp only [surround, tree_path_id, Category.comp_id, Category.id_comp]  
+  simp only [surround, tree_path_id, Category.comp_id, Category.id_comp]
 
 @[simp] theorem surroundEdge_bar (e : G.EdgeBetween u v) : Γ.surroundEdge e.bar = inv (Γ.surroundEdge e) := by
-  rw [surroundEdge, surroundEdge, ← surround_inv, Graph.EdgePath.singletonPath_bar, 
+  rw [surroundEdge, surroundEdge, ← surround_inv, Graph.EdgePath.singletonPath_bar,
     Graph.PathClass.reverse_class_eq_inv, Graph.PathClass.inv_eq_inv]
 
-theorem surroundEdge_cast {u v u' v' : V} (huu' : u = u') (hvv' : v = v') 
-    (e : G.EdgeBetween u v) (e' : G.EdgeBetween u' v') 
+theorem surroundEdge_cast {u v u' v' : V} (huu' : u = u') (hvv' : v = v')
+    (e : G.EdgeBetween u v) (e' : G.EdgeBetween u' v')
     (hee' : e.edge = e'.edge) : Γ.surroundEdge e = Γ.surroundEdge e' := by
   cases huu'; cases hvv'
   congr; ext
@@ -407,15 +407,15 @@ theorem surroundEdge_cast {u v u' v' : V} (huu' : u = u') (hvv' : v = v')
   rw [← surroundEdge_bar]
   apply surroundEdge_cast <;> simp
 
-def surroundEdgewise {u v : V} : G.EdgePath u v → G.π₁ Γ.base := 
-  Graph.EdgePath.fold Γ.surroundEdge CategoryStruct.comp (1 : G.π₁ Γ.base) 
+def surroundEdgewise {u v : V} : G.EdgePath u v → G.π₁ Γ.base :=
+  Graph.EdgePath.fold Γ.surroundEdge CategoryStruct.comp (1 : G.π₁ Γ.base)
 
 @[simp] lemma surroundEdgewise_nil {u : V} : Γ.surroundEdgewise (Graph.EdgePath.nil (G := G) u) = 𝟙 Γ.base := rfl
 
-@[simp] lemma surroundEdgewise_cons {u v : V} : 
-  Γ.surroundEdgewise (Graph.EdgePath.cons e p) = (Γ.surroundEdge e) ≫ (Γ.surroundEdgewise p) := rfl 
+@[simp] lemma surroundEdgewise_cons {u v : V} :
+  Γ.surroundEdgewise (Graph.EdgePath.cons e p) = (Γ.surroundEdge e) ≫ (Γ.surroundEdgewise p) := rfl
 
-theorem surround_eq {u v : V} (p : G.EdgePath u v) : 
+theorem surround_eq {u v : V} (p : G.EdgePath u v) :
     Γ.surround [[p]] = Γ.surroundEdgewise p := by
   induction p with
   | nil _ => simp only [surround, Subgraph.contains_nil, SpanningSubgraph.spanning, Set.top_eq_univ, Set.mem_univ,
