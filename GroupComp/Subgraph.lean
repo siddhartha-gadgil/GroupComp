@@ -42,6 +42,19 @@ def contains {u v : V} : G.EdgePath u v → Prop
 
 @[simp] theorem contains_cons : H.contains (.cons e p) ↔ e.edge ∈ H.edges ∧ H.contains p := Iff.rfl
 
+@[simp] theorem contains_concat : H.contains (.concat p e) ↔ e.edge ∈ H.edges ∧ H.contains p := by
+  induction p with
+    | nil => 
+      rw [EdgePath.concat]
+      simp only [contains_cons, contains_nil, and_congr_right_iff]
+      intro he
+      have := e.init_eq ▸ H.edges_init e.edge he
+      have := e.term_eq ▸ H.edges_terminal e.edge he
+      simp_all only
+    | cons e p' ih =>
+      rw [EdgePath.concat_cons]
+      aesop
+
 @[aesop safe apply] theorem contains_head (p : G.EdgePath u v) : H.contains p → u ∈ H.verts := by
   induction p with
   | nil => simp
@@ -55,17 +68,34 @@ def contains {u v : V} : G.EdgePath u v → Prop
 @[simp] theorem contains_append {u v w : V} (p : G.EdgePath u v) (p' : G.EdgePath v w) : H.contains (p ++ p') ↔ H.contains p ∧ H.contains p' := by
   induction p <;> aesop    
 
+theorem contains_reverse {u v : V} (p : G.EdgePath u v) : H.contains p → H.contains p.reverse := by
+  induction p with
+    | nil => simp only  [contains_nil, EdgePath.reverse_nil, imp_self]
+    | cons e p' ih =>
+      rw [EdgePath.reverse_cons]
+      simp only [contains_cons, contains_concat, EdgeBetween.bar_eq_bar, and_imp]
+      intro he hp'H
+      exact ⟨H.edges_bar _ he, ih hp'H⟩
+
 def Subgraph.le {G: Graph V E}(s₁ s₂ : Subgraph G) : Prop :=
   s₁.verts ⊆ s₂.verts ∧ s₁.edges ⊆ s₂.edges
 
 instance {G: Graph V E} : LE (Subgraph G) := ⟨Subgraph.le⟩
+
+theorem contains_le {H H' : Subgraph G} {p : G.EdgePath u v} 
+    (hpH : H.contains p) (h : H ≤ H') : H'.contains p := by
+  let ⟨hv, he⟩ := h
+  induction p with
+    | nil => apply hv; exact hpH
+    | cons e p' ih => 
+      simp at hpH ⊢
+      refine' ⟨he hpH.left, ih hpH.right⟩
 
 @[simp]
 theorem Subgraph.le_defn {G: Graph V E}(s₁ s₂ : Subgraph G) :
     s₁ ≤ s₂ ↔ s₁.verts ⊆ s₂.verts ∧ s₁.edges ⊆ s₂.edges := Iff.rfl
  
 instance : PartialOrder (Subgraph G) where
-  le := (·  ≤ ·  )
   lt := fun s₁ s₂ => s₁ ≤ s₂ ∧ ¬ s₂ ≤ s₁
   le_refl := by 
     intro s
@@ -84,6 +114,42 @@ instance : PartialOrder (Subgraph G) where
     let h' := subset_antisymm h₁.2 h₂.2
     ext <;> simp [h, h']
 
+def Subgraph.union (H H' : Subgraph G) : Subgraph G where
+  verts := H.verts ∪ H'.verts
+  edges := H.edges ∪ H'.edges
+  edges_bar e := by
+    rintro (_ | _)
+    · left; apply H.edges_bar; assumption
+    · right; apply H'.edges_bar; assumption 
+  edges_init e := by
+    rintro (_ | _)
+    · left; apply Subgraph.edges_init; assumption
+    · right; apply Subgraph.edges_init; assumption 
+
+def Subgraph.inter (H H' : Subgraph G) : Subgraph G where
+  verts := H.verts ∩ H'.verts
+  edges := H.edges ∩ H'.edges
+  edges_bar e := by
+    rintro ⟨_, _⟩
+    constructor <;>
+    ( apply Subgraph.edges_bar
+      assumption )
+  edges_init e := by
+    rintro ⟨_, _⟩
+    constructor <;>
+    ( apply Subgraph.edges_init
+      assumption )
+
+instance : Lattice (Subgraph G) where
+  sup := Subgraph.union
+  le_sup_left := by aesop (add norm unfold [Subgraph.union]) 
+  le_sup_right := by aesop (add norm unfold [Subgraph.union])
+  sup_le := by aesop (add norm unfold [Subgraph.union])
+  inf := Subgraph.inter
+  inf_le_left := by aesop (add norm unfold [Subgraph.inter]) 
+  inf_le_right := by aesop (add norm unfold [Subgraph.inter]) 
+  le_inf := by aesop (add norm unfold [Subgraph.inter]) 
+
 end Subgraph
 
 structure PreconnectedSubgraph (G : Graph V E) extends Subgraph G where
@@ -95,6 +161,31 @@ structure PointedSubgraph {V E : Type _} (G : Graph V E) extends Subgraph G wher
 structure Subtree (G : Graph V E) extends PreconnectedSubgraph G where
   path_unique : ∀ u v : verts, ∀ p : G.EdgePath u v, toSubgraph.contains p →
     [[p]] = [[(path u v).val]]
+
+open CategoryTheory in
+def Subtree.ofPointed {G : Graph V E} (H : Subgraph G) {u : V}
+  (path : (v : H.verts) → {p : G.EdgePath ↑u ↑v // H.contains p})
+  (path_unique : (v : H.verts) → (p : G.EdgePath u v) → H.contains p → [[p]] = [[(path v).val]]) :
+      Subtree G := { H with
+    path := fun (x y : H.verts) ↦ 
+      let ⟨p, hpH⟩ := path x
+      let ⟨q, hqH⟩ := path y
+      ⟨p.reverse ++ q, by
+        rw [H.contains_append]
+        exact ⟨H.contains_reverse _ hpH, hqH⟩⟩
+    path_unique := by
+      intro (a : H.verts) (b : H.verts) p (hpH : H.contains p)
+      simp only [Eq.ndrec, id_eq, eq_mpr_eq_cast]
+      rw [← mul_path_path, ← PathClass.inv_equiv_reverse]
+      rw [← PathClass.mul_id [[p]], ← PathClass.inv_mul [[(path b).val]], ← PathClass.mul_assoc]
+      congr
+      apply PathClass.inv_eq
+      apply path_unique
+      apply Subgraph.contains_reverse
+      rw [Subgraph.contains_append]
+      refine' ⟨hpH, Subgraph.contains_reverse _ _ _⟩
+      exact (path b).property
+    }
 
 @[simp] theorem PreconnectedSubgraph.contains_path (H : PreconnectedSubgraph G) (u v : H.verts) : H.contains (H.path u v).val := 
   (H.path u v).property
@@ -154,6 +245,76 @@ def SpanningSubgraph.coe {V E : Type _} {G : Graph V E} (H : SpanningSubgraph G)
   { H' with ι := Subtype.val ∘ H'.ι }
 
 structure SpanningSubtree (G : Graph V E) extends SpanningSubgraph G, Subtree G, PointedSubgraph G
+
+section MaximalSubtree
+
+variable {V E : Type _} (G : Graph V E)
+
+instance : LE (Subtree G) where
+  le t t' := t.toSubgraph ≤ t'.toSubgraph
+
+
+def chainUnion (c : Set (Subtree G)) (h : IsChain (· ≤ ·) c) : Subtree G where
+  verts := sorry
+  edges := sorry
+  edges_bar := sorry
+  edges_init := sorry
+  path := sorry
+  path_unique := sorry
+
+def pathToTree (t : Subtree G) [∀ v : V, Decidable (v ∈ t.verts)] 
+    {u v : V} (hu : u ∈ t.verts) (hv : v ∉ t.verts) (p : G.EdgePath v u) : 
+    {q : Σ w : V, G.EdgePath v w // q.1 ∈ t.verts ∧ q.2.initVerts.all (· ∉ t.verts)} :=
+  match p with
+    | .nil _ => by contradiction
+    | .cons e p' => by
+      rename_i x w 
+      if h:w ∈ t.verts then
+        refine' ⟨⟨w, G.singletonPath e⟩, ⟨h, _⟩⟩
+        simp only [EdgePath.initVerts, List.map, EdgeBetween.init_eq, 
+          decide_not, List.all_cons, hv, decide_False,
+          Bool.not_false, List.all_nil, Bool.and_self]
+      else 
+        let ⟨⟨v', q⟩, hqt, hqverts⟩ := pathToTree t hu h p'
+        refine' ⟨⟨v', .cons e q⟩, ⟨hqt, _⟩⟩
+        simp only [EdgePath.initVerts, decide_not, List.all_eq_true, 
+          List.mem_map, Bool.not_eq_true', decide_eq_false_iff_not, forall_exists_index, 
+          and_imp, forall_apply_eq_imp_iff₂, List.map, List.all_cons, Bool.and_eq_true] at hqverts ⊢
+        refine' ⟨_, hqverts⟩
+        simp only [EdgeBetween.init_eq, hv]
+
+section JointAtPoint
+
+variable (t t' : Subtree G) {u : V} (h : ∀ v : V, v ∈ t.verts ∧ v ∈ t'.verts ↔ v = u)
+variable [∀ v : V, Decidable (v ∈ t.verts)] [∀ v : V, Decidable (v ∈ t'.verts)]
+
+def Subtree.joinAtPoint : Subtree G := Subtree.ofPointed (u := u) (t.toSubgraph ⊔ t'.toSubgraph) 
+  (
+    fun ⟨v, (hv : v ∈ t.verts ∨ v ∈ t'.verts)⟩ ↦
+      if hvt : v ∈ t.verts then
+        let ⟨p, hpt⟩ := t.path ⟨u, ((h u).mpr rfl).left⟩ ⟨v, hvt⟩
+        ⟨p, Subgraph.contains_le hpt le_sup_left⟩
+      else if hvt' : v ∈ t'.verts then
+        let ⟨p, hpt'⟩ := t'.path ⟨u, ((h u).mpr rfl).right⟩ ⟨v, hvt'⟩
+        ⟨p, Subgraph.contains_le hpt' le_sup_right⟩
+      else by aesop
+  ) 
+  sorry
+
+-- def Subtree.jointAtPoint_contains_common_vertex : v ∈ (Subtree.jointAtPoint t t' h).verts := sorry 
+
+-- def Subtree.jointAtPoint_contains_left : t ≤ Subtree.joinAtPoint t t' h := sorry  
+
+-- def Subtree.jointAtPoint_contains_right : t' ≤ Subtree.joinAtPoint t t' h := sorry 
+
+end JointAtPoint
+
+-- Idea: attach the above path to the tree
+def extendTree (t : Subtree G) (v : V) (h : v ∉ t.verts) : {t' : Subtree G // t ≤ t' ∧ v ∈ t'.verts} := sorry  
+
+end MaximalSubtree
+
+#exit
 
 namespace SpanningSubtree
 
