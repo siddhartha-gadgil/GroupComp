@@ -281,8 +281,7 @@ def pathToTree (t : Subtree G) [∀ v : V, Decidable (v ∈ t.verts)]
           List.mem_map, Bool.not_eq_true', decide_eq_false_iff_not, forall_exists_index,
           and_imp, forall_apply_eq_imp_iff₂, List.map, List.all_cons, Bool.and_eq_true] at hqverts ⊢
         refine' ⟨_, hqverts⟩
-        simp only [EdgeBetween.init_eq, hv]
-        trivial
+        simp only [EdgeBetween.init_eq, hv, not_false_eq_true]
 
 section JointAtPoint
 

@@ -16,41 +16,39 @@ variable {α : Type}[LinearOrder α]
 #check List.ne_nil_of_mem -- ∀ {α : Type u_1} {a : α} {l : List α}, a ∈ l → l ≠ []
 
 
-/-- 
+/--
 Smallest member of a non-empty list of elements of a linearly ordered type.
 -/
-def smallest (l: List α)(h : l ≠ []): α := 
+def smallest (l: List α)(h : l ≠ []): α :=
   match l with
   | [] => by contradiction
-  | head :: tail => 
+  | head :: tail =>
     if c:tail = []
     then head
-    else 
+    else
       min head (smallest tail c)
 
 /--
 The result of `smallest` is a member of the list.
 -/
-theorem smallest_mem (l : List α) (hyp : l ≠ []) : 
+theorem smallest_mem (l : List α) (hyp : l ≠ []) :
   smallest l hyp ∈ l := by
   match l with
-  | head :: tail => 
+  | head :: tail =>
     simp [smallest]
-    split 
+    split
     · rename_i h
       simp [h]
-      intro contra
-      contradiction
     · rename_i h
-      by_cases h':(head ≤ smallest tail h)      
+      by_cases h':(head ≤ smallest tail h)
       · simp [h']
       · simp [h', h]
-        have lem : 
-          min head (smallest tail h) = smallest tail h :=   by 
+        have lem :
+          min head (smallest tail h) = smallest tail h :=   by
             apply min_eq_right
             apply le_of_not_ge
             exact h'
-        rw [lem] 
+        rw [lem]
         exact smallest_mem tail h
 
 
@@ -58,13 +56,13 @@ theorem smallest_mem (l : List α) (hyp : l ≠ []) :
 /--
 The result of `smallest` is `≤` every member of the list.
 -/
-theorem smallest_le (l : List α) (hyp : l ≠ []) : 
-  ∀ a : α, a ∈ l → smallest l hyp ≤ a  := 
+theorem smallest_le (l : List α) (hyp : l ≠ []) :
+  ∀ a : α, a ∈ l → smallest l hyp ≤ a  :=
     match l with
   | head :: tail => by
     simp [smallest, hyp]
     apply And.intro
-    · split  <;> simp 
+    · split  <;> simp
     · intro a hyp'
       have c''  := List.ne_nil_of_mem hyp'
       simp [c'']
@@ -85,7 +83,7 @@ variable {α β : Type}[LinearOrder α] [LinearOrder β]
 
 scoped instance lexLE : LE (α × β) where
   le := fun (a₁, b₁) (a₂, b₂) ↦
-    a₁ ≤ a₂ ∧ (a₁ < a₂ ∨ b₁ ≤ b₂) 
+    a₁ ≤ a₂ ∧ (a₁ < a₂ ∨ b₁ ≤ b₂)
 
 scoped instance LexLT : LT (α × β) where
   lt x y := (x ≤ y) ∧  (¬ y ≤ x)
@@ -93,32 +91,32 @@ scoped instance LexLT : LT (α × β) where
 
 scoped instance : LinearOrder (α × β) where
   le := fun (a₁, b₁) (a₂, b₂) ↦
-    a₁ ≤ a₂ ∧ (a₁ < a₂ ∨ b₁ ≤ b₂) 
-  le_refl := by 
+    a₁ ≤ a₂ ∧ (a₁ < a₂ ∨ b₁ ≤ b₂)
+  le_refl := by
     intro (a, b)
-    simp 
+    simp
   le_trans := by
     intro (a₁, b₁) (a₂, b₂) (a₃, b₃)
-    simp 
+    simp
     intro h₁ h₂ h₃ h₄
     simp [le_trans h₁ h₃]
     cases h₂ with
-    | inl h => 
+    | inl h =>
       left
       apply lt_of_lt_of_le h
-      assumption      
-    | inr h => 
+      assumption
+    | inr h =>
       cases h₄ with
-      | inl h' => 
+      | inl h' =>
         left
-        apply lt_of_le_of_lt h₁ 
+        apply lt_of_le_of_lt h₁
         assumption
-      | inr h' => 
+      | inr h' =>
         right
         trans b₂ <;> assumption
   le_antisymm := by
-    intro (a₁, b₁) (a₂, b₂) 
-    simp 
+    intro (a₁, b₁) (a₂, b₂)
+    simp
     intro h₁ h₂ h₃ h₄
     let h₅ := le_antisymm h₁ h₃
     simp [h₅] at *
@@ -126,7 +124,7 @@ scoped instance : LinearOrder (α × β) where
 
   le_total := by
     intro (a₁, b₁) (a₂, b₂)
-    simp 
+    simp
     by_cases c:a₁ ≤ a₂
     · simp [c]
       by_cases c':a₁ = a₂
