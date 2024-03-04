@@ -314,8 +314,6 @@ def extendTree (t : Subtree G) (v : V) (h : v ∉ t.verts) : {t' : Subtree G // 
 
 end MaximalSubtree
 
-#exit
-
 namespace SpanningSubtree
 
 variable {V E : Type _} {G : Graph V E} (Γ : SpanningSubtree G)
