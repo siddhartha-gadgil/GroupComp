@@ -1,6 +1,5 @@
 import GroupComp.Graph
 import Mathlib.Data.List.Basic
-import Mathlib
 
 namespace Graph
 

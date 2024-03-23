@@ -1,5 +1,4 @@
 import GroupComp.Graph.UniversalCover
-import Mathlib
 namespace Graph
 
 namespace SubgroupCover
@@ -10,50 +9,50 @@ variable {V : Type u} {E : Type v} [DecidableEq V] [DecidableEq E]
 
 variable {G: Graph V E} {x₀ : V}
 
-variable (H : Subgroup (π₁ G x₀)) 
+variable (H : Subgroup (π₁ G x₀))
 
 abbrev rel : Vert G x₀ → Vert G x₀ → Prop
 | ⟨τ₁, v₁, _⟩, ⟨τ₂, v₂, _⟩ => by
     if c:τ₁=τ₂ then
       cases c
-      exact [[ v₁ ++ v₂.reverse ]] ∈ H  
+      exact [[ v₁ ++ v₂.reverse ]] ∈ H
     else
       exact False
 
-def relH {τ : V} (v₁ v₂ : EdgePath G x₀ τ) : Prop := 
+def relH {τ : V} (v₁ v₂ : EdgePath G x₀ τ) : Prop :=
   [[v₁ ++ v₂.reverse]] ∈ H
 
 
-theorem relH_refl {τ : V} (v : EdgePath G x₀ τ) : relH H v v := 
-  by 
+theorem relH_refl {τ : V} (v : EdgePath G x₀ τ) : relH H v v :=
+  by
     simp [relH]
     apply one_mem
 
 
 theorem relH_symm {τ : V} {v₁ v₂ : EdgePath G x₀ τ} :
-  relH H v₁ v₂ → relH H v₂ v₁ := 
+  relH H v₁ v₂ → relH H v₂ v₁ :=
   by
     simp [relH]
     intro h
     let h': [[v₁ ++ v₂.reverse]].inv ∈ H := inv_mem h
-    rw [inv_equiv_reverse, 
+    rw [inv_equiv_reverse,
       reverse_append,  reverse_reverse] at h'
     exact h'
 
 theorem relH_trans {τ : V} {v₁ v₂ v₃ : EdgePath G x₀ τ} :
-  relH H v₁ v₂ → relH H v₂ v₃ → relH H v₁ v₃ := 
+  relH H v₁ v₂ → relH H v₂ v₃ → relH H v₁ v₃ :=
   by
     simp [relH]
     intro h₁ h₂
     let h₃  := mul_mem h₁ h₂
-    rw [mul_path_path, append_assoc, 
+    rw [mul_path_path, append_assoc,
       ← append_assoc v₂.reverse, ← mul_path_path,
       ← mul_path_path] at h₃
-    simp only [reverse_append_self] at h₃ 
+    simp only [reverse_append_self] at h₃
     rw [mul_path_path] at h₃
-    simp only [nil_append, reverse_class_eq_inv] at h₃ 
-    rw [← mul_path_path, ← inv_equiv_reverse] 
-    exact h₃ 
+    simp only [nil_append, reverse_class_eq_inv] at h₃
+    rw [← mul_path_path, ← inv_equiv_reverse]
+    exact h₃
 
 scoped instance vertSetoid  : Setoid (Vert G x₀) where
   r := fun ⟨τ₁, v₁, _⟩ ⟨τ₂, v₂, _⟩ => by
@@ -65,7 +64,7 @@ scoped instance vertSetoid  : Setoid (Vert G x₀) where
   iseqv := by
     apply Equivalence.mk
     · intro ⟨τ₁, v₁, _⟩
-      simp only [relH_refl, dite_eq_ite]
+      simp only [↓reduceDite, relH_refl]
     · intro ⟨τ₁, v₁, _⟩ ⟨τ₂, v₂, _⟩
       if c:τ₁=τ₂ then
       cases c
@@ -87,17 +86,17 @@ scoped instance vertSetoid  : Setoid (Vert G x₀) where
         simp [c₁]
 
 theorem terminal_eq_of_r {v₁ v₂ : Vert G x₀ } :
-  vertSetoid H |>.r v₁ v₂ → v₁.τ = v₂.τ := 
+  vertSetoid H |>.r v₁ v₂ → v₁.τ = v₂.τ :=
   by
     intro h
     simp [Setoid.r] at h
-    by_cases c:v₁.τ=v₂.τ <;> simp [c] at h 
+    by_cases c:v₁.τ=v₂.τ <;> simp [c] at h
     simp [c]
 
 theorem path_eq_iff_r {τ : V}(p₁ p₂ : EdgePath G x₀ τ)
   {red₁ : reduced p₁} {red₂ : reduced p₂} :
-  (vertSetoid H |>.r ⟨τ, p₁, red₁⟩ ⟨τ, p₂, red₂⟩) ↔ 
-      [[ p₁ ++ p₂.reverse ]] ∈ H := by 
+  (vertSetoid H |>.r ⟨τ, p₁, red₁⟩ ⟨τ, p₂, red₂⟩) ↔
+      [[ p₁ ++ p₂.reverse ]] ∈ H := by
     simp [Setoid.r, relH]
 
 scoped instance edgeSetoid : Setoid (Edge G x₀) where
@@ -110,8 +109,8 @@ scoped instance edgeSetoid : Setoid (Edge G x₀) where
       exact False
   iseqv := by
     apply Equivalence.mk
-    · intro ⟨τ₀, τ₁, e, p, _⟩ 
-      simp only [relH_refl, dite_eq_ite]
+    · intro ⟨τ₀, τ₁, e, p, _⟩
+      simp only [and_self, ↓reduceDite, relH_refl]
     · intro ⟨τ₀, τ₁, e, p, _⟩ ⟨τ₀', τ₁', e', p', _⟩
       if c:τ₀=τ₀' ∧ τ₁ = τ₁' then
       cases c.left
@@ -123,7 +122,7 @@ scoped instance edgeSetoid : Setoid (Edge G x₀) where
       · rw [hyp.2]
     else
       simp only [c, dite_false, IsEmpty.forall_iff]
-    · intro ⟨τ₀, τ₁, e, p, _⟩ ⟨τ₀', τ₁', e', p', _⟩ ⟨τ₀'', τ₁'', e'', p'', _⟩ 
+    · intro ⟨τ₀, τ₁, e, p, _⟩ ⟨τ₀', τ₁', e', p', _⟩ ⟨τ₀'', τ₁'', e'', p'', _⟩
       if c₁:τ₀=τ₀' ∧ τ₁ = τ₁' then
         cases c₁.left
         cases c₁.right
@@ -131,7 +130,7 @@ scoped instance edgeSetoid : Setoid (Edge G x₀) where
         if c₂:τ₀=τ₀'' ∧ τ₁ = τ₁'' then
           cases c₂.left
           cases c₂.right
-          simp 
+          simp
           intro hyp₁ hyp₂ hyp₃ hyp₄
           apply And.intro
           · apply relH_trans H hyp₁ hyp₃
@@ -142,23 +141,23 @@ scoped instance edgeSetoid : Setoid (Edge G x₀) where
         simp [c₁]
 
 theorem terminal₁_eq_of_r {e₁ e₂ : Edge G x₀ } :
-  edgeSetoid H |>.r e₁ e₂ → e₁.τ₁ = e₂.τ₁ := 
+  edgeSetoid H |>.r e₁ e₂ → e₁.τ₁ = e₂.τ₁ :=
   by
     intro h
     simp [Setoid.r] at h
-    by_cases c:(e₁.τ₁=e₂.τ₁) <;> simp [c] at h 
+    by_cases c:(e₁.τ₁=e₂.τ₁) <;> simp [c] at h
     simp [c]
 
 theorem terminal₀_eq_of_r {e₁ e₂ : Edge G x₀ } :
-  edgeSetoid H |>.r e₁ e₂ → e₁.τ₀ = e₂.τ₀ := 
+  edgeSetoid H |>.r e₁ e₂ → e₁.τ₀ = e₂.τ₀ :=
   by
     intro h
     simp [Setoid.r] at h
-    by_cases c:(e₁.τ₀=e₂.τ₀) <;> simp [c] at h 
+    by_cases c:(e₁.τ₀=e₂.τ₀) <;> simp [c] at h
     simp [c]
 
-theorem edge_eq_of_r :{e₁ e₂ : Edge G x₀ } →  
-  edgeSetoid H |>.r e₁ e₂ → e₁.nxt.edge = e₂.nxt.edge := 
+theorem edge_eq_of_r :{e₁ e₂ : Edge G x₀ } →
+  edgeSetoid H |>.r e₁ e₂ → e₁.nxt.edge = e₂.nxt.edge :=
   by
     intro ⟨τ₀, τ₁, e, p, _⟩ ⟨τ₀', τ₁', e', p', _⟩
     if c:τ₀=τ₀' ∧ τ₁ = τ₁' then
@@ -169,12 +168,12 @@ theorem edge_eq_of_r :{e₁ e₂ : Edge G x₀ } →
       rw [h]
     else
       simp [Setoid.r, relH, c]
-      
+
 
 def QuotVert  := Quotient (vertSetoid H)
 def QuotEdge  := Quotient (edgeSetoid H)
 
-def basepoint : QuotVert H  := 
+def basepoint : QuotVert H  :=
   ⟦ UniversalCover.basepoint G x₀ ⟧
 
 namespace Quot
@@ -228,7 +227,7 @@ theorem initial_defn (e: Edge G x₀):
 theorem bar_eq_barn (e : Edge G x₀):
   bar H ⟦ e ⟧ = ⟦ (G.univ x₀).bar e ⟧ := rfl
 
-theorem bar_bar :(ebar : Quotient (edgeSetoid H)) → 
+theorem bar_bar :(ebar : Quotient (edgeSetoid H)) →
   bar H (bar H ebar) = ebar := by
   apply Quotient.ind
   intro e
@@ -253,7 +252,7 @@ theorem bar_ne_self : (ebar : Quotient (edgeSetoid H)) →
 
 end Quot
 
-def groupCover : 
+def groupCover :
   Graph (Quotient (vertSetoid H)) (Quotient (edgeSetoid H)) where
   ι := Quot.ι H
   bar := Quot.bar H
@@ -267,7 +266,7 @@ def toFuncV : Quotient (vertSetoid H) → V := by
   simp [HasEquiv.Equiv]
   intro v₁ v₂
   apply terminal_eq_of_r H
-  
+
 theorem toFuncV_defn (v : Vert G x₀):
   toFuncV H ⟦ v ⟧ = v.τ := rfl
 
@@ -286,8 +285,8 @@ theorem initial (e : Edge G x₀):
 theorem bar_eq_barn' (e : Edge G x₀):
   (groupCover H).bar ⟦ e ⟧ = ⟦ (G.univ x₀).bar e ⟧ := rfl
 
-theorem toFuncV_init : (ebar : Quotient (edgeSetoid H)) → 
-  toFuncV H ((groupCover H).ι ebar) = 
+theorem toFuncV_init : (ebar : Quotient (edgeSetoid H)) →
+  toFuncV H ((groupCover H).ι ebar) =
    G.ι (toFuncE H ebar) := by
   apply Quotient.ind
   intro e
@@ -295,7 +294,7 @@ theorem toFuncV_init : (ebar : Quotient (edgeSetoid H)) →
   rw [toFuncV_defn, toFuncE_defn]
   apply (proj G x₀).toFuncV_init
 
-theorem toFuncE_bar : (ebar : Quotient (edgeSetoid H)) → 
+theorem toFuncE_bar : (ebar : Quotient (edgeSetoid H)) →
   toFuncE H ((groupCover H).bar ebar) = G.bar (toFuncE H ebar) := by
   apply Quotient.ind
   intro e
@@ -314,35 +313,35 @@ def univGroupProj : Morphism (G.univ x₀) (groupCover H)  where
   toFuncV := fun v ↦ ⟦ v ⟧
   toFuncE := fun e ↦ ⟦ e ⟧
   toFuncV_init := by
-    intro e 
+    intro e
     rfl
   toFuncE_bar := by
     intro e
     rfl
 
-theorem projections_compose : 
-  (groupCoverProj H).comp (univGroupProj H) = 
+theorem projections_compose :
+  (groupCoverProj H).comp (univGroupProj H) =
     UniversalCover.proj G x₀ := by
     ext
     · rfl
-    · rfl 
+    · rfl
 
 namespace Quot
 
 theorem toFuncV_defn' (v : Vert G x₀):
   (groupCoverProj H).toFuncV ⟦ v ⟧ = v.τ := rfl
 
-theorem toFuncE_defn' (τ₀ : V) (τ₁: V)(nxt: EdgeBetween G τ₀ τ₁) 
+theorem toFuncE_defn' (τ₀ : V) (τ₁: V)(nxt: EdgeBetween G τ₀ τ₁)
   (p: EdgePath G x₀ τ₀)(red: reduced p):
   (groupCoverProj H).toFuncE ⟦ ⟨τ₀, τ₁, nxt, p, red⟩  ⟧ = nxt.edge := rfl
 
 def localSection : (v₁ : Quotient (vertSetoid H)) → (e : E) →
-  ((groupCoverProj H).toFuncV v₁) = G.ι e → 
+  ((groupCoverProj H).toFuncV v₁) = G.ι e →
   Quotient (edgeSetoid H) := by
   intro v₁
-  apply Quotient.hrecOn v₁ 
-    (motive:= fun v₁ ↦ (e : E) → Morphism.toFuncV (groupCoverProj H) v₁ = Graph.ι G e → Quotient (edgeSetoid H)) 
-    (fun ⟨τ, p, is_reduced⟩ e h ↦ 
+  apply Quotient.hrecOn v₁
+    (motive:= fun v₁ ↦ (e : E) → Morphism.toFuncV (groupCoverProj H) v₁ = Graph.ι G e → Quotient (edgeSetoid H))
+    (fun ⟨τ, p, is_reduced⟩ e h ↦
         ⟦ ⟨τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧)
   intro ⟨τ, p, is_reduced⟩ ⟨τ', p', is_reduced'⟩ rel
   have : τ = τ' := terminal_eq_of_r H rel
@@ -355,16 +354,16 @@ def localSection : (v₁ : Quotient (vertSetoid H)) → (e : E) →
   exact rel
 
 theorem localSection_defn (τ : V) (p : EdgePath G x₀ τ)
-  (is_reduced : reduced p) 
+  (is_reduced : reduced p)
   (e: E) (h: τ = G.ι e):
-  localSection H ⟦ ⟨τ, p, is_reduced⟩ ⟧ e h = 
+  localSection H ⟦ ⟨τ, p, is_reduced⟩ ⟧ e h =
     ⟦ ⟨τ, G.τ e, ⟨e, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧ := rfl
 
 theorem localSection_composition (τ₀ : V) (p : EdgePath G x₀ τ₀)
-  (is_reduced : reduced p) 
+  (is_reduced : reduced p)
   (e: Edge G x₀) (h: τ₀ = G.ι e.nxt.edge) :
-  localSection H ⟦ ⟨τ₀, p, is_reduced⟩ ⟧ ((groupCoverProj H).toFuncE ⟦ e⟧) h = 
-    ⟦ ⟨τ₀, G.τ (e.nxt.edge), 
+  localSection H ⟦ ⟨τ₀, p, is_reduced⟩ ⟧ ((groupCoverProj H).toFuncE ⟦ e⟧) h =
+    ⟦ ⟨τ₀, G.τ (e.nxt.edge),
     ⟨e.nxt.edge, Eq.symm h, rfl⟩, p, is_reduced⟩ ⟧ := rfl
 
 -- set_option maxHeartbeats 200000
@@ -374,14 +373,14 @@ theorem localSection_composition' (τ : V) (p : EdgePath G x₀ τ)
   (is_reduced : reduced p)(τ₀ τ₁ : V) (nxt: EdgeBetween G τ₀ τ₁) (p' : EdgePath G x₀ τ₀)
   (is_reduced' : reduced p')
   (h: τ = G.ι nxt.edge) :
-  localSection H ⟦ ⟨τ, p, is_reduced⟩ ⟧ 
-  ((groupCoverProj H).toFuncE ⟦ (⟨τ₀, τ₁, nxt, p', is_reduced'⟩ : Edge G x₀)⟧) h = 
-    ⟦ ⟨τ, τ₁, 
+  localSection H ⟦ ⟨τ, p, is_reduced⟩ ⟧
+  ((groupCoverProj H).toFuncE ⟦ (⟨τ₀, τ₁, nxt, p', is_reduced'⟩ : Edge G x₀)⟧) h =
+    ⟦ ⟨τ, τ₁,
     ⟨nxt.edge, Eq.symm h, nxt.term_eq⟩, p, is_reduced⟩ ⟧ := by
   rw [localSection_composition]
-  apply Quotient.sound  
+  apply Quotient.sound
   simp [nxt.term_eq]
-  have : (⟨τ, G.τ (nxt.edge), 
+  have : (⟨τ, G.τ (nxt.edge),
     ⟨nxt.edge, Eq.symm h, rfl⟩, p, is_reduced⟩ : Edge G x₀) =
     ⟨τ, τ₁,
     ⟨nxt.edge, Eq.symm h, nxt.term_eq⟩, p, is_reduced⟩ := by
@@ -392,22 +391,22 @@ theorem localSection_composition' (τ : V) (p : EdgePath G x₀ τ)
       HEq (rfl: G.τ nxt.edge  = G.τ nxt.edge ) pf   := by
       cases pf
       simp
-    apply l nxt.term_eq     
+    apply l nxt.term_eq
   rw [this]
   apply @Setoid.refl _ (edgeSetoid H)
-  
 
 
-theorem edge_from (e : Edge G x₀)(τ₀ : V): τ₀ = e.τ₀  → 
-  ∃ τ₁: V, ∃ nxt: EdgeBetween G τ₀ τ₁, 
+
+theorem edge_from (e : Edge G x₀)(τ₀ : V): τ₀ = e.τ₀  →
+  ∃ τ₁: V, ∃ nxt: EdgeBetween G τ₀ τ₁,
   ∃ p': EdgePath G x₀ τ₀, ∃ red: reduced p',
   e = ⟨τ₀, τ₁, nxt, p', red⟩ := by
   intro h
   cases h
   use e.τ₁, e.nxt, e.p, e.is_reduced
 
-theorem edge_to (e : Edge G x₀)(τ₀ : V){τ₁ : V}: τ₀ = e.τ₀  →  e.τ₁ = τ₁  → 
-  ∃ nxt: EdgeBetween G τ₀ τ₁, 
+theorem edge_to (e : Edge G x₀)(τ₀ : V){τ₁ : V}: τ₀ = e.τ₀  →  e.τ₁ = τ₁  →
+  ∃ nxt: EdgeBetween G τ₀ τ₁,
   ∃ p': EdgePath G x₀ τ₀, ∃ red: reduced p',
   e = ⟨τ₀, τ₁, nxt, p', red⟩ := by
   intro h₁ h₂
@@ -415,11 +414,11 @@ theorem edge_to (e : Edge G x₀)(τ₀ : V){τ₁ : V}: τ₀ = e.τ₀  →  e
   cases h₂
   use e.nxt, e.p, e.is_reduced
 
-end Quot 
+end Quot
 
 instance groupCovering : CoveringMap (groupCoverProj H)  where
   localSection := Quot.localSection H
-    
+
   init_localSection := by
     apply Quotient.ind
     intro ⟨τ, p, is_reduced⟩ e h
@@ -431,10 +430,10 @@ instance groupCovering : CoveringMap (groupCoverProj H)  where
     intro ⟨τ, p, is_reduced⟩ e h
     simp [Quot.localSection_defn]
     rw [Quot.toFuncE_defn']
-  
+
   localSection_toFuncE := by
     apply Quotient.ind
-    intro ⟨τ, p, is_reduced⟩ 
+    intro ⟨τ, p, is_reduced⟩
     apply Quotient.ind
     intro ⟨τ₀, τ₁, nxt, p', red⟩   h
     simp [Quot.localSection_composition']
@@ -443,7 +442,7 @@ instance groupCovering : CoveringMap (groupCoverProj H)  where
     let teq :τ = τ₀ := terminal_eq_of_r H rel
     apply Quotient.sound
     cases teq
-    simp [HasEquiv.Equiv, Setoid.r, relH] 
+    simp [HasEquiv.Equiv, Setoid.r, relH]
     simp [HasEquiv.Equiv, Setoid.r, relH] at rel
     exact rel
 
@@ -454,13 +453,13 @@ instance groupCovering : CoveringMap (groupCoverProj H)  where
 -/
 def liftViaUniv {w₂ : V}
     (e: EdgePath G x₀ w₂):
-    PathLift (groupCoverProj H) (basepoint H) rfl e := 
-    let univPath := 
+    PathLift (groupCoverProj H) (basepoint H) rfl e :=
+    let univPath :=
       e.lift (proj G x₀) (UniversalCover.basepoint G x₀) rfl
     {
       τ := ⟦ univPath.τ ⟧
       path := univPath.path.map (univGroupProj H)
-      term_pushdown := by 
+      term_pushdown := by
         rw [Quot.toFuncV_defn']
         exact univPath.term_pushdown
       list_pushdown := by
@@ -474,25 +473,25 @@ theorem liftFactors {w₂ : V}(e: EdgePath G x₀ w₂) :
     apply unique_Pathlift
 
 theorem liftTermFactors {w₂ : V}(e: EdgePath G x₀ w₂) :
-  (e.lift (groupCoverProj H) (basepoint H) rfl).τ = 
+  (e.lift (groupCoverProj H) (basepoint H) rfl).τ =
     ⟦ liftTerminal (proj G x₀) (UniversalCover.basepoint G x₀) rfl e ⟧ := by
     rw [liftFactors]
     rfl
 
 theorem reduced_liftTerminal_factor {w₂ : V}(e: EdgePath G x₀ w₂)
   (hyp : reduced e) :
-    (e.lift (groupCoverProj H) (basepoint H) rfl).τ = 
+    (e.lift (groupCoverProj H) (basepoint H) rfl).τ =
       ⟦ ⟨w₂, e, hyp⟩ ⟧ := by
         rw [liftTermFactors, reduced_liftTerminal]
 
 theorem reduced_liftTerminal_factor' {w₂ : V}(e: EdgePath G x₀ w₂)
   (hyp : reduced e) :
-    (liftTerminal (groupCoverProj H) (basepoint H) rfl e) = 
+    (liftTerminal (groupCoverProj H) (basepoint H) rfl e) =
       ⟦ ⟨w₂, e, hyp⟩ ⟧ := by
         apply reduced_liftTerminal_factor
 
 
-theorem imageInSubgroup : ∀ h : π₁ (groupCover H) (basepoint H), 
+theorem imageInSubgroup : ∀ h : π₁ (groupCover H) (basepoint H),
       (groupCoverProj H).π₁map (basepoint H) x₀ rfl h ∈ H := by
       apply Quot.ind
       intro η
@@ -500,8 +499,8 @@ theorem imageInSubgroup : ∀ h : π₁ (groupCover H) (basepoint H),
       let heqn := reduction_homotopic_self θ
       simp [Morphism.π₁map, PathClass.map]
       rw [← heqn]
-      have term_eqn := 
-        liftTerminal_eq_of_homotopic (groupCoverProj H) 
+      have term_eqn :=
+        liftTerminal_eq_of_homotopic (groupCoverProj H)
         (basepoint H) rfl heqn
       rw [liftTerminal_of_proj (groupCoverProj H)  η] at term_eqn
       rw [reduced_liftTerminal_factor' H (reduction θ)
@@ -512,20 +511,20 @@ theorem imageInSubgroup : ∀ h : π₁ (groupCover H) (basepoint H),
       exact term_eqn
 
 
-theorem proj_image : ∀ (g : π₁ G x₀),  
-  (g ∈ H ↔ ∃ h' : π₁ (groupCover H) (basepoint H), 
+theorem proj_image : ∀ (g : π₁ G x₀),
+  (g ∈ H ↔ ∃ h' : π₁ (groupCover H) (basepoint H),
       g = (groupCoverProj H).π₁map (basepoint H) x₀ rfl h') := by
       apply Quot.ind
       intro η
       let η' := reduction η
       apply Iff.intro
-      · intro mem 
+      · intro mem
         have mem' :  [[ η ]] ∈ H := mem
         rw [← reduction_homotopic_self] at mem'
         let pL := η'.lift (groupCoverProj H) (basepoint H) rfl
         let p := pL.path
-        have term_lift : pL.τ = _ := 
-          reduced_liftTerminal_factor H η' (reduction_reduced η) 
+        have term_lift : pL.τ = _ :=
+          reduced_liftTerminal_factor H η' (reduction_reduced η)
         have term_lift' : pL.τ = basepoint H := by
           rw [term_lift]
           simp [basepoint, UniversalCover.basepoint]
@@ -542,7 +541,7 @@ theorem proj_image : ∀ (g : π₁ G x₀),
         congr
         apply eq_of_toList_eq
         rw [EdgePath.map_toList, toList_shiftTarget,
-          pL.list_pushdown]        
+          pL.list_pushdown]
       · intro ⟨h, heqn⟩
         simp [imageInSubgroup H h, heqn]
 
@@ -553,21 +552,21 @@ theorem range_proj : MonoidHom.range
   simp [MonoidHom.mem_range]
   let l := proj_image H x
   apply Iff.intro
-  · intro ⟨h, heq⟩  
+  · intro ⟨h, heq⟩
     apply l.2
     use h
     rw [heq]
   · intro g
-    let ⟨h, heq⟩  := l.1 g 
+    let ⟨h, heq⟩  := l.1 g
     use h
     rw [heq]
 
-theorem group_of_cover_is_subgroup : 
+theorem group_of_cover_is_subgroup :
     π₁ (groupCover H) (basepoint H) ≃* H := by
-  let hf := 
+  let hf :=
     cover_π₁injective (groupCoverProj H) (basepoint H) x₀ rfl
   let lem := MonoidHom.ofInjective hf
-  apply MulEquiv.trans lem  
+  apply MulEquiv.trans lem
   rw [range_proj]
 
 
