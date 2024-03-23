@@ -64,7 +64,7 @@ attribute [aesop safe forward] EdgeBetween.init_eq EdgeBetween.term_eq
 variable {G} (e : G.EdgeBetween v w)
 
 /-- Reversing the orientation for an edge between `v` and `w`. -/
-def EdgeBetween.bar (e : G.EdgeBetween v w) : G.EdgeBetween w v := 
+def EdgeBetween.bar (e : G.EdgeBetween v w) : G.EdgeBetween w v :=
   { edge := G.bar e.edge
   , init_eq := by aesop
   , term_eq := by aesop
@@ -76,12 +76,12 @@ def EdgeBetween.ofEdge (e : E) : G.EdgeBetween (G.ι e) (G.τ e) where
   init_eq := rfl
   term_eq := rfl
 
-@[simp] lemma EdgeBetween.ofEdge_eq_self (e : E) : 
+@[simp] lemma EdgeBetween.ofEdge_eq_self (e : E) :
   (EdgeBetween.ofEdge (G := G) e).edge = e := rfl
 
 @[simp] theorem EdgeBetween.bar_eq_bar : e.bar.edge = G.bar e.edge := rfl
 
-@[simp] theorem EdgeBetween.bar_bar : e.bar.bar = e := by 
+@[simp] theorem EdgeBetween.bar_bar : e.bar.bar = e := by
     ext; aesop (add norm simp [EdgeBetween.bar])
 
 -- @[aesop unsafe [cases, constructors]]
@@ -102,30 +102,30 @@ def length {v w : V} : G.EdgePath v w → ℕ
   | cons _ p'  => p'.length.succ
 
 /-- Concatenation of an edge between `w` and `u` to a path between `v` and `w`. -/
-def concat {v w u : V} (p : G.EdgePath v w) (e : G.EdgeBetween w u) : G.EdgePath v u := 
+def concat {v w u : V} (p : G.EdgePath v w) (e : G.EdgeBetween w u) : G.EdgePath v u :=
   match p with
-  | nil .(v) => cons e (nil u)      
+  | nil .(v) => cons e (nil u)
   | cons  e' p'  => cons e' (concat p' e)
 
-@[simp] theorem concat_cons {v w u u': V} (e: G.EdgeBetween v w) (p: G.EdgePath w u) (e': G.EdgeBetween u u')  : 
+@[simp] theorem concat_cons {v w u u': V} (e: G.EdgeBetween v w) (p: G.EdgePath w u) (e': G.EdgeBetween u u')  :
     concat (cons e p) e' = cons e (concat p e') := by rfl
 
 /-- Reverse of a path -/
-def reverse {v w : V} (p : G.EdgePath v w) : G.EdgePath w v := 
+def reverse {v w : V} (p : G.EdgePath v w) : G.EdgePath w v :=
   match p with
-  | nil .(v) => 
+  | nil .(v) =>
       nil v
-  | cons  e p  => 
-      concat (reverse p) e.bar  
+  | cons  e p  =>
+      concat (reverse p) e.bar
 
-@[simp] theorem reverse_nil {v : V} : 
+@[simp] theorem reverse_nil {v : V} :
   reverse (.nil (G := G) v) = .nil (G := G) v := by rfl
 
-theorem reverse_cons {v w u : V} (e : G.EdgeBetween v w) (p : G.EdgePath w u) : 
+theorem reverse_cons {v w u : V} (e : G.EdgeBetween v w) (p : G.EdgePath w u) :
     reverse (cons e p) = concat (reverse p) e.bar := by rfl
 
-theorem reverse_concat {v w u : V} (p: G.EdgePath v w) (e: G.EdgeBetween w u) : 
-    reverse (concat p e) = cons e.bar (reverse p) := by 
+theorem reverse_concat {v w u : V} (p: G.EdgePath v w) (e: G.EdgeBetween w u) :
+    reverse (concat p e) = cons e.bar (reverse p) := by
     induction p <;> aesop (add norm simp [concat_cons, reverse_cons])
 
 /-- Appending a path between `w` and `u` to a path between `v` and `w` -/
@@ -133,7 +133,7 @@ def append { v w u : V}
     (p : G.EdgePath v w) (q : G.EdgePath w u) : G.EdgePath v u :=
   match p with
   | nil .(v) => q
-  | cons  e' p'  => 
+  | cons  e' p'  =>
       cons e' <| append p' q
 
 /-- Folding a function along a path -/
@@ -142,8 +142,8 @@ def fold (φ : {u v : V} → G.EdgeBetween u v → A) (comp : A → A → A) (in
   | .cons e p => comp (φ e) (fold φ comp init p)
 
 /--Appending paths using `_++_` -/
-instance  G.edgePathAppend {v w u : V} {G : Graph V E} : 
-  HAppend (G.EdgePath v w) (G.EdgePath w u) (G.EdgePath v u) := 
+instance  G.edgePathAppend {v w u : V} {G : Graph V E} :
+  HAppend (G.EdgePath v w) (G.EdgePath w u) (G.EdgePath v u) :=
     ⟨append⟩
 
 @[simp] theorem nil_append  {u v : V} (p: G.EdgePath u v) :
@@ -167,7 +167,7 @@ theorem append_concat {v w w' u : V} (e : EdgeBetween G w' u)(p: EdgePath G v w)
   p ++ (concat q e) = concat (p ++ q) e := by
   induction p <;> aesop
 
-theorem cons_eq_append_singletonPath {u v w : V} (e : G.EdgeBetween u v) (p : G.EdgePath v w) : 
+theorem cons_eq_append_singletonPath {u v w : V} (e : G.EdgeBetween u v) (p : G.EdgePath v w) :
     EdgePath.cons e p = G.singletonPath e ++ p := rfl
 
 theorem singletonPath_bar (e : G.EdgeBetween u v) : G.singletonPath e.bar = reverse (G.singletonPath e) := rfl
@@ -178,15 +178,15 @@ theorem concat_eq_append_edge {v w u : V} (e : G.EdgeBetween w u) (p : G.EdgePat
   aesop
 
 theorem append_assoc { v w u u' :  V}
-  (p: G.EdgePath v w)(q: G.EdgePath w u)(r: G.EdgePath u u') : 
-    (p ++ q) ++ r = p ++ (q ++ r) := by 
+  (p: G.EdgePath v w)(q: G.EdgePath w u)(r: G.EdgePath u u') :
+    (p ++ q) ++ r = p ++ (q ++ r) := by
     induction p <;> aesop
 
-@[simp] theorem reverse_reverse {v w : V} (p : G.EdgePath v w) : 
+@[simp] theorem reverse_reverse {v w : V} (p : G.EdgePath v w) :
   p.reverse.reverse = p := by
   induction p <;> aesop (add norm simp [reverse_cons, reverse_concat])
 
-theorem reverse_append {u v w : V} (p : G.EdgePath u v) 
+theorem reverse_append {u v w : V} (p : G.EdgePath u v)
   (q : G.EdgePath v w) :
     (p ++ q).reverse = q.reverse ++ p.reverse := by
   induction p <;>
@@ -200,23 +200,23 @@ We associate lists of edges to paths in the obvious way. Note that lists of edge
 This makes proofs of paths much easier by avoiding the need to reason about indexed inductive types.
 -/
 
-def toList {G : Graph V E} {v w : V} (p : EdgePath G v w) : 
-  List E := 
+def toList {G : Graph V E} {v w : V} (p : EdgePath G v w) :
+  List E :=
   match p with
   | nil _ => []
   | cons e p' =>  e.edge :: p'.toList
 
-theorem nil_toList {G : Graph V E} {v : V}  : 
+theorem nil_toList {G : Graph V E} {v : V}  :
   (nil v : EdgePath G v v).toList = [] := rfl
 
-theorem cons_toList {G: Graph V E} {v w u: V} (e : EdgeBetween G v w) 
-    (p : EdgePath G w u) : 
+theorem cons_toList {G: Graph V E} {v w u: V} (e : EdgeBetween G v w)
+    (p : EdgePath G w u) :
   (cons e p).toList = e.edge :: p.toList := rfl
 
 theorem append_toList {G : Graph V E}{v w u : V} (p₁ : EdgePath G v w) (p₂ : EdgePath G w u) :
     (p₁ ++ p₂).toList = p₁.toList ++ p₂.toList := by
     induction p₁ with
-    | nil v => 
+    | nil v =>
       simp [nil_toList]
     | cons e p' ih =>
       simp [cons_toList]
@@ -225,7 +225,7 @@ theorem append_toList {G : Graph V E}{v w u : V} (p₁ : EdgePath G v w) (p₂ :
 theorem concat_toList {G : Graph V E}{v w u : V} (p : EdgePath G v w) (e : EdgeBetween G w u) :
     (concat p e).toList = List.concat p.toList e.edge := by
     induction p with
-    | nil v => 
+    | nil v =>
       simp [nil_toList]
       rw [concat, cons_toList, nil_toList]
     | cons e p' ih =>
@@ -234,7 +234,7 @@ theorem concat_toList {G : Graph V E}{v w u : V} (p : EdgePath G v w) (e : EdgeB
 theorem reverse_toList {G : Graph V E}{v w : V} (p : EdgePath G v w):
   p.reverse.toList  = p.toList.reverse.map (G.bar) := by
   induction p with
-  | nil _ => 
+  | nil _ =>
     simp [nil_toList]
   | cons e p' ih =>
     simp [cons_toList, reverse_cons, concat_toList]
@@ -243,7 +243,7 @@ theorem reverse_toList {G : Graph V E}{v w : V} (p : EdgePath G v w):
 theorem toList_reverse {G : Graph V E}{v w : V} (p : EdgePath G v w):
   p.toList.reverse = p.reverse.toList.map (G.bar) := by
   induction p with
-  | nil _ => 
+  | nil _ =>
     simp [nil_toList]
   | cons e p' ih =>
     simp [cons_toList, reverse_cons, concat_toList]
@@ -260,9 +260,9 @@ def termVerts (p : G.EdgePath u v) : List V :=
   induction p₁ with
   | nil v =>
     match p₂ with
-    | EdgePath.nil v => 
+    | EdgePath.nil v =>
       intro h
-      rw [nil_toList] at h      
+      rw [nil_toList] at h
     | EdgePath.cons e₂ p₂  =>
       intro h
       simp [cons_toList, nil_toList] at h
@@ -288,21 +288,21 @@ theorem eq_of_edge_eq {G: Graph V E}{v w: V}
   (e₁ e₂ : EdgeBetween G v w) : e₁.edge = e₂.edge → e₁ = e₂ := by
       intro h
       ext
-      exact h      
-        
+      exact h
+
 theorem terminal_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
-  (p₁ : EdgePath G v₁ w₁) (p₂ : EdgePath G v₂ w₂) : p₁.toList = p₂.toList → (v₁ = v₂) → (w₁ = w₂)  := by 
+  (p₁ : EdgePath G v₁ w₁) (p₂ : EdgePath G v₂ w₂) : p₁.toList = p₂.toList → (v₁ = v₂) → (w₁ = w₂)  := by
   induction p₁ with
   | nil v₁' =>
     match p₂ with
-    | EdgePath.nil v => 
+    | EdgePath.nil v =>
       intro h heq
-      rw [nil_toList] at h      
+      rw [nil_toList] at h
       exact heq
     | EdgePath.cons e₂ p₂  =>
       intro h
       simp [cons_toList, nil_toList] at h
-  | cons e p₁' ih =>    
+  | cons e p₁' ih =>
     intro h heq
     match p₂ with
     | EdgePath.nil w =>
@@ -316,9 +316,9 @@ theorem terminal_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
 def shiftTarget {G: Graph V E}{v w w' : V}
   (p : EdgePath G v w)(eql : w = w'):  EdgePath G v w' := by
   match p, w', eql with
-  | nil _, _, rfl => 
+  | nil _, _, rfl =>
     exact (nil v)
-  | cons e p', w', eql => 
+  | cons e p', w', eql =>
     exact cons e (shiftTarget p' eql)
 
 theorem toList_shiftTarget {G: Graph V E}{v w w' : V}
@@ -332,12 +332,12 @@ theorem toList_shiftTarget {G: Graph V E}{v w w' : V}
     simp only [shiftTarget, cons_toList, toList_shiftTarget]
 
 def shiftEnds {G: Graph V E}{v v' w w' : V}
-  (p : EdgePath G v w)(eqlv : v = v')(eqlw : w = w'):  
+  (p : EdgePath G v w)(eqlv : v = v')(eqlw : w = w'):
     EdgePath G v' w' := by
   match p, w', eqlv, eqlw with
-  | nil _, _, rfl, rfl => 
+  | nil _, _, rfl, rfl =>
     exact (nil v)
-  | cons e p', w', rfl,  eqlw => 
+  | cons e p', w', rfl,  eqlw =>
     exact cons e (shiftTarget p' eqlw)
 
 theorem toList_shiftEnds {G: Graph V E}{v v' w w' : V}
@@ -347,7 +347,7 @@ theorem toList_shiftEnds {G: Graph V E}{v v' w w' : V}
   | nil _, _, rfl, rfl =>
     simp only [shiftEnds]
   | cons e p', w', rfl,  eqlw =>
-    simp only [shiftEnds, cons_toList, toList_shiftTarget]     
+    simp only [shiftEnds, cons_toList, toList_shiftTarget]
 
 
 /-- Sequence of reductions of a path by cancelling adjacent edges that are inverses. -/
@@ -355,23 +355,23 @@ theorem toList_shiftEnds {G: Graph V E}{v v' w w' : V}
 inductive Reduction {v w : V}:
       G.EdgePath v w →  G.EdgePath v w →  Prop where
   /-- A cancellation of adjacent edges that are reductions -/
-  | step (u u' : V)(e : G.EdgeBetween u u') (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) : 
+  | step (u u' : V)(e : G.EdgeBetween u u') (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) :
       Reduction (p₁ ++ (cons e (cons e.bar p₂))) (p₁ ++ p₂)
 
 /-- A path being reduced, i.e., admitting no reductions. -/
-def reduced  {v w : V} (p : G.EdgePath v w) : Prop := 
+def reduced  {v w : V} (p : G.EdgePath v w) : Prop :=
   ∀ p', ¬ Reduction p p'
 
 /-- Reduction data and the corresponding relation -/
-theorem Reduction.property {v w : V} {p' : G.EdgePath v w}(p : G.EdgePath v w) : 
+theorem Reduction.property {v w : V} {p' : G.EdgePath v w}(p : G.EdgePath v w) :
   Reduction p p' →
-  ∃ u u': V, ∃ e : G.EdgeBetween u u', 
+  ∃ u u': V, ∃ e : G.EdgeBetween u u',
     ∃ p₁ : G.EdgePath v u,
-    ∃ p₂ : G.EdgePath u w, 
-      p₁ ++ (cons e (cons e.bar p₂)) = p 
+    ∃ p₂ : G.EdgePath u w,
+      p₁ ++ (cons e (cons e.bar p₂)) = p
 | Reduction.step u u' e' p₁ p₂ => by
   use u, u', e', p₁, p₂
-  
+
 end EdgePath
 
 open EdgePath
@@ -385,11 +385,11 @@ theorem not_reduced_of_split {v w u u': V}{p : G.EdgePath v w}
   apply red'
   apply Reduction.step
 
-theorem tail_reduced {u v w : V} (e: EdgeBetween G u v) 
+theorem tail_reduced {u v w : V} (e: EdgeBetween G u v)
     (p : G.EdgePath v w) : reduced (cons e p) → reduced p := by
   intro red p' red'
   let ⟨u, u', e', p₁, p₂, eqn⟩   := red'.property
-  let eqn' : (cons e p₁) ++ cons e' (cons e'.bar p₂) = 
+  let eqn' : (cons e p₁) ++ cons e' (cons e'.bar p₂) =
     cons e p := by
       simp [cons_append]
       exact eqn
@@ -408,23 +408,23 @@ theorem reverse_reduced {v w : V} (p : G.EdgePath v w): reduced p →   reduced 
       simp [reverse_cons]
   rw [←eqn'']
   apply Reduction.step
-  
+
 theorem reverse_reduced_iff {v w : V} (p : G.EdgePath v w) :
   reduced p ↔ reduced p.reverse := by
   apply Iff.intro
   · exact reverse_reduced p
   · intro h
     rw [← reverse_reverse p]
-    apply reverse_reduced 
+    apply reverse_reduced
     assumption
 
 /-- Paths up to the equivalence relation generated by reduction. -/
-abbrev PathClass (G: Graph V E) (v w : V)  := 
+abbrev PathClass (G: Graph V E) (v w : V)  :=
     Quot <| @Reduction _ _ G v w
 
 /-- The class of a path up to the equivalence generated by reduction. -/
 abbrev homotopyClass  {v w : V} (p : G.EdgePath v w) :
-   PathClass G v w  := 
+   PathClass G v w  :=
   Quot.mk _ p
 
 notation "[[" p "]]" => homotopyClass p
@@ -436,18 +436,18 @@ attribute [aesop safe apply] Quot.sound
   have := Reduction.step _ _ e p₁ p₂
   aesop
 
-@[simp] theorem append_cons_cons_bar (e : G.EdgeBetween u' u) (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) : 
+@[simp] theorem append_cons_cons_bar (e : G.EdgeBetween u' u) (p₁ : G.EdgePath v u) (p₂ : G.EdgePath u w) :
   [[p₁ ++ (p₂ |>.cons e |>.cons e.bar)]] = [[p₁ ++ p₂]] := by
   have := append_cons_bar_cons e.bar p₁ p₂
   aesop
 
-theorem left_append_step {v w u : V} (a : G.EdgePath v w)  (b₁ b₂ : G.EdgePath w u)  (rel : Reduction  b₁ b₂) : 
+theorem left_append_step {v w u : V} (a : G.EdgePath v w)  (b₁ b₂ : G.EdgePath w u)  (rel : Reduction  b₁ b₂) :
    [[a ++ b₁]] = [[a ++ b₂]] := by
     induction rel
     repeat (rw [← append_assoc])
     aesop
 
-theorem right_append_step {v w u : V} (a₁ a₂ : G.EdgePath v w)  (b : G.EdgePath w u) (rel : Reduction  a₁ a₂) : 
+theorem right_append_step {v w u : V} (a₁ a₂ : G.EdgePath v w)  (b : G.EdgePath w u) (rel : Reduction  a₁ a₂) :
     [[a₁ ++ b]] = [[a₂ ++ b]] := by
   aesop (add norm simp [append_assoc])
 
@@ -456,8 +456,8 @@ theorem reverse_step {v w : V} (a₁ a₂ : G.EdgePath v w) (rel : Reduction a�
   induction rel
   aesop (add norm simp [reverse_append, reverse_cons])
 
-@[simp] theorem reverse_append_self {v w : V} 
-(p : G.EdgePath v w) : 
+@[simp] theorem reverse_append_self {v w : V}
+(p : G.EdgePath v w) :
     [[p.reverse ++ p]] = [[.nil w]] := by
     induction p <;>
       aesop (add norm simp [reverse_cons, reverse_concat, cons_append])
@@ -477,16 +477,24 @@ protected def id {G : Graph V E} (v : V) : G.PathClass v v :=
 protected def id' (G : Graph V E) (v : V) : G.PathClass v v :=
   [[.nil v]]
 
-protected def mul {v w u : V} : 
+protected def mul {v w u : V} :
     G.PathClass v w → G.PathClass w u → G.PathClass v u := by
-  apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]]) <;>
-    aesop (add safe apply [left_append_step, right_append_step])
+  apply Quot.lift₂ (fun p₁ p₂ ↦ [[ p₁ ++ p₂ ]])
+  · rename_i _ _ u_1 v_1 w_1
+    intro a b₁ b₂ a_1
+    apply Graph.left_append_step
+    simp_all only
+  · rename_i _ _ u_1 v_1 w_1
+    intro a₁ a₂ b a
+    apply Graph.right_append_step
+    simp_all only
+
 
 @[aesop norm unfold]
-protected def inv {u v : V} : G.PathClass u v → G.PathClass v u := 
+protected def inv {u v : V} : G.PathClass u v → G.PathClass v u :=
   Quot.lift ([[·.reverse]]) reverse_step
 
-theorem inv_equiv_reverse {v w : V₁} (η : EdgePath G₁ v w):  
+theorem inv_equiv_reverse {v w : V₁} (η : EdgePath G₁ v w):
   [[ η ]].inv = [[ η.reverse ]] := by
     rfl
 
@@ -499,20 +507,20 @@ end PathClass
 @[local simp] lemma mul_path_path (p : G.EdgePath u v) (p' : G.EdgePath v w) :
   [[p]] * [[p']] = [[p ++ p']] := rfl
 
-theorem cons_equiv_of_equiv{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] → 
+theorem cons_equiv_of_equiv{G: Graph V E}{v w u : V} (a : EdgeBetween G v w)  (b₁ b₂ : EdgePath G w u) : [[b₁]] = [[b₂]] →
    [[cons a  b₁]] = [[cons a b₂]] := by
   intro r
-  rw [show cons a b₁ = cons a (nil _) ++ b₁ by rfl, 
+  rw [show cons a b₁ = cons a (nil _) ++ b₁ by rfl,
       show cons a b₂ = cons a (nil _) ++ b₂ by rfl,
       ← mul_path_path, ← mul_path_path, r]
 
-theorem concat_equiv_of_equiv {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgeBetween G w u) : [[a₁]] = [[a₂]] → 
+theorem concat_equiv_of_equiv {G: Graph V E}{v w u : V} (a₁ a₂ : EdgePath G v w)  (b : EdgeBetween G w u) : [[a₁]] = [[a₂]] →
    [[concat a₁ b]] = [[concat a₂ b]] := by
   intro r
-  have: concat a₁  b = a₁ ++ (concat (nil _) b) := by 
+  have: concat a₁  b = a₁ ++ (concat (nil _) b) := by
     rw [append_concat, append_nil]
   rw [this]
-  have: concat a₂  b = a₂ ++ (concat (nil _) b) := by 
+  have: concat a₂  b = a₂ ++ (concat (nil _) b) := by
     rw [append_concat, append_nil]
   rw [this, ← mul_path_path, ← mul_path_path, r]
 
@@ -525,8 +533,8 @@ abbrev π₁ (G: Graph V E) (v : V) := G.PathClass v v
 namespace PathClass
 
 protected theorem mul_assoc { v w u u' :  V}:
-  (p : G.PathClass v w) → (q : G.PathClass w  u) → 
-  (r : G.PathClass u  u') →  
+  (p : G.PathClass v w) → (q : G.PathClass w  u) →
+  (r : G.PathClass u  u') →
     (p * q) * r = p * (q * r) := by
     apply Quot.ind
     intro a
@@ -536,11 +544,11 @@ protected theorem mul_assoc { v w u u' :  V}:
     intro c
     simp [append_assoc]
 
-def ind {β : (PathClass G u v) → Prop} : 
+def ind {β : (PathClass G u v) → Prop} :
    (∀ p : G.EdgePath u v, β [[p]]) → (∀ q : PathClass G u v, β q) :=
   Quot.ind
 
-@[simp] protected theorem id_mul  {u v : V} : ∀ p : PathClass G u v, 
+@[simp] protected theorem id_mul  {u v : V} : ∀ p : PathClass G u v,
   (PathClass.id' G u) * p = p := by
     apply PathClass.ind; aesop
 
@@ -601,7 +609,7 @@ instance [G : Graph V E] : CategoryStruct V where
 @[local simp] lemma comp_mul (p : u ⟶ v) (p' : v ⟶ w) :
   p ≫ p' = .mul p p' := rfl
 
-@[simp] protected theorem id_mul'  {u v : V} : ∀ p : u ⟶ v, 
+@[simp] protected theorem id_mul'  {u v : V} : ∀ p : u ⟶ v,
   (𝟙 u) ≫ p = p := by
     apply Quot.ind; aesop
 
@@ -618,7 +626,7 @@ instance [G : Graph V E] : CategoryStruct V where
   apply Quot.ind; aesop
 
 protected theorem mul_assoc' { v w u u' :  V}:
-  (p : v ⟶ w) → (q : w ⟶ u) → (r : u ⟶ u') →  
+  (p : v ⟶ w) → (q : w ⟶ u) → (r : u ⟶ u') →
     (p ≫ q) ≫ r = p ≫ (q ≫ r) := by
     apply Quot.ind
     intro a
@@ -667,7 +675,7 @@ protected def one_def : 𝟙 base = (1 : G.π₁ base) := rfl
 
 protected def mul_def (p q : base ⟶ base) : p ≫ q = p * q := rfl
 
-protected def inv_def (p : base ⟶ base) : (inv p) = (p : G.π₁ base)⁻¹ := by 
+protected def inv_def (p : base ⟶ base) : (inv p) = (p : G.π₁ base)⁻¹ := by
   simp only [Groupoid.vertexGroup_inv, Groupoid.inv_eq_inv]
 
 end π₁
