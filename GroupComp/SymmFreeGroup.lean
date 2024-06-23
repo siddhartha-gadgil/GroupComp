@@ -241,6 +241,7 @@ set_option synthInstance.checkSynthOrder false in -- HACK
     show (InvHom.comp ι (MonoidHom.toInvHom (induced φ))) _ = _
     rw [induced_is_lift (G := G) φ]
     simp [OrientableInvolutiveInv.lift, DFunLike.coe, EquivLike.coe, h]
+    sorry
 
 noncomputable instance [IsFreeGroup G] : SymmFreeGroup G (IsFreeGroup.Generators G ⊕ IsFreeGroup.Generators G) where
   ι :=

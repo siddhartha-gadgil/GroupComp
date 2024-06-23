@@ -14,7 +14,7 @@ We will then see
 * A detailed example with programs and proofs.
 -/
 
-    
+
 /-!
 ## Lean as a calculator.
 
@@ -36,14 +36,14 @@ def some_number := 42
 /-!
 We next evaluate an expression involving a definition.
 
-```lean 
+```lean
 #eval some_number + 23 -- 65
 ```
 -/
 
 #eval some_number + 23
 
-/-! 
+/-!
 ## Defining functions
 
 We next define some functions. These are defined in terms of previously defined functions.
@@ -69,10 +69,10 @@ def cube'' : ℕ → ℕ := fun n ↦ n * n * n
 
 example := λ (n : ℕ) => n * n * n
 
-/-! 
-## Types 
+/-!
+## Types
 
-Terms in Lean, including functions, have types, which can be seen using `#check` 
+Terms in Lean, including functions, have types, which can be seen using `#check`
 
 ```lean
 #check 1 + 2 -- ℕ
@@ -93,10 +93,10 @@ Terms in Lean, including functions, have types, which can be seen using `#check`
 #check "Hello " ++ "world!"
 
 #check add_two
-#check cube 
+#check cube
 
 #check ℕ
-#check Type 
+#check Type
 #check ℕ → ℕ
 
 /-!
@@ -121,5 +121,5 @@ We can also define this in a way that makes the type clearer.
 #check sum_of_squares 3 -- ℕ → ℕ
 
 /-- Sum of squares of natural numbers `x` and `y` -/
-def sum_of_squares' : ℕ → ℕ → ℕ := 
+def sum_of_squares' : ℕ → ℕ → ℕ :=
   fun x ↦ fun y ↦  x * x + y * y

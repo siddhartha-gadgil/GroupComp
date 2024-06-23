@@ -147,7 +147,6 @@ scoped instance : LinearOrder (α × β) where
         apply lt_of_le_of_ne c c'
     · apply isFalse
       simp [le_of_not_ge c, lt_of_not_ge c]
-      simp [c]
 
 #eval smallest [(3, 2), (4, 5), (7, 0)] (by simp) -- (3, 2)
 

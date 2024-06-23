@@ -1,27 +1,27 @@
 import Mathlib
 /-!
-# Word problem for quotients of ℤ 
+# Word problem for quotients of ℤ
 
 ## Linear Diophantine Equations
 
-We solve linear diophantine equations of the form `a * x + b * y = c` 
+We solve linear diophantine equations of the form `a * x + b * y = c`
 where `a`, `b`, `c` are integers if they have a solution with proof.
 Otherwise, we return a proof that there is no solution.
 
 This has a solution if and only if the gcd of `a` and `b` divides `c`.
-* If the gcd of `a` and `b` divides `c`, by Bezout's Lemma 
+* If the gcd of `a` and `b` divides `c`, by Bezout's Lemma
   there are integers `x` and `y` such that `a * x + b * y = gcd a b`.
-  Further, as `gcd a b` divides `c`, we have an integer `d` such that 
+  Further, as `gcd a b` divides `c`, we have an integer `d` such that
   `(gcd a b) * d = c`. Then `x * d` and `y * d` are integers
  such that `a * (x * d) + b * (y * d) = c`.
-* The converse follows as `gcd a b` divides `a` and `b`, 
+* The converse follows as `gcd a b` divides `a` and `b`,
   hence `c = a * x + b * y`.
 
 ## Corresponding word problem
 
 The existence of solution to the diophantine equation `a * x + b * y = c`
 is equivalent to the image of the integer `c` in the the quotient group
-`ℤ / {z | ∃ x y : ℤ, a * x + b * y = z}` being trivial, i.e., 
+`ℤ / {z | ∃ x y : ℤ, a * x + b * y = z}` being trivial, i.e.,
 the word problem.
 
 We construct the quotient group and show that the word problem is decidable.
@@ -48,14 +48,14 @@ lemma eqn_solvable_iff_divides_gcd (a b c : ℤ) :
       rw [← h]
       apply dvd_add
       · trans a
-        · apply Int.gcd_dvd_left  
+        · apply Int.gcd_dvd_left
         · apply Int.dvd_mul_right
       · trans b
-        · apply Int.gcd_dvd_right  
-        · apply Int.dvd_mul_right    
+        · apply Int.gcd_dvd_right
+        · apply Int.dvd_mul_right
     · intro h
       let d := c / Int.gcd a b
-      let h' : Int.gcd a b * d = c := by 
+      let h' : Int.gcd a b * d = c := by
         apply Int.mul_ediv_cancel_of_emod_eq_zero
         apply Int.emod_eq_zero_of_dvd
         assumption
@@ -84,7 +84,7 @@ def spanGroup(a b : ℤ) : AddSubgroup ℤ  where
 
 abbrev moduloSpan (a b : ℤ) := ℤ ⧸ (spanGroup a b)
 
-abbrev zeroModSpan (a b n : ℤ) : Prop := 
+abbrev zeroModSpan (a b n : ℤ) : Prop :=
   (QuotientAddGroup.mk n : moduloSpan a b) = (0 : moduloSpan a b)
 
 instance wordProblemMod (a b n : ℤ) : Decidable (zeroModSpan a b n) := by
@@ -92,14 +92,14 @@ instance wordProblemMod (a b n : ℤ) : Decidable (zeroModSpan a b n) := by
   apply inferInstance
 
 
-#eval decide (zeroModSpan 2 3 5) 
+#eval decide (zeroModSpan 2 3 5)
 
 #check WellFounded.min
 #check Nat.lt_wfRel.wf.min {n: ℕ | n % 2 = 0} (by use 2; simp)
 
 #check Nat.find
 
-#eval @Nat.find (fun n ↦ n % 2 = 1) _ (by use 3; simp)
+#eval @Nat.find (fun n ↦ n % 2 = 1) _ (by use 3)
 
 
 

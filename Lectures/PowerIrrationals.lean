@@ -41,13 +41,21 @@ theorem exists_irrationals_pow_rational :
     let b := Real.sqrt 2
     by_cases c:Irrational (b ^ b)
     · let a := b ^ b
-      use a, b
-      simp [irrational_sqrt_two, c, sq2_pow_twice]
-      simp [irrational_iff_ne_rational]
-      use 2, 1
-      simp
+      use b^b, b
+      simp [c]
+      apply And.intro
+      · apply irrational_sqrt_two
+      · simp [irrational_iff_ne_rational]
+        use 2, 1
+        simp
+        rw [← Real.rpow_mul, Real.mul_self_sqrt]
+        · show √2 ^ 2 = 2
+          simp [Real.rpow_natCast]
+        · simp
+        · apply Real.sqrt_nonneg
     · use b, b
       simp [irrational_sqrt_two, c]
+      apply irrational_sqrt_two
 
 
 #check Classical.choice -- {α : Sort u} → Nonempty α → α

@@ -1,5 +1,5 @@
 import GroupComp.CantorTree
-import GroupComp.FundamentalGroup
+-- import GroupComp.FundamentalGroup
 import GroupComp.Graph
 import GroupComp.Graph.Covering
 import GroupComp.Graph.ReducedPaths

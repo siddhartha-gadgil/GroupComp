@@ -249,9 +249,15 @@ theorem toList_reverse {G : Graph V E}{v w : V} (p : EdgePath G v w):
     simp [cons_toList, reverse_cons, concat_toList]
     simp [ih, EdgeBetween.bar]
 
+/--
+Initial vertices of a path.
+-/
 def initVerts (p : G.EdgePath u v) : List V :=
   p.toList.map G.ι
 
+/--
+Terminal vertices of a path.
+-/
 def termVerts (p : G.EdgePath u v) : List V :=
   p.toList.map G.τ
 
@@ -312,7 +318,9 @@ theorem terminal_eq_of_toList_eq {G: Graph V E}{v₁ v₂ w₁ w₂: V}
       apply terminal_eq_of_toList_eq p₁' p₂' h.right
       rw [←e₂.term_eq, ←e.term_eq, h.left]
 
-
+/--
+Edgepath obtained by shifting the target of an edgepath along an equality.
+-/
 def shiftTarget {G: Graph V E}{v w w' : V}
   (p : EdgePath G v w)(eql : w = w'):  EdgePath G v w' := by
   match p, w', eql with
@@ -331,6 +339,9 @@ theorem toList_shiftTarget {G: Graph V E}{v w w' : V}
   | cons e p', w', eql =>
     simp only [shiftTarget, cons_toList, toList_shiftTarget]
 
+/--
+Edgepath obtained by shifting the ends of an edgepath along equalities.
+-/
 def shiftEnds {G: Graph V E}{v v' w w' : V}
   (p : EdgePath G v w)(eqlv : v = v')(eqlw : w = w'):
     EdgePath G v' w' := by
@@ -469,10 +480,16 @@ theorem reverse_step {v w : V} (a₁ a₂ : G.EdgePath v w) (rel : Reduction a�
 
 namespace PathClass
 
+/--
+The constant path, identity in the fundamental group.
+-/
 @[aesop norm unfold]
 protected def id {G : Graph V E} (v : V) : G.PathClass v v :=
   [[.nil v]]
 
+/--
+The constant path, identity in the fundamental group, with graph explicit.
+-/
 @[aesop norm unfold]
 protected def id' (G : Graph V E) (v : V) : G.PathClass v v :=
   [[.nil v]]
